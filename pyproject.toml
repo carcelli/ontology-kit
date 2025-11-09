@@ -1,0 +1,206 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent_kit"
+version = "0.1.0"
+description = "Hyperdimensional vector space navigation with ontology-driven agents"
+authors = [
+    {name = "Agent Kit Team", email = "dev@agent_kit.io"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+keywords = ["agents", "ontology", "reinforcement-learning", "embeddings", "vector-space"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core ML & Embeddings
+    "sentence-transformers>=2.2.0",
+    "torch>=2.1.0",
+    "numpy>=1.24.0",
+    
+    # Vector Store
+    "faiss-cpu>=1.7.4",  # Switch to faiss-gpu if GPU available
+    
+    # Ontology & Knowledge Graphs
+    "rdflib>=7.0.0",
+    "owlrl>=6.0.2",  # OWL-RL reasoner
+    
+    # RL Framework
+    "stable-baselines3>=2.1.0",
+    "gymnasium>=0.29.0",  # Replaces gym
+    
+    # Optimization & Tuning
+    "optuna>=3.4.0",
+    "scikit-learn>=1.3.0",
+    
+    # Observability
+    "structlog>=23.2.0",
+    "prometheus-client>=0.19.0",
+    
+    # Experiment Tracking
+    "mlflow>=2.9.0",
+    
+    # Utilities
+    "tqdm>=4.66.0",
+    "pyyaml>=6.0.1",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",  # CLI framework
+    "treelib>=1.6.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.21.0",
+    
+    # Linting & Formatting
+    "ruff>=0.1.6",
+    "black>=23.11.0",
+    "mypy>=1.7.0",
+    
+    # Type Stubs
+    "types-pyyaml>=6.0.0",
+    "types-tqdm>=4.66.0",
+    
+    # Profiling
+    "py-spy>=0.3.14",
+    "memory-profiler>=0.61.0",
+    
+    # Documentation
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+
+gpu = [
+    "faiss-gpu>=1.7.4",
+]
+
+all = [
+    "agent_kit[dev,gpu]",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/agent_kit"
+Documentation = "https://agent-kit.readthedocs.io"
+Repository = "https://github.com/your-org/agent_kit"
+Issues = "https://github.com/your-org/agent_kit/issues"
+
+[project.scripts]
+agent-kit = "agent_kit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--cov=agent_kit",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=90",
+]
+markers = [
+    "slow: marks tests as slow (integration tests)",
+    "gpu: marks tests requiring GPU",
+    "requires_api: marks tests requiring external API calls",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.venv
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+    "faiss.*",
+    "sentence_transformers.*",
+    "stable_baselines3.*",
+    "optuna.*",
+    "mlflow.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src/agent_kit"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+

@@ -1,0 +1,195 @@
+@prefix : <http://agent_kit.io/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# ============================================================================
+# Core Ontology for Agent Kit
+# ============================================================================
+
+# Ontology Declaration
+: a owl:Ontology ;
+    rdfs:label "Agent Kit Core Ontology" ;
+    rdfs:comment "Defines agents, tasks, tools, states, and their relationships in a hyperdimensional vector space navigation system." ;
+    owl:versionInfo "0.1.0" .
+
+# ============================================================================
+# Classes
+# ============================================================================
+
+:Agent a owl:Class ;
+    rdfs:label "Agent" ;
+    rdfs:comment "An autonomous entity that navigates vector space, makes decisions, and executes actions." .
+
+:Task a owl:Class ;
+    rdfs:label "Task" ;
+    rdfs:comment "A goal-directed activity with preconditions, required tools, and expected outcomes." .
+
+:Tool a owl:Class ;
+    rdfs:label "Tool" ;
+    rdfs:comment "An executable capability or function that agents can invoke (e.g., API, code function, data retrieval)." .
+
+:State a owl:Class ;
+    rdfs:label "State" ;
+    rdfs:comment "A configuration or snapshot of the environment, agent memory, or task progress." .
+
+:Action a owl:Class ;
+    rdfs:label "Action" ;
+    rdfs:comment "A concrete operation that transitions from one state to another." .
+
+:Concept a owl:Class ;
+    rdfs:label "Concept" ;
+    rdfs:comment "An abstract idea or entity represented as a point in vector space." .
+
+# ============================================================================
+# Object Properties (Relations)
+# ============================================================================
+
+:hasPrerequisite a owl:ObjectProperty ;
+    rdfs:label "has prerequisite" ;
+    rdfs:domain :Task ;
+    rdfs:range :Task ;
+    rdfs:comment "Task A requires Task B to be completed first." .
+
+:requiresTool a owl:ObjectProperty ;
+    rdfs:label "requires tool" ;
+    rdfs:domain :Task ;
+    rdfs:range :Tool ;
+    rdfs:comment "Task requires a specific tool to be executed." .
+
+:navigatesTo a owl:ObjectProperty ;
+    rdfs:label "navigates to" ;
+    rdfs:domain :Agent ;
+    rdfs:range :State ;
+    rdfs:comment "Agent moves to a target state in vector space." .
+
+:executesAction a owl:ObjectProperty ;
+    rdfs:label "executes action" ;
+    rdfs:domain :Agent ;
+    rdfs:range :Action ;
+    rdfs:comment "Agent performs an action." .
+
+:transitionsTo a owl:ObjectProperty ;
+    rdfs:label "transitions to" ;
+    rdfs:domain :State ;
+    rdfs:range :State ;
+    rdfs:comment "One state transitions to another via an action." .
+
+:triggeredBy a owl:ObjectProperty ;
+    rdfs:label "triggered by" ;
+    rdfs:domain :State ;
+    rdfs:range :Action ;
+    rdfs:comment "State change was caused by this action." .
+
+:accomplishes a owl:ObjectProperty ;
+    rdfs:label "accomplishes" ;
+    rdfs:domain :Action ;
+    rdfs:range :Task ;
+    rdfs:comment "Action contributes to completing a task." .
+
+:similarTo a owl:ObjectProperty, owl:SymmetricProperty ;
+    rdfs:label "similar to" ;
+    rdfs:domain :Concept ;
+    rdfs:range :Concept ;
+    rdfs:comment "Two concepts are semantically similar in vector space." .
+
+:composedOf a owl:ObjectProperty ;
+    rdfs:label "composed of" ;
+    rdfs:domain :Task ;
+    rdfs:range :Task ;
+    rdfs:comment "Complex task composed of subtasks." .
+
+:hasCapability a owl:ObjectProperty ;
+    rdfs:label "has capability" ;
+    rdfs:domain :Agent ;
+    rdfs:range :Tool ;
+    rdfs:comment "Agent has access to or can use a tool." .
+
+# ============================================================================
+# Datatype Properties
+# ============================================================================
+
+:hasConfidence a owl:DatatypeProperty ;
+    rdfs:label "has confidence" ;
+    rdfs:domain :Action ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Confidence score (0-1) for choosing this action." .
+
+:hasReward a owl:DatatypeProperty ;
+    rdfs:label "has reward" ;
+    rdfs:domain :Action ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Reward value from reinforcement learning." .
+
+:hasCost a owl:DatatypeProperty ;
+    rdfs:label "has cost" ;
+    rdfs:domain :Action ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Cost in dollars, compute, or latency." .
+
+:hasLatency a owl:DatatypeProperty ;
+    rdfs:label "has latency" ;
+    rdfs:domain :Tool ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Average execution time in milliseconds." .
+
+:hasDescription a owl:DatatypeProperty ;
+    rdfs:label "has description" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Human-readable description." .
+
+:hasEmbedding a owl:DatatypeProperty ;
+    rdfs:label "has embedding" ;
+    rdfs:comment "Vector representation (serialized as JSON array)." .
+
+# ============================================================================
+# Example Instances (for testing)
+# ============================================================================
+
+:AgentAlpha a :Agent ;
+    rdfs:label "Agent Alpha" ;
+    :hasDescription "Initial test agent for Phase 1 validation" ;
+    :hasCapability :SearchTool, :SortTool .
+
+:SortListTask a :Task ;
+    rdfs:label "Sort List Task" ;
+    :hasDescription "Sort a list of numbers in ascending order" ;
+    :requiresTool :SortTool .
+
+:SearchTask a :Task ;
+    rdfs:label "Search Task" ;
+    :hasDescription "Find relevant documents via vector similarity" ;
+    :requiresTool :SearchTool .
+
+:ComplexTask a :Task ;
+    rdfs:label "Complex Multi-Step Task" ;
+    :hasDescription "Retrieve, sort, and summarize data" ;
+    :composedOf :SearchTask, :SortListTask ;
+    :hasPrerequisite :SearchTask .
+
+:SortTool a :Tool ;
+    rdfs:label "Sort Tool" ;
+    :hasDescription "Sorts arrays or lists" ;
+    :hasLatency 10.5 .
+
+:SearchTool a :Tool ;
+    rdfs:label "Vector Search Tool" ;
+    :hasDescription "Performs k-NN search in vector index" ;
+    :hasLatency 25.0 .
+
+:InitialState a :State ;
+    rdfs:label "Initial State" ;
+    :hasDescription "Starting state with unsorted data" .
+
+:SortedState a :State ;
+    rdfs:label "Sorted State" ;
+    :hasDescription "Data has been sorted" ;
+    :transitionsTo :InitialState .
+
+:SortAction a :Action ;
+    rdfs:label "Sort Action" ;
+    :accomplishes :SortListTask ;
+    :hasConfidence 0.95 ;
+    :hasCost 0.001 .
+
