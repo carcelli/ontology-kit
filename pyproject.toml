@@ -55,6 +55,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "click>=8.1.0",  # CLI framework
     "treelib>=1.6.1",
+    "pydantic>=2.0.0",  # Data validation & settings
     "openai-agents>=0.5.0",
     "polars>=0.20.0",  # For ontology-ML example
     "pyshacl>=0.25.0",  # SHACL validation

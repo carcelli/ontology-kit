@@ -1,0 +1,56 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix core: <http://agent-kit.com/ontology/core#> .
+@prefix ml:   <http://agent-kit.com/ontology/ml#> .
+
+ml: a owl:Ontology ;
+  rdfs:comment "Ontology for executable ML tools and their relations to algorithms and artifacts." ;
+  owl:imports core: .
+
+### Classes
+ml:MLTool           a rdfs:Class ; rdfs:subClassOf core:Tool .
+ml:ModelTrainerTool a rdfs:Class ; rdfs:subClassOf ml:MLTool .
+ml:CrossValidatorTool a rdfs:Class ; rdfs:subClassOf ml:MLTool .
+ml:JobStatusTool    a rdfs:Class ; rdfs:subClassOf ml:MLTool .
+
+ml:Dataset          a rdfs:Class .
+ml:Model            a rdfs:Class .
+ml:TrainedModel     a rdfs:Class ; rdfs:subClassOf ml:Model .
+ml:PerformanceMetric a rdfs:Class .
+ml:Hyperparameters  a rdfs:Class .
+
+### Properties
+ml:consumes a owl:ObjectProperty ;
+  rdfs:domain ml:MLTool ; rdfs:comment "Tool consumes resource." .
+
+ml:produces a owl:ObjectProperty ;
+  rdfs:domain ml:MLTool ; rdfs:comment "Tool produces resource." .
+
+ml:implementsAlgorithm a owl:DatatypeProperty ;
+  rdfs:domain ml:MLTool ; rdfs:range xsd:string ;
+  rdfs:comment "Algorithm(s) the tool implements (e.g., 'GradientDescent')." .
+
+ml:hasPythonIdentifier a owl:DatatypeProperty ;
+  rdfs:domain ml:MLTool ; rdfs:range xsd:string ;
+  rdfs:comment "Exact Python function name in the codebase." .
+
+### Example instances (bind these to your code)
+ml:DefaultTrainer a ml:ModelTrainerTool ;
+  rdfs:label "Default Trainer" ;
+  ml:consumes ml:Dataset ;
+  ml:produces ml:TrainedModel ;
+  ml:implementsAlgorithm "GradientDescent", "Backpropagation" ;
+  ml:hasPythonIdentifier "train_model" .
+
+ml:DefaultValidator a ml:CrossValidatorTool ;
+  rdfs:label "Default K-Fold Validator" ;
+  ml:consumes ml:TrainedModel, ml:Dataset ;
+  ml:produces ml:PerformanceMetric ;
+  ml:hasPythonIdentifier "run_cross_validation" .
+
+ml:DefaultJobChecker a ml:JobStatusTool ;
+  rdfs:label "Default Job Status Checker" ;
+  ml:hasPythonIdentifier "check_job_status" .
+
