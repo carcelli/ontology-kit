@@ -1,0 +1,108 @@
+{
+  "nodes": [
+    {
+      "id": "Revenue",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Forecast",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Client",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Customer",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "OutreachCampaign",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "EmailTiming",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Budget",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Marketing",
+      "betweenness": 0.0,
+      "closeness": 0.09377356151269131,
+      "actionable": 0.5
+    },
+    {
+      "id": "Sales",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Product",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Service",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Website",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "SocialMedia",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    },
+    {
+      "id": "Advertising",
+      "betweenness": 0.0,
+      "closeness": 0.09377356151269131,
+      "actionable": 0.5
+    },
+    {
+      "id": "CustomerSatisfaction",
+      "betweenness": 0.0,
+      "closeness": 0.0,
+      "actionable": 0.5
+    }
+  ],
+  "edges": [
+    {
+      "source": "Marketing",
+      "target": "Advertising",
+      "weight": 0.7617133259773254,
+      "relation_type": "semantic"
+    }
+  ],
+  "metadata": {
+    "n_nodes": 15,
+    "n_edges": 1,
+    "avg_degree": 0.13333333333333333,
+    "n_clusters": 14
+  }
+}

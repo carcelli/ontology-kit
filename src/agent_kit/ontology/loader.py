@@ -113,3 +113,15 @@ class OntologyLoader:
         triples = len(self.graph) if self.graph is not None else 0
         return f"OntologyLoader(path='{self.path}', status={status}, triples={triples})"
 
+    def add_triple(self, subject: Any, predicate: Any, object_: Any) -> None:
+        """Adds a triple to the graph (idempotent if exists)."""
+        if self.graph is None:
+            raise RuntimeError("Call load() first")
+        self.graph.add((subject, predicate, object_))
+
+    def save(self, file_path: str | None = None, format: str = 'turtle') -> None:
+        """Serializes and saves the graph back to file."""
+        if self.graph is None:
+            raise RuntimeError("Call load() first")
+        path = file_path or self.path
+        self.graph.serialize(destination=path, format=format)

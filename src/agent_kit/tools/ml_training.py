@@ -156,6 +156,66 @@ def check_job_status(input_data: JobStatusInput) -> Dict[str, Any]:
     return resp
 
 
+# -------------- Dimensionality Reduction / Leverage Analysis --------------
+class LeverageAnalysisInput(BaseModel):
+    """Input schema for leverage analysis."""
+
+    terms: list[str] = Field(..., description='Business entities/terms to analyze')
+    kpi_term: str = Field(..., description='Key Performance Indicator for sensitivity analysis')
+    actionable_terms: list[str] = Field(
+        default_factory=list, description='Terms that can be intervened upon'
+    )
+    ontology_path: Optional[str] = Field(
+        None, description='Optional ontology path for graph structure analysis'
+    )
+
+
+def analyze_leverage(input_data: LeverageAnalysisInput) -> Dict[str, Any]:
+    """
+    Analyze high-leverage intervention points using t-SNE dimensionality reduction.
+
+    Computes multi-factor leverage scores:
+    Leverage = Actionability × (Sensitivity + Uncertainty + Centrality)
+
+    Args:
+        input_data: Analysis configuration
+
+    Returns:
+        Top leverage points ranked by score with visualization path
+    """
+    try:
+        from agent_kit.tools.hyperdim_leverage_viz import generate_hyperdim_leverage_viz
+    except ImportError:
+        return {
+            'status': 'ERROR',
+            'message': 'hyperdim_leverage_viz not available. Install dependencies.',
+        }
+
+    job_id = f'leverage-job-{uuid.uuid4()}'
+    logger.info('Running leverage analysis: %s for KPI: %s', job_id, input_data.kpi_term)
+
+    try:
+        result = generate_hyperdim_leverage_viz(
+            terms=input_data.terms,
+            kpi_term=input_data.kpi_term,
+            actionable_terms=input_data.actionable_terms if input_data.actionable_terms else None,
+            ontology_path=input_data.ontology_path,
+            output_file=f'outputs/leverage_{job_id}.png',
+            n_components=2,
+        )
+
+        return {
+            'status': 'COMPLETED',
+            'job_id': job_id,
+            'top_levers': result['top_levers'][:5],
+            'viz_path': result['viz_path'],
+            'message': f"Identified {len(result['top_levers'])} leverage points",
+        }
+    except Exception as e:
+        logger.error('Leverage analysis failed: %s', e)
+        return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
+
+
 # ------------ OpenAI tool spec (Pydantic → JSON) ------------
 def pydantic_to_openai_tool(
     name: str, description: str, schema_model: type[BaseModel]
@@ -197,5 +257,24 @@ ML_TOOL_REGISTRY = {
             JobStatusInput,
         ),
     },
+    'analyze_leverage': {
+        'function': analyze_leverage,
+        'schema': LeverageAnalysisInput,
+        'tool_spec': pydantic_to_openai_tool(
+            'analyze_leverage',
+            'Identify high-leverage intervention points via t-SNE dimensionality reduction and multi-factor scoring.',
+            LeverageAnalysisInput,
+        ),
+    },
 }
+
+
+# Import and merge semantic graph tools
+try:
+    from agent_kit.tools.semantic_graph import SEMANTIC_GRAPH_TOOL_REGISTRY
+
+    ML_TOOL_REGISTRY.update(SEMANTIC_GRAPH_TOOL_REGISTRY)
+except ImportError:
+    logger.warning('Semantic graph tools not available')
+
 

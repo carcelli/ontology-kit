@@ -54,3 +54,52 @@ ml:DefaultJobChecker a ml:JobStatusTool ;
   rdfs:label "Default Job Status Checker" ;
   ml:hasPythonIdentifier "check_job_status" .
 
+### Dimensionality Reduction & Leverage Analysis Tools
+ml:DimensionalityReductionTool a rdfs:Class ; rdfs:subClassOf ml:MLTool ;
+  rdfs:comment "Tools that reduce high-dimensional data to 2D/3D for visualization and clustering." .
+
+ml:LeverageAnalysisTool a rdfs:Class ; rdfs:subClassOf ml:DimensionalityReductionTool ;
+  rdfs:comment "Identifies high-leverage intervention points via multi-factor scoring." .
+
+ml:DefaultLeverageAnalyzer a ml:LeverageAnalysisTool ;
+  rdfs:label "Hyperdimensional Leverage Analyzer" ;
+  ml:consumes ml:Dataset ;
+  ml:produces ml:PerformanceMetric ;
+  ml:implementsAlgorithm "t-SNE", "Multi-Factor Scoring" ;
+  ml:hasPythonIdentifier "analyze_leverage" ;
+  rdfs:comment "Computes Leverage = Actionability × (Sensitivity + Uncertainty + Centrality) to prioritize business entities for intervention." .
+
+### Semantic Graph Tools for Targeted Leverage Analysis
+ml:SemanticGraphTool a rdfs:Class ; rdfs:subClassOf ml:MLTool ;
+  rdfs:comment "Tools for building and analyzing semantic graphs with targeted leverage scoring." .
+
+ml:TargetLeverageTool a rdfs:Class ; rdfs:subClassOf ml:SemanticGraphTool ;
+  rdfs:comment "Computes targeted leverage scores using graph-theoretic path analysis." .
+
+ml:InterventionRecommenderTool a rdfs:Class ; rdfs:subClassOf ml:SemanticGraphTool ;
+  rdfs:comment "Generates experiment recommendations for high-leverage intervention points." .
+
+ml:DefaultSemanticGraphBuilder a ml:SemanticGraphTool ;
+  rdfs:label "Semantic Graph Builder" ;
+  ml:consumes ml:Dataset ;
+  ml:produces "Semantic Graph" ;
+  ml:implementsAlgorithm "Cosine Similarity", "Relation Extraction" ;
+  ml:hasPythonIdentifier "build_semantic_graph" ;
+  rdfs:comment "Constructs weighted graph from embeddings and optional text relations for leverage analysis." .
+
+ml:DefaultTargetLeverageAnalyzer a ml:TargetLeverageTool ;
+  rdfs:label "Targeted Leverage Analyzer" ;
+  ml:consumes "Semantic Graph" ;
+  ml:produces ml:PerformanceMetric ;
+  ml:implementsAlgorithm "Targeted Betweenness", "Path Strength", "SHAP Integration" ;
+  ml:hasPythonIdentifier "compute_target_leverage" ;
+  rdfs:comment "Computes Leverage(i→T) = Betweenness_T × PathStrength × Actionability × ModelEffect for specific KPI targets." .
+
+ml:DefaultInterventionRecommender a ml:InterventionRecommenderTool ;
+  rdfs:label "Intervention Recommender" ;
+  ml:consumes "Semantic Graph" ;
+  ml:produces "Experiment Specification" ;
+  ml:implementsAlgorithm "Path Analysis", "Effect Size Estimation", "Power Analysis" ;
+  ml:hasPythonIdentifier "recommend_interventions" ;
+  rdfs:comment "Generates A/B test specifications with actions, KPIs, sample sizes, and guardrails for high-leverage nodes." .
+

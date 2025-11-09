@@ -1,27 +1,16 @@
 # src/agent_kit/agents/orchestrator.py
-from agents import Runner as SDKRunner, function_tool
+from agents import Runner as SDKRunner
 from agent_kit.agents.ontology_agent import OntologyAgent
-from typing import Any, Dict
-
-@function_tool
-def _predict() -> Dict:
-    """Stub: Ontology-tied forecasting."""
-    print("Forecasting...")
-    return {'forecast': [100, 200]}  # Integrate ML
-
-@function_tool
-def _optimize() -> Dict:
-    """Stub: Find leverage points."""
-    print("Optimizing...")
-    return {'action': 'Increase outreach'}
+from agent_kit.tools.business import predict, optimize
+from typing import Any
 
 class BusinessOrchestrator:
     """Orchestrates ontology-driven agents using SDK."""
 
     def __init__(self, ontology_path: str):
         self.agents = {
-            'forecaster': OntologyAgent('Forecaster', ontology_path, tools=[_predict]),
-            'optimizer': OntologyAgent('Optimizer', ontology_path, tools=[_optimize]),
+            'forecaster': OntologyAgent('Forecaster', ontology_path, tools=[predict]),
+            'optimizer': OntologyAgent('Optimizer', ontology_path, tools=[optimize]),
         }
 
     async def run(self, goal: str) -> Any:
