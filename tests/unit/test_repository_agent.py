@@ -1,6 +1,7 @@
 """Tests for the repository analysis agent."""
 
-from agent_kit.agents import AgentResult, RepositoryAnalysisAgent
+from agent_kit.agents.base import AgentResult
+from agent_kit.agents.repository_agent import RepositoryAnalysisAgent
 
 
 def test_repository_analysis_agent_returns_tree_and_ontology(tmp_path) -> None:

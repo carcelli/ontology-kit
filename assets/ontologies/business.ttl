@@ -308,3 +308,85 @@ ns1:insight_002 ns1:hasText "Customers in cold climates prefer warm beverages in
     rdfs:comment "A commercial enterprise (substance): bakery, cafe, retail store. Persistent entity with properties like revenue, location." ;
     rdfs:subClassOf core:Concept .
 
+# --- Agent, Tool, and Capability Definitions ---
+
+:Agent a owl:Class ;
+    rdfs:label "Agent" ;
+    rdfs:comment "An autonomous entity that can perform actions to achieve goals." ;
+    rdfs:subClassOf core:Concept .
+
+:Tool a owl:Class ;
+    rdfs:label "Tool" ;
+    rdfs:comment "A function or resource that can be used by an agent to perform a task." ;
+    rdfs:subClassOf core:Concept .
+
+:Capability a owl:Class ;
+    rdfs:label "Capability" ;
+    rdfs:comment "An abstract representation of an ability to perform a certain type of task." ;
+    rdfs:subClassOf core:Concept .
+
+:hasCapability a owl:ObjectProperty ;
+    rdfs:label "has capability" ;
+    rdfs:comment "Links an agent or tool to a capability it possesses." ;
+    rdfs:domain [ owl:unionOf ( :Agent :Tool ) ] ;
+    rdfs:range :Capability .
+
+:canPerform a owl:ObjectProperty ;
+    rdfs:label "can perform" ;
+    rdfs:comment "Links an agent to a capability." ;
+    rdfs:domain :Agent ;
+    rdfs:range :Capability .
+
+:requiresTool a owl:ObjectProperty ;
+    rdfs:label "requires tool" ;
+    rdfs:comment "Links a capability to a tool that is required to perform it." ;
+    rdfs:domain :Capability ;
+    rdfs:range :Tool .
+
+# --- Capabilities ---
+
+:CanPlan a :Capability ;
+    rdfs:label "Can Plan" .
+
+:CanForecast a :Capability ;
+    rdfs:label "Can Forecast" ;
+    :requiresTool :PredictTool .
+
+:CanOptimize a :Capability ;
+    rdfs:label "Can Optimize" ;
+    :requiresTool :OptimizeTool .
+
+# --- Tools ---
+
+:PredictTool a :Tool ;
+    rdfs:label "Predict Tool" .
+
+:OptimizeTool a :Tool ;
+    rdfs:label "Optimize Tool" .
+
+# --- Agent Instances ---
+
+:Planner a :Agent ;
+    rdfs:label "Planner" ;
+    :canPerform :CanPlan .
+
+:Forecaster a :Agent ;
+    rdfs:label "Forecaster" ;
+    :canPerform :CanForecast .
+
+:Optimizer a :Agent ;
+    rdfs:label "Optimizer" ;
+    :canPerform :CanOptimize .
+
+# --- New Capability and Agent for Writing Code ---
+
+:CanWriteCode a :Capability ;
+    rdfs:label "Can Write Code" ;
+    :requiresTool :GitHubTool .
+
+:CodeWriter a :Agent ;
+    rdfs:label "CodeWriter" ;
+    :canPerform :CanWriteCode .
+
+:GitHubTool a :Tool ;
+    rdfs:label "GitHub Tool" .
