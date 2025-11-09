@@ -103,3 +103,26 @@ ml:DefaultInterventionRecommender a ml:InterventionRecommenderTool ;
   ml:hasPythonIdentifier "recommend_interventions" ;
   rdfs:comment "Generates A/B test specifications with actions, KPIs, sample sizes, and guardrails for high-leverage nodes." .
 
+### Advanced Visualization & Clustering Tools
+ml:InteractiveVisualizationTool a rdfs:Class ; rdfs:subClassOf ml:MLTool ;
+  rdfs:comment "Tools for generating interactive, aesthetically superior visualizations." .
+
+ml:ClusteringTool a rdfs:Class ; rdfs:subClassOf ml:MLTool ;
+  rdfs:comment "Tools for unsupervised clustering of data points." .
+
+ml:DefaultInteractiveViz a ml:InteractiveVisualizationTool ;
+  rdfs:label "Interactive Plotly Leverage Visualizer" ;
+  ml:consumes ml:Dataset ;
+  ml:produces "Interactive HTML Visualization" ;
+  ml:implementsAlgorithm "t-SNE", "Plotly 3D Scatter", "Perceptual Color Mapping" ;
+  ml:hasPythonIdentifier "generate_interactive_leverage_viz" ;
+  rdfs:comment "Generates beautiful, zoomable, rotatable 3D/2D leverage visualizations with Plotly (HTML or PNG)." .
+
+ml:DefaultClusteringTool a ml:ClusteringTool ;
+  rdfs:label "Multi-Algorithm Clustering Tool" ;
+  ml:consumes ml:Dataset ;
+  ml:produces "Cluster Labels" ;
+  ml:implementsAlgorithm "DBSCAN", "KMeans", "Hierarchical Clustering" ;
+  ml:hasPythonIdentifier "cluster_data" ;
+  rdfs:comment "Clusters data using DBSCAN (density-based), KMeans (centroid-based), or Hierarchical (agglomerative) methods." .
+

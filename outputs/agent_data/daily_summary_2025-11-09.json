@@ -1,0 +1,29 @@
+{
+  "date": "2025-11-09",
+  "total_sessions": 6,
+  "agent_performance": {
+    "forecast_agent": {
+      "session_count": 6,
+      "total_successes": 5,
+      "total_duration": 67.762357,
+      "avg_confidence": 0.9133333333333334
+    }
+  },
+  "task_distribution": {
+    "revenue_forecast": 6
+  },
+  "success_rates": {
+    "forecast_agent": 0.8333333333333334
+  },
+  "average_durations": {
+    "forecast_agent": 11.293726166666666
+  },
+  "error_patterns": [
+    {
+      "agent": "forecast_agent",
+      "task": "revenue_forecast",
+      "error": "AgentDecision.__init__() got an unexpected keyword argument 'outcome_success'",
+      "timestamp": "2025-11-09T14:57:11.971905"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "workflow_id": "bakery_forecast_opt",
+  "start_time": "2025-11-09T14:58:39.044950",
+  "end_time": "2025-11-09T14:58:50.594216",
+  "final_outcome": "Successfully optimized bakery revenue forecasting with ARIMA model achieving 85% accuracy",
+  "performance_metrics": {
+    "overall_accuracy": 0.85,
+    "processing_time": 89.5,
+    "insights_value": 0.78,
+    "user_satisfaction": 0.92
+  },
+  "stages_completed": 6,
+  "decisions_made": 4,
+  "duration_seconds": 11.549266
+}

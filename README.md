@@ -42,7 +42,7 @@
 └────────────┘      └─────────────────┘   └────────────┘
 ```
 
-**Key Decision** (see [`ARCHITECTURE_DECISION.md`](ARCHITECTURE_DECISION.md)):
+**Key Decision** (see [`docs/guides/ARCHITECTURE_DECISION.md`](docs/guides/ARCHITECTURE_DECISION.md)):
 - **Don't refactor to OpenAI SDK** — keep ontology-first architecture
 - **Use adapters** for SDK integration (composition, not inheritance)
 - **Enable multi-SDK testing** for diverse use cases
@@ -131,7 +131,7 @@ agent_kit/
 ├── tests/
 │   ├── unit/                        # Unit tests (BaseAgent, ontology, vectorspace)
 │   └── integration/                 # (Future: E2E workflows)
-├── ARCHITECTURE_DECISION.md         # Why modular > full refactor
+├── docs/guides/ARCHITECTURE_DECISION.md         # Why modular > full refactor
 ├── AGENTS.md                        # Agent design patterns
 └── BUSINESS_ONTOLOGY_PLAN.md        # Business domain ontology spec
 ```
@@ -413,7 +413,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for:
 
 ## 📚 Documentation
 
-- **[ARCHITECTURE_DECISION.md](ARCHITECTURE_DECISION.md)**: Why modular > full refactor
+- **[docs/guides/ARCHITECTURE_DECISION.md](docs/guides/ARCHITECTURE_DECISION.md)**: Why modular > full refactor
 - **[AGENTS.md](AGENTS.md)**: Agent design patterns
 - **[BUSINESS_ONTOLOGY_PLAN.md](BUSINESS_ONTOLOGY_PLAN.md)**: Business domain spec
 - **[examples/ontology_ml/README.md](examples/ontology_ml/README.md)**: OpenAI SDK integration

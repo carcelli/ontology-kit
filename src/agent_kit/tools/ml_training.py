@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -269,6 +269,116 @@ ML_TOOL_REGISTRY = {
 }
 
 
+# -------------- Clustering Tool --------------
+class ClusteringInput(BaseModel):
+    """Input schema for clustering analysis."""
+
+    data: List[List[float]] = Field(..., description='2D array of data points to cluster')
+    eps: float = Field(default=0.5, gt=0.0, description='Maximum distance between points in cluster (DBSCAN)')
+    min_samples: int = Field(default=5, ge=1, description='Minimum points to form dense region (DBSCAN)')
+    algorithm: str = Field(default='DBSCAN', description='Clustering algorithm: DBSCAN, KMeans, or Hierarchical')
+    n_clusters: Optional[int] = Field(None, description='Number of clusters (for KMeans/Hierarchical)')
+
+
+def cluster_data(input_data: ClusteringInput) -> Dict[str, Any]:
+    """
+    Cluster data points using DBSCAN, KMeans, or Hierarchical clustering.
+
+    Implements density-based, centroid-based, and hierarchical clustering
+    for discovering patterns in high-dimensional data after dimensionality reduction.
+
+    Args:
+        input_data: Clustering parameters
+
+    Returns:
+        Cluster labels, number of clusters, and noise points (if applicable)
+
+    References:
+        - DBSCAN: Ester et al. (1996), KDD
+        - KMeans: Lloyd (1982), IEEE Trans
+        - Hierarchical: Ward (1963), JASA
+    """
+    job_id = f'cluster-job-{uuid.uuid4()}'
+    logger.info('Running clustering: %s with %s', job_id, input_data.algorithm)
+
+    try:
+        import numpy as np
+        from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
+
+        X = np.array(input_data.data)
+
+        if input_data.algorithm == 'DBSCAN':
+            clusterer = DBSCAN(eps=input_data.eps, min_samples=input_data.min_samples)
+            labels = clusterer.fit_predict(X)
+            n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+            n_noise = list(labels).count(-1)
+
+            return {
+                'status': 'COMPLETED',
+                'job_id': job_id,
+                'algorithm': 'DBSCAN',
+                'labels': labels.tolist(),
+                'n_clusters': n_clusters,
+                'n_noise': n_noise,
+                'message': f'Found {n_clusters} clusters and {n_noise} noise points',
+            }
+
+        elif input_data.algorithm == 'KMeans':
+            if input_data.n_clusters is None:
+                raise ValueError('n_clusters required for KMeans')
+            clusterer = KMeans(n_clusters=input_data.n_clusters, random_state=42)
+            labels = clusterer.fit_predict(X)
+
+            return {
+                'status': 'COMPLETED',
+                'job_id': job_id,
+                'algorithm': 'KMeans',
+                'labels': labels.tolist(),
+                'n_clusters': input_data.n_clusters,
+                'centroids': clusterer.cluster_centers_.tolist(),
+                'inertia': float(clusterer.inertia_),
+                'message': f'Clustered into {input_data.n_clusters} groups',
+            }
+
+        elif input_data.algorithm == 'Hierarchical':
+            if input_data.n_clusters is None:
+                raise ValueError('n_clusters required for Hierarchical clustering')
+            clusterer = AgglomerativeClustering(n_clusters=input_data.n_clusters)
+            labels = clusterer.fit_predict(X)
+
+            return {
+                'status': 'COMPLETED',
+                'job_id': job_id,
+                'algorithm': 'Hierarchical',
+                'labels': labels.tolist(),
+                'n_clusters': input_data.n_clusters,
+                'message': f'Hierarchically clustered into {input_data.n_clusters} groups',
+            }
+
+        else:
+            return {
+                'status': 'ERROR',
+                'job_id': job_id,
+                'message': f"Unknown algorithm: {input_data.algorithm}. Use DBSCAN, KMeans, or Hierarchical",
+            }
+
+    except Exception as e:
+        logger.error('Clustering failed: %s', e)
+        return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
+
+
+# Update ML_TOOL_REGISTRY with clustering
+ML_TOOL_REGISTRY['cluster_data'] = {
+    'function': cluster_data,
+    'schema': ClusteringInput,
+    'tool_spec': pydantic_to_openai_tool(
+        'cluster_data',
+        'Cluster data points using DBSCAN, KMeans, or Hierarchical clustering.',
+        ClusteringInput,
+    ),
+}
+
+
 # Import and merge semantic graph tools
 try:
     from agent_kit.tools.semantic_graph import SEMANTIC_GRAPH_TOOL_REGISTRY
@@ -276,5 +386,17 @@ try:
     ML_TOOL_REGISTRY.update(SEMANTIC_GRAPH_TOOL_REGISTRY)
 except ImportError:
     logger.warning('Semantic graph tools not available')
+
+# Import and merge interactive visualization tools
+try:
+    from agent_kit.tools.interactive_viz import generate_interactive_leverage_viz, INTERACTIVE_VIZ_TOOL_SPEC
+
+    ML_TOOL_REGISTRY['generate_interactive_leverage_viz'] = {
+        'function': generate_interactive_leverage_viz,
+        'schema': None,  # Uses type hints directly
+        'tool_spec': INTERACTIVE_VIZ_TOOL_SPEC,
+    }
+except ImportError:
+    logger.warning('Interactive visualization tools not available (install plotly, kaleido)')
 
 

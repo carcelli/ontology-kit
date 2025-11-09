@@ -56,9 +56,22 @@ dependencies = [
     "click>=8.1.0",  # CLI framework
     "treelib>=1.6.1",
     "pydantic>=2.0.0",  # Data validation & settings
+    "openai>=1.0.0",  # For xAI/Grok API compatibility
     "openai-agents>=0.5.0",
     "polars>=0.20.0",  # For ontology-ML example
     "pyshacl>=0.25.0",  # SHACL validation
+    "tenacity>=8.2.0",  # Retry logic for API calls
+    
+    # Advanced Visualizations
+    "plotly>=5.18.0",  # Interactive plots
+    "dash>=2.14.0",  # Interactive dashboards
+    "kaleido>=0.2.1",  # Static image export from Plotly
+    
+    # Advanced Ontology Tools
+    "owlready2>=0.45",  # OWL reasoning beyond rdflib
+    
+    # Enhanced ML (versions aligned with existing torch)
+    "transformers>=4.35.0",  # Advanced embeddings
 ]
 
 [project.optional-dependencies]
