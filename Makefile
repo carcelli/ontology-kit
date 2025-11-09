@@ -33,25 +33,25 @@ help:
 
 # Installation
 install:
-	python -m pip install -e .
+	python3 -m pip install -e .
 
 install-dev:
-	python -m pip install -e .[dev]
+	python3 -m pip install -e .[dev]
 
 # Code Quality
 lint:
 	@echo "Running ruff..."
-	python -m ruff check src tests
+	python3 -m ruff check src tests
 	@echo "✅ Linting passed"
 
 format:
 	@echo "Running black..."
-	python -m black src tests
+	python3 -m black src tests
 	@echo "✅ Formatting complete"
 
 typecheck:
 	@echo "Running mypy..."
-	python -m mypy src
+	python3 -m mypy src
 	@echo "✅ Type checking passed"
 
 quality: lint format typecheck
@@ -76,11 +76,11 @@ coverage:
 
 # Performance
 benchmark:
-	python scripts/benchmark_embedder.py
-	python scripts/benchmark_index.py
+	python3 scripts/benchmark_embedder.py
+	python3 scripts/benchmark_index.py
 
 profile:
-	py-spy record -o profile.svg -- python scripts/benchmark_embedder.py
+	py-spy record -o profile.svg -- python3 scripts/benchmark_embedder.py
 	@echo "Profile saved to profile.svg"
 
 # Deployment Gate
@@ -91,7 +91,7 @@ dryrun:
 	@echo "🔍 Validating ontology..."
 	rapper -i turtle -o ntriples assets/ontologies/core.ttl > /dev/null
 	@echo "🔍 Smoke test..."
-	python examples/01_embed_and_search.py
+	python3 examples/01_embed_and_search.py
 	@echo "✅ Dryrun passed - safe to deploy"
 
 # Cleanup

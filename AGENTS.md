@@ -18,6 +18,13 @@ Target Python 3.12 with strict typing, stick to Black’s 88-column default, pre
 ## Testing Guidelines
 Organize files as `tests/<area>/test_<feature>.py`, lean on fixtures for I/O seams, reserve `pytest.mark.integration` for end-to-end ontology flows, and maintain ≥90% statement coverage via `pytest --cov=agent_kit --cov-report=term-missing`. Each new tool requires a behavior test hitting the agent loop plus a focused unit test.
 
+## OpenAI Agents SDK Integration
+- Add `openai-agents>=0.5.0` when building orchestrators so we can import `Agent`, `Runner`, `Tool`, and `handoffs`.
+- Wrap SDK agents inside ontology-aware facades (`OntologyAgent`) that derive instructions and validation from SPARQL queries; never skip ontology grounding when creating SDK instructions.
+- Multi-agent workflows must express handoffs as ontology relations (e.g., `ForecastModel optimizes BusinessProcess`) before calling the SDK `Runner`; record these relations in orchestration logs.
+- Async SDK calls should stream-friendly; guard ontology queries so they do not block event loops (e.g., run blocking I/O in executors or during initialization).
+- Unit tests should inject stub SDK classes so we can exercise orchestration logic without the real dependency; integration tests can run with the real SDK when available.
+
 ## Commit & Pull Request Guidelines
 Stick to Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`) with subjects ≤72 chars, concise bullet bodies, and linked issues. Every PR must include representative test output (or justification) and request review only after lint + tests succeed locally.
 

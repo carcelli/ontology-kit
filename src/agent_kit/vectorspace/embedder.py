@@ -1,9 +1,7 @@
 """Embedding generation using SentenceTransformers or custom models."""
 
-from typing import List, Optional, Union
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from tqdm import tqdm
 
 
 class Embedder:
@@ -18,12 +16,12 @@ class Embedder:
         >>> embeddings.shape
         (2, 384)
     """
-    
+
     def __init__(
-        self, 
+        self,
         model_name: str = 'all-MiniLM-L6-v2',
-        device: Optional[str] = None,
-        cache_folder: Optional[str] = None
+        device: str | None = None,
+        cache_folder: str | None = None
     ) -> None:
         """
         Initialize embedder with specified model.
@@ -35,12 +33,12 @@ class Embedder:
         """
         self.model_name = model_name
         self.model = SentenceTransformer(
-            model_name, 
+            model_name,
             device=device,
             cache_folder=cache_folder
         )
         self.dimension = self.model.get_sentence_embedding_dimension()
-    
+
     def embed(self, text: str) -> np.ndarray:
         """
         Embed a single text string.
@@ -52,10 +50,10 @@ class Embedder:
             1D numpy array of shape (dimension,)
         """
         return self.model.encode(text, convert_to_numpy=True)
-    
+
     def embed_batch(
-        self, 
-        texts: List[str], 
+        self,
+        texts: list[str],
         batch_size: int = 32,
         show_progress: bool = True
     ) -> np.ndarray:
@@ -76,20 +74,20 @@ class Embedder:
             show_progress_bar=show_progress,
             convert_to_numpy=True
         )
-    
+
     def save(self, path: str) -> None:
         """Save model to disk."""
         self.model.save(path)
-    
+
     @classmethod
-    def load(cls, path: str, device: Optional[str] = None) -> 'Embedder':
+    def load(cls, path: str, device: str | None = None) -> 'Embedder':
         """Load model from disk."""
         embedder = cls.__new__(cls)
         embedder.model = SentenceTransformer(path, device=device)
         embedder.model_name = path
         embedder.dimension = embedder.model.get_sentence_embedding_dimension()
         return embedder
-    
+
     def __repr__(self) -> str:
         return f"Embedder(model='{self.model_name}', dim={self.dimension})"
 

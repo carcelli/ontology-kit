@@ -1,6 +1,6 @@
 """Geometric operations and distance metrics for vector spaces."""
 
-from typing import Optional
+
 import numpy as np
 
 
@@ -36,8 +36,8 @@ def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
 
 
 def pairwise_distances(
-    X: np.ndarray, 
-    Y: Optional[np.ndarray] = None,
+    X: np.ndarray,
+    Y: np.ndarray | None = None,
     metric: str = 'euclidean'
 ) -> np.ndarray:
     """
@@ -53,14 +53,14 @@ def pairwise_distances(
     """
     if Y is None:
         Y = X
-    
+
     if metric == 'euclidean':
         # ||x - y||^2 = ||x||^2 + ||y||^2 - 2<x, y>
         X_norm = (X**2).sum(axis=1, keepdims=True)
         Y_norm = (Y**2).sum(axis=1, keepdims=True).T
         dists = X_norm + Y_norm - 2 * X @ Y.T
         return np.sqrt(np.maximum(dists, 0))  # Avoid negative due to numerical error
-    
+
     elif metric == 'cosine':
         # Normalize
         X_norm = X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-8)
@@ -69,7 +69,7 @@ def pairwise_distances(
         similarities = X_norm @ Y_norm.T
         # Convert to distance: 1 - sim
         return 1 - similarities
-    
+
     else:
         raise ValueError(f"Unsupported metric: {metric}")
 
