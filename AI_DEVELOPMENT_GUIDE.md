@@ -137,6 +137,67 @@ python3 examples/04_orchestrated_agents.py
 
 ---
 
+## 🔒 Security & Credentials Management
+
+### **Never Expose Secrets in Code**
+
+#### ❌ **Dangerous Patterns (Don't Do This):**
+```bash
+# DON'T put tokens in scripts
+export GITHUB_TOKEN="github_pat_11BQ7JIMI0..."
+
+# DON'T hardcode API keys
+OPENAI_API_KEY="sk-1234567890..."
+
+# DON'T commit .env files
+git add .env  # This exposes secrets to version control!
+```
+
+#### ✅ **Secure Patterns (Do This):**
+```bash
+# Use .env files (ignored by .gitignore)
+echo "GITHUB_TOKEN=your_token_here" > .env
+
+# Load environment variables securely
+source load_env.sh
+
+# Use repository secrets for CI/CD
+# GitHub Settings → Secrets and variables → Actions
+```
+
+### **Environment Setup Security:**
+
+1. **Create .env file manually:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual tokens
+   ```
+
+2. **Load environment variables:**
+   ```bash
+   source load_env.sh
+   ```
+
+3. **Verify .gitignore protection:**
+   ```bash
+   grep "\.env" .gitignore  # Should show .env is ignored
+   ```
+
+4. **Test authentication securely:**
+   ```bash
+   ./setup_github_auth.sh  # Loads from .env, doesn't expose tokens
+   ```
+
+### **Security Checklist:**
+
+- [ ] `.env` file is in `.gitignore`
+- [ ] No tokens in scripts or committed files
+- [ ] Repository secrets configured for CI/CD
+- [ ] Regular token rotation (GitHub tokens expire)
+- [ ] Minimal token permissions (principle of least privilege)
+
+---
+
 ## 🚨 Red Flags (Stop and Reassess)
 
 ### **Code Quality Red Flags:**
