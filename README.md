@@ -1,57 +1,98 @@
-# Agent Kit — Ontology-Driven ML for Small Businesses
+# Agent Kit — Comprehensive Ontology-Driven ML for Enterprise Agents
 
-**Multi-SDK agentic framework** for building ontology-grounded machine learning systems. Enables flexible orchestration across OpenAI Agents SDK, LangChain, AutoGen, and custom agents—all anchored by SPARQL-queryable knowledge graphs.
+**Ontology-driven agent framework** that extends the OpenAI Agents SDK with knowledge graph capabilities. Enables intelligent agent orchestration with SPARQL-based reasoning, semantic memory, and ontology-aware tool filtering—all powered by RDF/OWL knowledge graphs.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/carcelli/ontology-kit/actions)
 [![Coverage](https://img.shields.io/badge/coverage-64%25-yellow)](https://github.com/carcelli/ontology-kit)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![Web Demo](https://img.shields.io/badge/web-demo-live-blue)](https://agent-kit.vercel.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
 
 ## 🎯 Mission
 
-**Democratize ML for small businesses** by providing an agentic framework that:
-- Grounds agents in **ontologies** (SPARQL + SHACL) to reduce hallucinations
-- Enables **multi-SDK flexibility** (OpenAI, LangChain, AutoGen) for diverse use cases
-- Provides **hyperdimensional navigation** (FAISS vector spaces) for semantic reasoning
+**Empower organizations with intelligent agent systems** by providing an ontology-driven framework that:
+- Grounds agents in **ontologies** (SPARQL + SHACL) to reduce hallucinations and ensure consistency
+- Enables **semantic reasoning** with knowledge graph integration
+- Provides **ontology-enhanced agents** with SPARQL-based instructions and tool discovery
+- Supports **intelligent MCP tool filtering** based on business rules
+- Includes **semantic memory** with ontology-aware context preservation
+- Enables **hyperdimensional navigation** (FAISS vector spaces) for semantic reasoning
 - Optimizes **leverage points** via graph-structured business knowledge
 
-**Target**: Small businesses in Wisconsin/Illinois lacking data science teams.
+**Target**: Organizations requiring knowledge-driven agent orchestration, from research institutions to enterprise deployments.
+
+**🎉 Live Demo**: Try Agent Kit's capabilities at [agent-kit.vercel.app](https://agent-kit.vercel.app)
 
 ---
 
 ## 🏗️ Architecture
 
-### Ontology as Backbone, SDKs as Plugins
+### Ontology-Driven Enterprise Agent Framework
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  ONTOLOGY LAYER                         │
-│  • RDF/OWL Knowledge Graphs (business.ttl, core.ttl)  │
-│  • SPARQL Queries (agent routing, context injection)   │
-│  • SHACL Validation (business rules, constraints)      │
-└─────────────────┬───────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                  ONTOLOGY LAYER                              │
+│  • RDF/OWL Knowledge Graphs (business.ttl, core.ttl)       │
+│  • SPARQL Queries (agent routing, tool filtering)           │
+│  • SHACL Validation (business rules, constraints)           │
+│  • Semantic Memory & Context Preservation                   │
+└─────────────────┬───────────────────────────────────────────┘
                   │
-      ┌───────────┴───────────┬───────────────────┐
-      │                       │                   │
-┌─────▼──────┐      ┌────────▼────────┐   ┌─────▼──────┐
-│   Custom   │      │  OpenAI Agents  │   │ LangChain  │
-│ BaseAgent  │      │   SDK Adapter   │   │  Adapter   │
-│            │      │                 │   │  (Future)  │
-└────────────┘      └─────────────────┘   └────────────┘
+    ┌─────────────┴─────────────┬─────────────────────┐
+    │                           │                     │
+┌───▼────┐   ┌──────────────┐   │   ┌──────────────┐   │
+│  MCP   │   │  Computer    │   │   │ Multi-Model  │   │
+│ Servers│   │ Automation   │   │   │   Routing    │   │
+│ GitHub │   │   Browser    │   │   │ Intelligence │   │
+│ Browser│   │   Code Edit  │   │   │              │   │
+└────────┘   └──────────────┘   │   └──────────────┘   │
+                                │                     │
+    ┌───────────────────────────┴─────────────────────┐
+    │                                                 │
+┌───▼──────────────────────────────────────────────┐  │
+│         OPENAI AGENTS SDK EXTENSIONS              │  │
+│  • Ontology-Aware Agent Orchestration             │  │
+│  • Advanced Handoffs & Tool Filtering             │  │
+│  • Persistent Memory Integration                  │  │
+│  • Tracing & Observability                        │  │
+└───────────────────────────────────────────────────┘  │
+    │                                                 │
+    ▼                                                 │
+┌─────────────────────────────────────────────────────┘
+│         WEB & INTEGRATION LAYER                       │
+│  • Streamlit Interactive Dashboards                     │
+│  • Ontology Explorer & SPARQL Interface                │
+│  • Vector Search Demonstrations                         │
+│  • Agent Playground & Business Analytics               │
+│  • Vercel Serverless Deployment                        │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**Key Decision** (see [`docs/guides/ARCHITECTURE_DECISION.md`](docs/guides/ARCHITECTURE_DECISION.md)):
-- **Don't refactor to OpenAI SDK** — keep ontology-first architecture
-- **Use adapters** for SDK integration (composition, not inheritance)
-- **Enable multi-SDK testing** for diverse use cases
+**Key Decisions**:
+- **Ontology-First Architecture**: Knowledge graphs drive agent behavior
+- **Multi-SDK Flexibility**: Adapters enable OpenAI, LangChain, AutoGen integration
+- **Web Demo Accessibility**: Streamlit interface for easy exploration
+- **Quality Assurance**: Automated linting, testing, and deployment validation
+
+**See**: [`docs/guides/ARCHITECTURE_DECISION.md`](docs/guides/ARCHITECTURE_DECISION.md) for detailed design rationale.
 
 ---
 
 ## 🚀 Quick Start
 
-### Installation
+### 🌐 Try the Live Demo (No Installation Required!)
+
+Visit **[agent-kit.vercel.app](https://agent-kit.vercel.app)** to explore Agent Kit's capabilities interactively:
+- 🔍 **Ontology Explorer**: Query knowledge graphs with SPARQL
+- 📊 **Vector Search**: Test semantic embeddings and similarity
+- 🎯 **Business Analytics**: Explore leverage point analysis
+- ⚙️ **Agent Playground**: Interact with forecasting agents
+
+### 💻 Local Development
+
+#### Installation
 
 ```bash
 # Clone repo
@@ -65,7 +106,7 @@ python -m pip install -e .[dev]
 make test
 ```
 
-### Run Examples
+#### Run Examples
 
 #### Example 1: Custom Ontology-Driven Agents
 
@@ -94,6 +135,18 @@ python examples/05_hybrid_orchestration.py
 
 **Output**: ForecastAgent (custom) + InsightExtractor (SDK)
 
+#### Example 4: Interactive Web Demo
+
+```bash
+# Launch interactive web interface
+streamlit run web_app.py
+
+# Or deploy to Vercel for live demo
+# See VERCEL_DEPLOYMENT.md for details
+```
+
+**Output**: Live interactive dashboard at `http://localhost:8501`
+
 ---
 
 ## 📂 Project Structure
@@ -113,7 +166,14 @@ agent_kit/
 │   ├── vectorspace/
 │   │   ├── index.py                 # FAISS vector index
 │   │   └── embedder.py              # SentenceTransformer embeddings
+│   ├── tools/                       # GitHub, visualization, and utility tools
+│   │   ├── github_tools.py          # GitHub API integration
+│   │   ├── hyperdim_leverage_viz.py # Business leverage visualization
+│   │   ├── hyperdim_viz.py          # General hyperdimensional viz
+│   │   ├── interactive_viz.py       # Interactive Plotly dashboards
+│   │   └── [other tools...]
 │   └── optimization/                # (Future: RL-based optimization)
+├── src/agents/                      # Vendored OpenAI Agents SDK (pristine upstream code)
 ├── assets/ontologies/
 │   ├── core.ttl                     # Core ontology (Agent, Tool, Capability)
 │   └── business.ttl                 # Business domain (Business, Revenue, LeveragePoint)
@@ -128,19 +188,141 @@ agent_kit/
 │       ├── tools/                   # graph_tools.py (@function_tool)
 │       ├── manager.py               # Deterministic orchestrator
 │       └── main.py                  # Entry point
+├── scripts/
+│   ├── code_quality_checker.py      # AI-assisted development QA
+│   ├── validate_vercel_config.py    # Vercel deployment validation
+│   ├── sync_openai_agents.py        # Keeps vendored SDK aligned with upstream release
+│   └── [benchmark tools...]
 ├── tests/
 │   ├── unit/                        # Unit tests (BaseAgent, ontology, vectorspace)
 │   └── integration/                 # (Future: E2E workflows)
-├── docs/guides/ARCHITECTURE_DECISION.md         # Why modular > full refactor
+├── web_app.py                       # Streamlit interactive demo
+├── vercel.json                      # Vercel deployment configuration
+├── package.json                     # Node.js wrapper for Vercel
+├── requirements.txt                 # Python dependencies
+├── setup_github_auth.sh             # Secure GitHub authentication setup
+├── update_token.sh                  # Token rotation utility
+├── load_env.sh                      # Environment loading helper
+├── docs/
+│   ├── guides/
+│   │   ├── ARCHITECTURE_DECISION.md # Design rationale
+│   │   └── ENGINEERING_OUTLINE.md   # Technical implementation
+│   └── index.md                     # Documentation index
+├── AI_DEVELOPMENT_GUIDE.md          # Quality assurance for AI-assisted dev
+├── QUALITY_CHECKLIST.md             # Code review checklist
+├── VERCEL_DEPLOYMENT.md             # Deployment guide
+├── CONTRIBUTING.md                  # Development guidelines
 ├── AGENTS.md                        # Agent design patterns
-└── BUSINESS_ONTOLOGY_PLAN.md        # Business domain ontology spec
+├── BUSINESS_ONTOLOGY_PLAN.md        # Ontology specification
+├── QUICKSTART.md                    # Alternative quick start guide
+├── GROK_INTEGRATION_SUMMARY.md      # xAI integration details
+└── upstream/openai-agents/          # Full OpenAI Agents SDK snapshot (docs, tests, mkdocs, workflows)
 ```
+
+## 🔗 OpenAI Agents SDK Upstream
+
+Agent Kit now vendors the official OpenAI Agents SDK directly inside this repository:
+
+- `src/agents/` exposes OpenAI's `agents` Python package so ontology extensions can import the exact same runtime shipped by OpenAI.
+- `upstream/openai-agents/` is a bit-for-bit snapshot of the upstream repository, including docs, examples, mkdocs configuration, GitHub workflows, and the original LICENSE.
+- `scripts/sync_openai_agents.py` refreshes `src/agents` from the snapshot so that vendored code stays pristine and free of Windows Zone metadata.
+- `docs/openai_agents_sdk.md` details the sync workflow, how to run upstream tests, and attribution requirements.
+
+Update workflow:
+
+1. Drop a new upstream release into `upstream/openai-agents/` (or pull latest files into that directory).
+2. Run `make sync-openai-agents` to rebuild `src/agents` from the snapshot.
+3. Run your regression suite (`make test`) plus any relevant upstream tests as documented in `docs/openai_agents_sdk.md`.
+4. Commit and push the refreshed SDK alongside ontology extensions.
 
 ---
 
-## 🧭 Engineering Outline
+## 🛠️ Development Workflow
 
-Want the short version of how everything fits together? Read [`docs/guides/ENGINEERING_OUTLINE.md`](docs/guides/ENGINEERING_OUTLINE.md) for a working breakdown of the active code paths, workflows, demos, and extension playbooks that engineers rely on.
+### Quality Assurance for AI-Assisted Development
+
+Agent Kit includes comprehensive quality assurance tools designed for AI-assisted development:
+
+#### Automated Quality Checks
+```bash
+# Run full quality suite
+make quality          # Lint, format, type-check
+make test            # Unit and integration tests
+make dryrun          # Pre-deployment validation
+
+# AI-specific quality checker
+python scripts/code_quality_checker.py
+```
+
+#### Development Guides
+- **[`AI_DEVELOPMENT_GUIDE.md`](AI_DEVELOPMENT_GUIDE.md)**: Best practices for AI-assisted coding
+- **[`QUALITY_CHECKLIST.md`](QUALITY_CHECKLIST.md)**: Systematic code review checklist
+- **[`VERCEL_DEPLOYMENT.md`](VERCEL_DEPLOYMENT.md)**: Web deployment guide
+
+### Secure Authentication Setup
+
+```bash
+# Set up GitHub authentication securely
+./setup_github_auth.sh
+
+# Update tokens when needed
+./update_token.sh
+```
+
+**See**: [`docs/guides/ENGINEERING_OUTLINE.md`](docs/guides/ENGINEERING_OUTLINE.md) for technical implementation details.
+
+---
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+Deploy the interactive web demo to Vercel for instant sharing:
+
+```bash
+# Automatic deployment via GitHub integration
+# 1. Push changes to GitHub
+# 2. Connect repository to Vercel
+# 3. Auto-deploy on every push
+
+# Manual deployment
+npm install -g vercel
+vercel --prod
+```
+
+**Live Demo**: [agent-kit.vercel.app](https://agent-kit.vercel.app)
+
+### Local Development
+
+```bash
+# Run web demo locally
+streamlit run web_app.py
+
+# Run examples
+python examples/04_orchestrated_agents.py
+
+# Run tests
+make test
+```
+
+### Production Deployment
+
+For full production deployment with all features:
+
+```bash
+# Install all dependencies
+pip install -e .[dev]
+
+# Set up environment
+./setup_github_auth.sh
+
+# Run quality checks
+make dryrun
+
+# Deploy agents to your infrastructure
+```
+
+**See**: [`VERCEL_DEPLOYMENT.md`](VERCEL_DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 
@@ -234,7 +416,14 @@ schema_result = await schema_agent_adapter.run(task2)  # SDK agent
 
 ## 🔬 Key Features
 
-### 1. **SPARQL-Driven Agent Routing**
+### 1. **Interactive Web Demos**
+- Live Streamlit dashboards for ontology exploration
+- Vector search demonstrations with real-time embeddings
+- Agent playground for testing forecasting capabilities
+- Business leverage analysis visualizations
+- Vercel-deployed demos accessible worldwide
+
+### 2. **SPARQL-Driven Agent Routing**
 
 ```python
 # Orchestrator queries ontology to select agent
@@ -399,12 +588,15 @@ class LangChainAdapter:
 - [ ] LangChain adapter (RAG + vector stores)
 - [ ] AutoGen adapter (crew-based workflows)
 
-### Phase 3: Production (🔲 Planned)
-- [ ] Multi-SDK orchestrator
-- [ ] RL-based optimization (`optimization/`)
+### Phase 3: Web & Production (🚧 Recently Added)
+- [x] Interactive web demos (Streamlit + Vercel)
+- [x] Quality assurance system for AI-assisted development
+- [x] Secure authentication and deployment tools
+- [x] Code linting and testing automation
 - [ ] Real business data integration (WI/IL)
-- [ ] Web UI for agent monitoring
+- [ ] Advanced agent monitoring dashboard
 - [ ] MLOps pipeline (MLflow, model registry)
+- [ ] Multi-SDK orchestrator with web interface
 
 ---
 
@@ -415,14 +607,30 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for:
 - Commit conventions (Conventional Commits)
 - PR process (tests + coverage required)
 
+### AI-Assisted Development
+- **[`AI_DEVELOPMENT_GUIDE.md`](AI_DEVELOPMENT_GUIDE.md)**: Best practices for AI-assisted coding
+- **[`QUALITY_CHECKLIST.md`](QUALITY_CHECKLIST.md)**: Systematic code review checklist
+- Run `python scripts/code_quality_checker.py` for automated QA
+
 ---
 
 ## 📚 Documentation
 
+### Core Documentation
 - **[docs/guides/ARCHITECTURE_DECISION.md](docs/guides/ARCHITECTURE_DECISION.md)**: Why modular > full refactor
+- **[docs/guides/ENGINEERING_OUTLINE.md](docs/guides/ENGINEERING_OUTLINE.md)**: Technical implementation details
 - **[AGENTS.md](AGENTS.md)**: Agent design patterns
-- **[BUSINESS_ONTOLOGY_PLAN.md](BUSINESS_ONTOLOGY_PLAN.md)**: Business domain spec
+- **[BUSINESS_ONTOLOGY_PLAN.md](BUSINESS_ONTOLOGY_PLAN.md)**: Business domain specification
+
+### Development & Quality Assurance
+- **[AI_DEVELOPMENT_GUIDE.md](AI_DEVELOPMENT_GUIDE.md)**: Best practices for AI-assisted development
+- **[QUALITY_CHECKLIST.md](QUALITY_CHECKLIST.md)**: Systematic code review checklist
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Development guidelines and processes
+
+### Deployment & Integration
+- **[VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md)**: Web demo deployment guide
 - **[examples/ontology_ml/README.md](examples/ontology_ml/README.md)**: OpenAI SDK integration
+- **[GROK_INTEGRATION_SUMMARY.md](GROK_INTEGRATION_SUMMARY.md)**: xAI integration details
 
 ---
 
@@ -441,6 +649,8 @@ MIT License — see [`LICENSE`](LICENSE)
 
 ---
 
-**Ship it!** 🚀 Ontology as backbone, SDKs as tools.
+**Ship it!** 🚀 Ontology as backbone, SDKs as tools, web as interface.
+
+**Try it live:** [agent-kit.vercel.app](https://agent-kit.vercel.app)
 
 **Questions?** Open an issue or contribute via PR.

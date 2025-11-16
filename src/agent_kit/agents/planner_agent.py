@@ -1,11 +1,13 @@
 # src/agent_kit/agents/planner_agent.py
 
-from agents import Agent as SDKAgent
+from __future__ import annotations
+
+from agents import Agent
 
 from agent_kit.ontology.loader import OntologyLoader
 
 
-class PlannerAgent(SDKAgent):
+class PlannerAgent(Agent):
     """An agent that creates a plan to achieve a high-level goal."""
 
     def __init__(self, name: str, ontology_path: str, tools: list = None, **kwargs):

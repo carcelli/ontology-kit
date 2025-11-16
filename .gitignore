@@ -87,3 +87,4 @@ temp/
 .env
 .env.local
 
+.vercel

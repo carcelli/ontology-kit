@@ -1,22 +1,26 @@
 # src/agent_kit/agents/ontology_agent.py
-from typing import Any
+from __future__ import annotations
 
-from agents import Agent as SDKAgent
+from typing import TYPE_CHECKING, Any
+
+from agents import Agent
 
 from agent_kit.ontology.loader import OntologyLoader
-from agent_kit.shared_context import SharedContext
 from agent_kit.tools.business import optimize, predict
 from agent_kit.tools.github_tools import write_to_github
 
-# A simple registry to map tool names to functions
+if TYPE_CHECKING:
+    from agents.run_context import RunContextWrapper
+
+# Ontology-driven tools registered with SDK decorators
 TOOL_REGISTRY = {
     "Predict Tool": predict,
     "Optimize Tool": optimize,
     "GitHub Tool": write_to_github,
 }
 
-class OntologyAgent(SDKAgent):
-    """SDK Agent with ontology integration."""
+class OntologyAgent(Agent):
+    """SDK Agent with ontology integration and proper context management."""
 
     def __init__(self, name: str, ontology_path: str, **kwargs):
         self.ontology = OntologyLoader(ontology_path).load()
@@ -25,9 +29,11 @@ class OntologyAgent(SDKAgent):
         tools = self._discover_tools()
         super().__init__(name=name, instructions=instructions, tools=tools, **kwargs)
 
-    def _generate_instructions(self) -> str:
+    def _generate_instructions(self) -> str | None:
         """Query ontology for dynamic instructions."""
-        base_instructions = f"You are the {self.agent_name} agent. You have access to a shared context to communicate with other agents."
+        base_instructions = f"You are the {self.agent_name} agent with ontology-driven capabilities."
+
+        # Check if we need dynamic instructions based on ontology
         sparql = f"""
             PREFIX : <http://agent_kit.io/business#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -37,10 +43,11 @@ class OntologyAgent(SDKAgent):
                        :hasInstructions ?instructions .
             }}
         """
-        results = self.ontology.query(sparql)
-        for row in results:
-            return f"{base_instructions} Your specific instructions are: {str(row.instructions)}"
-        return f"{base_instructions} You are a helpful agent."
+        results = list(self.ontology.query(sparql))
+        if results:
+            return f"{base_instructions} Your specific instructions are: {str(results[0].instructions)}"
+
+        return base_instructions
 
     def _discover_tools(self) -> list:
         """Discovers tools for the agent by querying the ontology."""
@@ -64,26 +71,3 @@ class OntologyAgent(SDKAgent):
                 tools.append(TOOL_REGISTRY[tool_name])
 
         return tools
-
-    async def act(self, state: dict[str, Any]) -> dict[str, Any]:
-        """Override to validate actions against ontology and use shared context."""
-        context: SharedContext = state.get("context")
-        if context and self.agent_name == "Optimizer":
-            forecaster_output = context.get("forecaster_output")
-            if forecaster_output:
-                state["prompt"] = f"Based on the forecast: {forecaster_output}\n\n{state.get('prompt', '')}"
-
-        action = state.get('action')
-        if action and not await self._validate_action(action):
-            raise ValueError(f"Action '{action}' is invalid per the ontology")
-        return await super().act(state)
-
-    async def _validate_action(self, action: str) -> bool:
-        """SPARQL validate action."""
-        # This is a placeholder query.
-        sparql = f"""
-            PREFIX : <http://www.agentkit.io/ontologies/business#>
-            ASK {{ ?action a :AllowedAction . FILTER(?action = :{action}) }}
-        """
-        results = self.ontology.query(sparql)
-        return bool(results)

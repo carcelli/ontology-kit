@@ -108,7 +108,7 @@ def main() -> None:
     print("Next steps:")
     print("  - Explore assets/ontologies/core.ttl to see the full schema")
     print("  - Try adding your own classes and relations")
-    print("  - Implement agent loop in Phase 2")
+    print("  - Run examples/03_ontology_agents.py to see agents in action")
     print("=" * 70)
 
 

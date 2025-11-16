@@ -28,6 +28,9 @@ help:
 	@echo "Deployment:"
 	@echo "  make dryrun          Validate config + run smoke tests (gate before prod)"
 	@echo ""
+	@echo "Upstream SDK:"
+	@echo "  make sync-openai-agents  Refresh vendored OpenAI Agents SDK from upstream snapshot"
+	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean           Remove build artifacts, cache, etc."
 
@@ -41,17 +44,17 @@ install-dev:
 # Code Quality
 lint:
 	@echo "Running ruff..."
-	python3 -m ruff check src tests
+	python3 -m ruff check src/agent_kit tests scripts
 	@echo "✅ Linting passed"
 
 format:
 	@echo "Running black..."
-	python3 -m black src tests
+	python3 -m black src/agent_kit tests scripts
 	@echo "✅ Formatting complete"
 
 typecheck:
 	@echo "Running mypy..."
-	python3 -m mypy src
+	python3 -m mypy src/agent_kit
 	@echo "✅ Type checking passed"
 
 quality: lint format typecheck
@@ -83,6 +86,9 @@ profile:
 	py-spy record -o profile.svg -- python3 scripts/benchmark_embedder.py
 	@echo "Profile saved to profile.svg"
 
+sync-openai-agents:
+	python3 scripts/sync_openai_agents.py
+
 # Deployment Gate
 dryrun:
 	@echo "🔍 Running pre-production validation..."
@@ -102,4 +108,3 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
 	@echo "✅ Cleanup complete"
-

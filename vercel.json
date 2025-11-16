@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "functions": {
+    "web_app.py": {
+      "runtime": "python3",
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "web_app.py"
+    }
+  ]
+}

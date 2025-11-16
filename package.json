@@ -1,0 +1,18 @@
+{
+  "name": "agent-kit-web-demo",
+  "version": "0.1.0",
+  "description": "Agent Kit Ontology-Driven ML Web Demo",
+  "main": "web_app.py",
+  "scripts": {
+    "dev": "streamlit run web_app.py --server.port $PORT --server.headless true",
+    "build": "echo 'No build step required'",
+    "start": "streamlit run web_app.py --server.port $PORT --server.headless true"
+  },
+  "keywords": ["ml", "ontology", "agents", "streamlit"],
+  "author": "Agent Kit Team",
+  "license": "MIT",
+  "engines": {
+    "python": "3.12"
+  },
+  "dependencies": {}
+}

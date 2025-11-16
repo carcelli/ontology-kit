@@ -1,56 +1,76 @@
-# src/agent_kit/agents/orchestrator.py
-from typing import Any
+"""Ontology-aware business orchestrator using SDK handoffs."""
 
-from agents import Runner as SDKRunner
+from __future__ import annotations
 
-from agent_kit.agents.code_writer_agent import CodeWriterAgent
+from typing import TYPE_CHECKING, Any
+
+from agents import Agent, Runner, handoff
+
 from agent_kit.agents.ontology_agent import OntologyAgent
 from agent_kit.agents.planner_agent import PlannerAgent
-from agent_kit.shared_context import SharedContext
+
+if TYPE_CHECKING:
+    from agents.run_context import RunContextWrapper
 
 
-class BusinessOrchestrator:
-    """Orchestrates ontology-driven agents using SDK."""
+class OntologyOrchestratorAgent(Agent):
+    """Ontology-aware orchestrator agent that uses handoffs to delegate tasks."""
 
-    def __init__(self, ontology_path: str):
+    def __init__(self, ontology_path: str, **kwargs):
+        self.ontology_path = ontology_path
         self.planner = PlannerAgent('Planner', ontology_path)
-        self.agents = {
-            'forecaster': OntologyAgent('Forecaster', ontology_path),
-            'optimizer': OntologyAgent('Optimizer', ontology_path),
-            'codewriter': CodeWriterAgent('CodeWriter', ontology_path),
-        }
 
-    async def run(self, goal: str) -> Any:
-        """Decompose via ontology, orchestrate with SDK Runner."""
-        print(f"Received goal: {goal}")
+        # Create the specialist agents that this orchestrator can hand off to
+        self.forecaster = OntologyAgent(
+            name="Forecaster",
+            ontology_path=ontology_path,
+            handoff_description="Specializes in forecasting and prediction tasks"
+        )
+        self.optimizer = OntologyAgent(
+            name="Optimizer",
+            ontology_path=ontology_path,
+            handoff_description="Specializes in optimization and improvement tasks"
+        )
 
-        context = SharedContext()
-        context.set("goal", goal)
+        # Set up handoffs to specialist agents
+        handoffs = [
+            handoff(self.forecaster),
+            handoff(self.optimizer),
+        ]
 
-        # 1. Create a plan using the PlannerAgent
-        plan = self.planner.create_plan(goal)
+        instructions = self._generate_orchestrator_instructions()
 
-        print("Generated Plan:")
-        for i, step in enumerate(plan):
-            print(f"  Step {i+1}: Agent '{step['agent']}' with prompt: \"{step['prompt']}\"")
+        super().__init__(
+            name="Orchestrator",
+            instructions=instructions,
+            handoffs=handoffs,
+            **kwargs
+        )
 
-        # 2. Execute the plan
-        for step in plan:
-            agent_name = step.get('agent')
-            prompt = step.get('prompt')
+    def _generate_orchestrator_instructions(self) -> str:
+        """Generate instructions for the orchestrator based on ontology."""
+        return """You are an ontology-aware orchestrator agent that coordinates specialized agents to accomplish complex tasks.
 
-            if agent_name not in self.agents:
-                raise ValueError(f"Agent '{agent_name}' not found in orchestrator.")
+Based on the user's goal, analyze what needs to be done and delegate to the appropriate specialist agents:
+- Forecaster: For prediction, forecasting, and data analysis tasks
+- Optimizer: For optimization, improvement, and strategic planning tasks
 
-            agent = self.agents[agent_name]
+Use handoffs to delegate specific subtasks to these specialists, then synthesize their results into a comprehensive response.
 
-            print(f"Running {agent_name} agent...")
+Always provide clear reasoning for which agent you're delegating to and why."""
 
-            # Pass the current context to the agent
-            state = {"context": context}
-            response = await SDKRunner.run(agent, prompt, state=state)
 
-            # Store the output in the context for the next agent
-            context.set(f"{agent_name}_output", response.final_output)
+async def run_ontology_orchestration(goal: str, ontology_path: str) -> str:
+    """
+    Convenience function to run ontology-aware orchestration.
 
-        return context.get_all()
+    Args:
+        goal: The business objective to accomplish
+        ontology_path: Path to the ontology file
+
+    Returns:
+        Final result from the orchestrated agents
+    """
+    orchestrator = OntologyOrchestratorAgent(ontology_path=ontology_path)
+    result = await Runner.run(orchestrator, goal)
+    return result.final_output

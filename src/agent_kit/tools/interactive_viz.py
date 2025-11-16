@@ -23,6 +23,7 @@ import logging
 from pathlib import Path
 from typing import Annotated, Any
 
+from agents import function_tool
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -35,6 +36,7 @@ from agent_kit.vectorspace.embedder import Embedder
 logger = logging.getLogger(__name__)
 
 
+@function_tool
 def generate_interactive_leverage_viz(
     terms: Annotated[list[str], "Business terms/entities to visualize"],
     kpi_term: Annotated[str, "Key Performance Indicator for sensitivity calculation"],

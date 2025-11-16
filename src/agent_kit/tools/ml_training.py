@@ -13,6 +13,7 @@ import uuid
 from typing import Any
 
 from pydantic import BaseModel, Field
+from agents import function_tool
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class CrossValidationInput(BaseModel):
 
 
 # -------------- Tool Implementations --------------
+@function_tool
 def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
     """
     ASYNC: schedule training, return job_id immediately.
@@ -66,6 +68,7 @@ def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
     return {'status': 'SCHEDULED', 'job_id': job_id, 'message': 'Use check_job_status to monitor.'}
 
 
+@function_tool
 def run_cross_validation(input_data: CrossValidationInput) -> dict[str, Any]:
     """
     ASYNC: schedule cross-validation, return job_id immediately.
@@ -127,6 +130,7 @@ def advance_mock_jobs(now: float | None = None) -> None:
                 job.update(_finalize_job(job))
 
 
+@function_tool
 def check_job_status(input_data: JobStatusInput) -> dict[str, Any]:
     """
     Poll job state. In prod, your worker updates real status/metrics.
@@ -170,6 +174,7 @@ class LeverageAnalysisInput(BaseModel):
     )
 
 
+@function_tool
 def analyze_leverage(input_data: LeverageAnalysisInput) -> dict[str, Any]:
     """
     Analyze high-leverage intervention points using t-SNE dimensionality reduction.
@@ -280,6 +285,7 @@ class ClusteringInput(BaseModel):
     n_clusters: int | None = Field(None, description='Number of clusters (for KMeans/Hierarchical)')
 
 
+@function_tool
 def cluster_data(input_data: ClusteringInput) -> dict[str, Any]:
     """
     Cluster data points using DBSCAN, KMeans, or Hierarchical clustering.

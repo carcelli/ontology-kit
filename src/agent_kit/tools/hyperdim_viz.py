@@ -24,6 +24,7 @@ Usage (direct call):
 from pathlib import Path
 from typing import Annotated
 
+from agents import function_tool
 import matplotlib.pyplot as plt
 import numpy as np
 from rdflib import Graph
@@ -32,6 +33,7 @@ from sklearn.manifold import TSNE
 from agent_kit.vectorspace.embedder import Embedder
 
 
+@function_tool
 def generate_hyperdim_viz(
     ontology_path: Annotated[str | None, "Path to RDF/OWL ontology file (*.ttl, *.owl)"] = None,
     terms: Annotated[list[str] | None, "Custom list of terms to visualize (overrides ontology)"] = None,

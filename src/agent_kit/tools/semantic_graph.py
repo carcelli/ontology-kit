@@ -20,6 +20,7 @@ from typing import Any
 
 import networkx as nx
 from pydantic import BaseModel, Field
+from agents import function_tool
 from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ class InterventionRecommendationInput(BaseModel):
 
 
 # -------------- Tool Implementations --------------
+@function_tool
 def build_semantic_graph(input_data: SemanticGraphInput) -> dict[str, Any]:
     """
     Build weighted semantic graph from term embeddings and optional text relations.
@@ -193,6 +195,7 @@ def build_semantic_graph(input_data: SemanticGraphInput) -> dict[str, Any]:
         return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
 
 
+@function_tool
 def compute_target_leverage(input_data: TargetLeverageInput) -> dict[str, Any]:
     """
     Compute targeted leverage scores for nodes with respect to a specific KPI.
@@ -289,6 +292,7 @@ def compute_target_leverage(input_data: TargetLeverageInput) -> dict[str, Any]:
         return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
 
 
+@function_tool
 def recommend_interventions(input_data: InterventionRecommendationInput) -> dict[str, Any]:
     """
     Generate experiment recommendations for a high-leverage node.

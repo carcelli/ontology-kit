@@ -1,5 +1,6 @@
 # src/agent_kit/tools/ontology.py
 
+from agents import function_tool
 from rdflib import Literal, Namespace, URIRef
 
 from agent_kit.ontology.loader import OntologyLoader
@@ -11,11 +12,13 @@ NS = Namespace("http://agent_kit.io/business#")
 global_ontology_loader = OntologyLoader('assets/ontologies/business.ttl')
 global_ontology_loader.load()
 
+@function_tool
 def query_ontology(sparql_query: str, ontology_loader: OntologyLoader = global_ontology_loader) -> list[dict]:
     """Execute a SPARQL query against the ontology."""
     results = ontology_loader.query(sparql_query)
     return results
 
+@function_tool
 def add_ontology_statement(
     subject: str,
     predicate: str,

@@ -31,6 +31,7 @@ import logging
 from pathlib import Path
 from typing import Annotated, Any
 
+from agents import function_tool
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -43,6 +44,7 @@ logger = logging.getLogger(__name__)
 from agent_kit.vectorspace.embedder import Embedder
 
 
+@function_tool
 def generate_hyperdim_leverage_viz(
     ontology_path: Annotated[str | None, "Path to RDF/OWL ontology file"] = None,
     terms: Annotated[list[str] | None, "Custom terms to analyze (overrides ontology)"] = None,

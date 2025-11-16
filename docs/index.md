@@ -46,12 +46,12 @@
   - Performance & scalability tips
   - FAQ and troubleshooting
 
-- **[Leverage Tool Integration](tools/tools/LEVERAGE_TOOL_INTEGRATION.md)**
+- **[Leverage Tool Integration](tools/LEVERAGE_TOOL_INTEGRATION.md)**
   - Integration details
   - Existing tool context
   - Production checklist
 
-- **[Semantic Graph Implementation](tools/tools/SEMANTIC_GRAPH_IMPLEMENTATION.md)**
+- **[Semantic Graph Implementation](tools/SEMANTIC_GRAPH_IMPLEMENTATION.md)**
   - What was delivered
   - Code statistics
   - File manifest
@@ -59,7 +59,7 @@
 
 ### Ontology & Architecture
 
-- **[ML Tool Ontology](guides/guides/ML_TOOL_ONTOLOGY.md)**
+- **[ML Tool Ontology](guides/ML_TOOL_ONTOLOGY.md)**
   - Design philosophy
   - Core classes and properties
   - OpenAI SDK integration
@@ -328,15 +328,15 @@ pip install networkx>=3.0
 ### For Researchers
 
 1. [Semantic Leverage Guide](tools/SEMANTIC_LEVERAGE_GUIDE.md) — Theory
-2. [Implementation Details](tools/tools/SEMANTIC_GRAPH_IMPLEMENTATION.md) — Code
-3. [ML Tool Ontology](guides/guides/ML_TOOL_ONTOLOGY.md) — Architecture
+2. [Implementation Details](tools/SEMANTIC_GRAPH_IMPLEMENTATION.md) — Code
+3. [ML Tool Ontology](guides/ML_TOOL_ONTOLOGY.md) — Architecture
 4. Extend with causal inference, multi-objective optimization
 
 ### For Agent Builders
 
 1. [Technical Reference](tools/README_SEMANTIC_TOOLS.md) — API
-2. [ML Tool Ontology](guides/guides/ML_TOOL_ONTOLOGY.md) — Discovery pattern
-3. [Integration Guide](tools/tools/LEVERAGE_TOOL_INTEGRATION.md) — OpenAI SDK
+2. [ML Tool Ontology](guides/ML_TOOL_ONTOLOGY.md) — Discovery pattern
+3. [Integration Guide](tools/LEVERAGE_TOOL_INTEGRATION.md) — OpenAI SDK
 4. Wire into agent workflows
 
 ---
@@ -415,4 +415,3 @@ docs/
 **Last Updated**: 2025-11-09  
 **Version**: 1.0.0  
 **Status**: Production-Ready
-
