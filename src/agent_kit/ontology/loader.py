@@ -9,7 +9,7 @@ from rdflib import Graph, Namespace
 class OntologyLoader:
     """
     Load and query ontologies from TTL/RDF/OWL files.
-    
+
     Example:
         >>> loader = OntologyLoader('assets/ontologies/core.ttl')
         >>> graph = loader.load()
@@ -21,7 +21,7 @@ class OntologyLoader:
     def __init__(self, ontology_path: str) -> None:
         """
         Initialize ontology loader.
-        
+
         Args:
             ontology_path: Path to TTL/RDF/OWL file
         """
@@ -35,10 +35,10 @@ class OntologyLoader:
     def load(self, format: str = 'turtle') -> Graph:
         """
         Load ontology into RDFLib graph.
-        
+
         Args:
             format: 'turtle', 'xml', 'n3', etc.
-            
+
         Returns:
             RDFLib Graph object
         """
@@ -54,10 +54,10 @@ class OntologyLoader:
     def query(self, sparql: str) -> list[dict[str, Any]]:
         """
         Execute SPARQL query.
-        
+
         Args:
             sparql: SPARQL query string
-            
+
         Returns:
             List of result bindings
         """
@@ -100,7 +100,7 @@ class OntologyLoader:
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         SELECT DISTINCT ?prop WHERE {
-            { ?prop a owl:ObjectProperty } UNION 
+            { ?prop a owl:ObjectProperty } UNION
             { ?prop a owl:DatatypeProperty } UNION
             { ?prop a rdf:Property }
         }

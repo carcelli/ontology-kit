@@ -10,7 +10,8 @@ Workflow:
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from rdflib import Namespace
 
@@ -34,7 +35,7 @@ class OntologyOrchestrator:
         ...                    {'dataset_uri': 's3://bucket/data.parquet'})
     """
 
-    def __init__(self, ontology: OntologyLoader, registry: Dict[str, Dict[str, Any]]) -> None:
+    def __init__(self, ontology: OntologyLoader, registry: dict[str, dict[str, Any]]) -> None:
         """
         Initialize orchestrator.
 
@@ -45,7 +46,7 @@ class OntologyOrchestrator:
         self.ontology = ontology
         self.registry = registry
 
-    def discover_tool(self, class_iri: str) -> Dict[str, Any]:
+    def discover_tool(self, class_iri: str) -> dict[str, Any]:
         """
         Discover a tool by its ontology class IRI.
 
@@ -76,7 +77,7 @@ class OntologyOrchestrator:
             raise RuntimeError(f"Python identifier '{py}' not found in registry")
         return tool
 
-    def discover_tools_by_algorithm(self, algorithm: str) -> list[Dict[str, Any]]:
+    def discover_tools_by_algorithm(self, algorithm: str) -> list[dict[str, Any]]:
         """
         Find all tools that implement a given algorithm.
 
@@ -102,7 +103,7 @@ class OntologyOrchestrator:
                 tools.append(self.registry[py])
         return tools
 
-    def get_openai_tools(self, classes: list[str]) -> list[Dict[str, Any]]:
+    def get_openai_tools(self, classes: list[str]) -> list[dict[str, Any]]:
         """
         Get OpenAI tool specs for a list of ontology class IRIs.
 
@@ -118,7 +119,7 @@ class OntologyOrchestrator:
             specs.append(t['tool_spec'])
         return specs
 
-    def call(self, class_iri: str, params: Dict[str, Any]) -> Any:
+    def call(self, class_iri: str, params: dict[str, Any]) -> Any:
         """
         Execute a tool by its ontology class IRI.
 
@@ -135,7 +136,7 @@ class OntologyOrchestrator:
         validated = schema(**params)
         return fn(validated)
 
-    def call_by_python_id(self, python_id: str, params: Dict[str, Any]) -> Any:
+    def call_by_python_id(self, python_id: str, params: dict[str, Any]) -> Any:
         """
         Execute a tool directly by its Python identifier.
 

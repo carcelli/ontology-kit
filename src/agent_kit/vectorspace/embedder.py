@@ -7,9 +7,9 @@ from sentence_transformers import SentenceTransformer
 class Embedder:
     """
     Wrapper for embedding text/code/tasks into high-dimensional vectors.
-    
+
     Uses SentenceTransformer by default; supports custom models via extend.
-    
+
     Example:
         >>> embedder = Embedder(model_name='all-MiniLM-L6-v2')
         >>> embeddings = embedder.embed_batch(['Task 1', 'Task 2'])
@@ -25,7 +25,7 @@ class Embedder:
     ) -> None:
         """
         Initialize embedder with specified model.
-        
+
         Args:
             model_name: HuggingFace model name or path
             device: 'cuda', 'cpu', or None (auto-detect)
@@ -42,10 +42,10 @@ class Embedder:
     def embed(self, text: str) -> np.ndarray:
         """
         Embed a single text string.
-        
+
         Args:
             text: Input text
-            
+
         Returns:
             1D numpy array of shape (dimension,)
         """
@@ -59,12 +59,12 @@ class Embedder:
     ) -> np.ndarray:
         """
         Embed a batch of texts efficiently.
-        
+
         Args:
             texts: List of input strings
             batch_size: Number of texts to process per batch
             show_progress: Whether to show progress bar
-            
+
         Returns:
             2D numpy array of shape (len(texts), dimension)
         """

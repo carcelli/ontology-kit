@@ -7,11 +7,11 @@ import numpy as np
 def cosine_similarity(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute cosine similarity between two vectors.
-    
+
     Args:
         x: First vector
         y: Second vector
-        
+
     Returns:
         Cosine similarity in [-1, 1]
     """
@@ -24,11 +24,11 @@ def cosine_similarity(x: np.ndarray, y: np.ndarray) -> float:
 def euclidean_distance(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute Euclidean (L2) distance between two vectors.
-    
+
     Args:
         x: First vector
         y: Second vector
-        
+
     Returns:
         Euclidean distance (non-negative)
     """
@@ -42,12 +42,12 @@ def pairwise_distances(
 ) -> np.ndarray:
     """
     Compute pairwise distances between vectors.
-    
+
     Args:
         X: Matrix of shape (N, D)
         Y: Optional matrix of shape (M, D); if None, compute X vs X
         metric: 'euclidean' or 'cosine'
-        
+
     Returns:
         Distance matrix of shape (N, M) or (N, N)
     """

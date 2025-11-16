@@ -1,5 +1,6 @@
 # src/agent_kit/agents/repository_agent.py
-from agent_kit.agents.base import BaseAgent, AgentTask, AgentResult
+from agent_kit.agents.base import AgentResult, AgentTask, BaseAgent
+
 
 class RepositoryAnalysisAgent(BaseAgent):
     """An agent that analyzes a repository."""

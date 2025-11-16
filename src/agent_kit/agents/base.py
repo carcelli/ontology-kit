@@ -5,8 +5,8 @@ Base agent framework with Grok integration for ontology-driven reasoning.
 Provides abstract BaseAgent and concrete GrokAgent for xAI API-powered workflows.
 """
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, NamedTuple, Optional, Union
-import os
+from typing import Any, NamedTuple
+
 from pydantic import BaseModel, Field
 
 # Lazy imports for optional dependencies
@@ -60,7 +60,7 @@ class BaseAgent(ABC):
 class GrokConfig(BaseModel):
     """
     Configuration for Grok agent integration.
-    
+
     References:
         - xAI API docs: https://x.ai/api
         - OpenAI Python SDK for compatibility: https://github.com/openai/openai-python
@@ -86,7 +86,7 @@ class GrokConfig(BaseModel):
         le=131072,
         description="Maximum tokens in response"
     )
-    seed: Optional[int] = Field(
+    seed: int | None = Field(
         default=42,
         description="Random seed for reproducible outputs"
     )
@@ -95,16 +95,16 @@ class GrokConfig(BaseModel):
 class GrokAgent(BaseAgent):
     """
     Ontology-aware agent using Grok (xAI) for advanced reasoning.
-    
+
     Implements observe-plan-act-reflect loop with SPARQL grounding to prevent
     hallucinations and ensure semantic consistency with business ontology.
-    
+
     Architecture:
         1. Observe: Query ontology (SPARQL) for task-relevant context
         2. Plan: Use Grok to generate actionable plan from observations
         3. Act: Execute plan via tool registry (hyperdim_viz, ml_training, etc.)
         4. Reflect: Critique results and store learnings in memory
-    
+
     Example:
         >>> from agent_kit.ontology.loader import OntologyLoader
         >>> config = GrokConfig(api_key=os.getenv('XAI_API_KEY'))
@@ -119,29 +119,29 @@ class GrokAgent(BaseAgent):
         >>> task = AgentTask(prompt="Optimize Q4 revenue for Sunshine Bakery")
         >>> result = agent.run(task)
         >>> print(result.result)
-    
+
     References:
         - xAI Grok: https://x.ai/blog/grok
         - SPARQL 1.1: https://www.w3.org/TR/sparql11-query/
         - Tool Use in LLMs: Schick et al. (2023), "Toolformer"
     """
-    
+
     def __init__(
         self,
         config: GrokConfig,
         ontology: Any,  # Type: agent_kit.ontology.loader.Ontology
-        tool_registry: Optional[Dict[str, Any]] = None,
-        system_prompt: Optional[str] = None,
+        tool_registry: dict[str, Any] | None = None,
+        system_prompt: str | None = None,
     ) -> None:
         """
         Initialize Grok agent with ontology and tool access.
-        
+
         Args:
             config: Grok API configuration
             ontology: Loaded ontology for SPARQL queries
             tool_registry: Dict mapping tool names to callables
             system_prompt: Custom system instructions (defaults to ontology-driven)
-        
+
         Raises:
             ImportError: If openai package not installed
             ValueError: If API key invalid
@@ -150,18 +150,18 @@ class GrokAgent(BaseAgent):
             raise ImportError(
                 "openai package required for GrokAgent. Install: pip install openai>=1.0.0"
             )
-        
+
         self.config = config
         self.ontology = ontology
         self.tool_registry = tool_registry or {}
-        self.memory: List[str] = []  # Store reflections for multi-turn learning
-        
+        self.memory: list[str] = []  # Store reflections for multi-turn learning
+
         # Initialize OpenAI client with xAI endpoint
         self.client = OpenAI(
             api_key=config.api_key,
             base_url=config.base_url
         )
-        
+
         # System prompt: emphasize ontology grounding
         self.system_prompt = system_prompt or (
             "You are an ontology-driven AI agent for small business optimization. "
@@ -169,29 +169,29 @@ class GrokAgent(BaseAgent):
             "Always prioritize semantic consistency over speculation. "
             "When uncertain, query the ontology for clarification."
         )
-    
+
     def run(self, task: AgentTask) -> AgentResult:
         """
         Execute full observe-plan-act-reflect loop.
-        
+
         Args:
             task: Task with prompt describing business objective
-        
+
         Returns:
             AgentResult with final output and reasoning trace
         """
         # 1. Observe
         observation = self.observe(task)
-        
+
         # 2. Plan
         plan = self.plan(task, observation)
-        
+
         # 3. Act
         action_result = self.act(plan)
-        
+
         # 4. Reflect
         self.reflect(task, action_result)
-        
+
         # Compile final result
         result_summary = (
             f"Task: {task.prompt}\n"
@@ -200,26 +200,26 @@ class GrokAgent(BaseAgent):
             f"Action: {plan.action}\n"
             f"Result: {action_result.output}\n"
         )
-        
+
         return AgentResult(result=result_summary)
-    
+
     def observe(self, task: AgentTask) -> AgentObservation:
         """
         Query ontology for task-relevant context via SPARQL.
-        
+
         Constructs semantic query from task description to extract relevant
         entities, relations, and constraints from business ontology.
-        
+
         Args:
             task: Task to observe context for
-        
+
         Returns:
             AgentObservation with SPARQL query results
         """
         # Extract key terms from task for SPARQL query
         # In production: use NER or keyword extraction
-        task_lower = task.prompt.lower()
-        
+        task.prompt.lower()
+
         # Construct SPARQL query based on task type
         # This is a simplified heuristic; expand with more sophisticated parsing
         sparql = """
@@ -232,7 +232,7 @@ class GrokAgent(BaseAgent):
         }
         LIMIT 10
         """
-        
+
         # Execute SPARQL query
         try:
             results = list(self.ontology.query(sparql))
@@ -243,20 +243,20 @@ class GrokAgent(BaseAgent):
             content = "\n".join(observations) if observations else "No ontology data found for task."
         except Exception as e:
             content = f"Ontology query failed: {str(e)}"
-        
+
         return AgentObservation(content=content)
-    
+
     def plan(self, task: AgentTask, observation: AgentObservation) -> AgentPlan:
         """
         Use Grok to generate actionable plan from observations.
-        
+
         Leverages Grok's reasoning capabilities to synthesize observations
         into structured plan with tool invocations.
-        
+
         Args:
             task: Original task
             observation: Ontology-grounded observations
-        
+
         Returns:
             AgentPlan with reasoning and action specification
         """
@@ -276,14 +276,14 @@ Previous Learnings:
 Generate a step-by-step plan to accomplish the task, grounded in the ontology.
 Specify which tools to invoke and why.
 """
-        
+
         # Call Grok API with retry logic
         try:
             response = self._call_grok_with_retry(user_prompt)
             plan_text = response.choices[0].message.content or "No plan generated."
         except Exception as e:
             plan_text = f"Planning failed: {str(e)}"
-        
+
         # Parse plan to extract action (simplified; use structured output in production)
         action = "execute_plan"  # Default action
         if "visualize" in plan_text.lower():
@@ -292,24 +292,24 @@ Specify which tools to invoke and why.
             action = "cluster_data"
         elif "train" in plan_text.lower():
             action = "train_model"
-        
+
         return AgentPlan(thought=plan_text, action=action)
-    
+
     def act(self, plan: AgentPlan) -> AgentActionResult:
         """
         Execute plan by invoking tools from registry.
-        
+
         Maps plan actions to tool calls, passing extracted parameters.
-        
+
         Args:
             plan: Plan with action specification
-        
+
         Returns:
             AgentActionResult with tool output
         """
         # Map action to tool
         action = plan.action
-        
+
         if action == "generate_visualization" and "generate_interactive_leverage_viz" in self.tool_registry:
             # Example: Call interactive viz tool
             try:
@@ -326,7 +326,7 @@ Specify which tools to invoke and why.
                 return AgentActionResult(output=f"Visualization generated: {viz_path}")
             except Exception as e:
                 return AgentActionResult(output=f"Visualization failed: {str(e)}")
-        
+
         elif action == "cluster_data" and "cluster_data" in self.tool_registry:
             # Example: Call clustering tool
             try:
@@ -336,17 +336,17 @@ Specify which tools to invoke and why.
                 return AgentActionResult(output=f"Clustering result: {result}")
             except Exception as e:
                 return AgentActionResult(output=f"Clustering failed: {str(e)}")
-        
+
         else:
             # Fallback: return plan as-is
             return AgentActionResult(output=f"Executed plan: {plan.thought}")
-    
+
     def reflect(self, task: AgentTask, result: AgentActionResult) -> None:
         """
         Use Grok to critique results and store learnings.
-        
+
         Enables multi-turn improvement by accumulating reflections in memory.
-        
+
         Args:
             task: Original task
             result: Action result to reflect on
@@ -362,26 +362,26 @@ Reflect on this result:
 
 Provide 2-3 concise insights for learning.
 """
-        
+
         try:
             response = self._call_grok_with_retry(reflection_prompt)
             reflection = response.choices[0].message.content or "No reflection generated."
             self.memory.append(reflection)
         except Exception as e:
             self.memory.append(f"Reflection failed: {str(e)}")
-    
+
     def _call_grok_with_retry(self, user_prompt: str) -> Any:
         """
         Call Grok API with exponential backoff retry logic.
-        
+
         Handles rate limits and transient failures gracefully.
-        
+
         Args:
             user_prompt: User message content
-        
+
         Returns:
             OpenAI ChatCompletion response
-        
+
         Raises:
             Exception: After max retries exhausted
         """

@@ -1,10 +1,12 @@
 # src/agent_kit/agents/ontology_agent.py
+from typing import Any
+
 from agents import Agent as SDKAgent
+
 from agent_kit.ontology.loader import OntologyLoader
 from agent_kit.shared_context import SharedContext
-from agent_kit.tools.business import predict, optimize
+from agent_kit.tools.business import optimize, predict
 from agent_kit.tools.github_tools import write_to_github
-from typing import Any, Dict, List
 
 # A simple registry to map tool names to functions
 TOOL_REGISTRY = {
@@ -40,7 +42,7 @@ class OntologyAgent(SDKAgent):
             return f"{base_instructions} Your specific instructions are: {str(row.instructions)}"
         return f"{base_instructions} You are a helpful agent."
 
-    def _discover_tools(self) -> List:
+    def _discover_tools(self) -> list:
         """Discovers tools for the agent by querying the ontology."""
         sparql = f"""
             PREFIX : <http://agent_kit.io/business#>
@@ -54,16 +56,16 @@ class OntologyAgent(SDKAgent):
             }}
         """
         results = self.ontology.query(sparql)
-        
+
         tools = []
         for row in results:
             tool_name = str(row.toolName)
             if tool_name in TOOL_REGISTRY:
                 tools.append(TOOL_REGISTRY[tool_name])
-        
+
         return tools
 
-    async def act(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    async def act(self, state: dict[str, Any]) -> dict[str, Any]:
         """Override to validate actions against ontology and use shared context."""
         context: SharedContext = state.get("context")
         if context and self.agent_name == "Optimizer":

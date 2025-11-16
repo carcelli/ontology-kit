@@ -15,26 +15,27 @@ Data is stored in structured format for analysis and visualization.
 """
 
 import json
+import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Any
+
 import psutil
-import threading
-from contextlib import contextmanager
 
 
 @dataclass
 class ExecutionMetrics:
     """Metrics collected during agent execution."""
     start_time: datetime
-    end_time: Optional[datetime] = None
-    duration_seconds: Optional[float] = None
-    cpu_usage_percent: Optional[float] = None
-    memory_usage_mb: Optional[float] = None
+    end_time: datetime | None = None
+    duration_seconds: float | None = None
+    cpu_usage_percent: float | None = None
+    memory_usage_mb: float | None = None
     success: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
     retry_count: int = 0
 
 
@@ -45,8 +46,8 @@ class OntologyQueryMetrics:
     query_text: str
     execution_time_seconds: float
     result_count: int
-    entities_discovered: List[str] = field(default_factory=list)
-    relationships_found: List[str] = field(default_factory=list)
+    entities_discovered: list[str] = field(default_factory=list)
+    relationships_found: list[str] = field(default_factory=list)
     cache_hit: bool = False
 
 
@@ -57,9 +58,9 @@ class ToolUsageMetrics:
     tool_category: str  # ml_training, visualization, data_processing, etc.
     execution_time_seconds: float
     success: bool
-    input_parameters: Dict[str, Any] = field(default_factory=dict)
-    output_summary: Optional[str] = None
-    error_details: Optional[str] = None
+    input_parameters: dict[str, Any] = field(default_factory=dict)
+    output_summary: str | None = None
+    error_details: str | None = None
 
 
 @dataclass
@@ -69,10 +70,10 @@ class DecisionMetrics:
     confidence_score: float
     alternatives_considered: int
     final_decision: str
-    ontology_entities_used: List[str] = field(default_factory=list)
-    tools_consulted: List[str] = field(default_factory=list)
-    outcome_success: Optional[bool] = None
-    outcome_quality_score: Optional[float] = None
+    ontology_entities_used: list[str] = field(default_factory=list)
+    tools_consulted: list[str] = field(default_factory=list)
+    outcome_success: bool | None = None
+    outcome_quality_score: float | None = None
 
 
 @dataclass
@@ -86,9 +87,9 @@ class AgentPerformanceRecord:
 
     # Core metrics
     execution: ExecutionMetrics
-    ontology_queries: List[OntologyQueryMetrics] = field(default_factory=list)
-    tool_usage: List[ToolUsageMetrics] = field(default_factory=list)
-    decisions: List[DecisionMetrics] = field(default_factory=list)
+    ontology_queries: list[OntologyQueryMetrics] = field(default_factory=list)
+    tool_usage: list[ToolUsageMetrics] = field(default_factory=list)
+    decisions: list[DecisionMetrics] = field(default_factory=list)
 
     # Derived metrics (calculated)
     total_query_time: float = 0.0
@@ -97,9 +98,9 @@ class AgentPerformanceRecord:
     success_rate: float = 0.0
 
     # Context
-    ontology_version: Optional[str] = None
-    agent_version: Optional[str] = None
-    environment_info: Dict[str, Any] = field(default_factory=dict)
+    ontology_version: str | None = None
+    agent_version: str | None = None
+    environment_info: dict[str, Any] = field(default_factory=dict)
 
 
 class AgentDataCollector:
@@ -123,12 +124,12 @@ class AgentDataCollector:
     def __init__(self, data_dir: str = "outputs/agent_data"):
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(exist_ok=True)
-        self.current_record: Optional[AgentPerformanceRecord] = None
+        self.current_record: AgentPerformanceRecord | None = None
         self._lock = threading.Lock()
 
     @contextmanager
     def track_execution(self, agent_name: str, task_type: str, task_description: str,
-                       session_id: Optional[str] = None):
+                       session_id: str | None = None):
         """
         Context manager to track complete agent execution.
 
@@ -216,7 +217,7 @@ class AgentDataCollector:
 
     @contextmanager
     def track_tool_usage(self, tool_name: str, tool_category: str = "general",
-                        input_params: Optional[Dict[str, Any]] = None):
+                        input_params: dict[str, Any] | None = None):
         """
         Context manager to track tool usage.
 
@@ -249,9 +250,9 @@ class AgentDataCollector:
             self.current_record.tool_usage.append(tool_metrics)
 
     def record_decision(self, decision_context: str, final_decision: str,
-                       confidence_score: float, alternatives: Optional[List[str]] = None,
-                       ontology_entities: Optional[List[str]] = None,
-                       tools_consulted: Optional[List[str]] = None) -> None:
+                       confidence_score: float, alternatives: list[str] | None = None,
+                       ontology_entities: list[str] | None = None,
+                       tools_consulted: list[str] | None = None) -> None:
         """
         Record an agent decision with context.
 
@@ -278,7 +279,7 @@ class AgentDataCollector:
         self.current_record.decisions.append(decision_metrics)
 
     def update_decision_outcome(self, decision_index: int, success: bool,
-                               quality_score: Optional[float] = None) -> None:
+                               quality_score: float | None = None) -> None:
         """
         Update the outcome of a previously recorded decision.
 
@@ -340,7 +341,7 @@ class AgentDataCollector:
         # Also save to daily summary file for quick analysis
         self._update_daily_summary(record)
 
-    def _record_to_dict(self, record: AgentPerformanceRecord) -> Dict[str, Any]:
+    def _record_to_dict(self, record: AgentPerformanceRecord) -> dict[str, Any]:
         """Convert performance record to dictionary for JSON serialization."""
         return {
             "agent_name": record.agent_name,
@@ -421,7 +422,7 @@ class AgentDataCollector:
 
         # Load existing summary or create new one
         if summary_file.exists():
-            with open(summary_file, 'r') as f:
+            with open(summary_file) as f:
                 summary = json.load(f)
         else:
             summary = {
@@ -496,8 +497,8 @@ class PerformanceAnalytics:
     def __init__(self, data_dir: str = "outputs/agent_data"):
         self.data_dir = Path(data_dir)
 
-    def get_agent_performance_summary(self, agent_name: Optional[str] = None,
-                                    days: int = 7) -> Dict[str, Any]:
+    def get_agent_performance_summary(self, agent_name: str | None = None,
+                                    days: int = 7) -> dict[str, Any]:
         """
         Get performance summary for agents over recent days.
 
@@ -515,7 +516,7 @@ class PerformanceAnalytics:
         summaries = []
         for summary_file in summary_files[:days]:
             try:
-                with open(summary_file, 'r') as f:
+                with open(summary_file) as f:
                     summaries.append(json.load(f))
             except (json.JSONDecodeError, FileNotFoundError):
                 continue
@@ -576,7 +577,7 @@ class PerformanceAnalytics:
             )[:5]
         }
 
-    def identify_bottlenecks(self) -> Dict[str, Any]:
+    def identify_bottlenecks(self) -> dict[str, Any]:
         """
         Identify performance bottlenecks from collected data.
 
@@ -596,7 +597,7 @@ class PerformanceAnalytics:
 
         for record_file in record_files[:50]:  # Analyze last 50 records
             try:
-                with open(record_file, 'r') as f:
+                with open(record_file) as f:
                     record_data = json.load(f)
 
                 # Check for slow ontology queries

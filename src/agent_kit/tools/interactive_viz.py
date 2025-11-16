@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any
 
 import numpy as np
 import pandas as pd
@@ -49,7 +49,7 @@ def generate_interactive_leverage_viz(
     leverage_formula: Annotated[
         str, "Leverage computation method"
     ] = 'inverse_distance',  # 'inverse_distance' or 'multi_factor'
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate interactive 3D leverage visualization using Plotly.
 
@@ -167,16 +167,16 @@ def generate_interactive_leverage_viz(
             logger.info('Saved static image: %s', output_path)
     except Exception as e:
         logger.error('Failed to save visualization: %s', e)
-        raise ValueError(f"Failed to save to {output_file}: {e}")
+        raise ValueError(f"Failed to save to {output_file}: {e}") from e
 
     return {
         'viz_path': str(output_path.resolve()),
         'n_terms': len(terms),
         'n_components': n_components,
-        'leverage_scores': dict(zip(terms, leverage_scores.tolist())),
+        'leverage_scores': dict(zip(terms, leverage_scores.tolist(), strict=False)),
         'top_levers': [
             {'term': t, 'leverage': float(s)}
-            for t, s in sorted(zip(terms, leverage_scores), key=lambda x: x[1], reverse=True)[
+            for t, s in sorted(zip(terms, leverage_scores, strict=False), key=lambda x: x[1], reverse=True)[
                 :5
             ]
         ],
@@ -187,9 +187,9 @@ def generate_interactive_leverage_viz(
 
 def _compute_leverage_scores(
     reduced: np.ndarray,
-    terms: List[str],
+    terms: list[str],
     kpi_term: str,
-    actionable_terms: List[str],
+    actionable_terms: list[str],
     formula: str = 'inverse_distance',
 ) -> np.ndarray:
     """
@@ -278,14 +278,14 @@ def _create_plotly_figure(
 
         # Update 3D scene
         fig.update_layout(
-            scene=dict(
-                xaxis_title='t-SNE Dimension 1',
-                yaxis_title='t-SNE Dimension 2',
-                zaxis_title='t-SNE Dimension 3',
-                aspectmode='cube',
-                camera=dict(eye=dict(x=1.5, y=1.5, z=1.3)),  # Better default angle
-            ),
-            font=dict(size=12, family='Arial'),
+            scene={
+                "xaxis_title": 't-SNE Dimension 1',
+                "yaxis_title": 't-SNE Dimension 2',
+                "zaxis_title": 't-SNE Dimension 3',
+                "aspectmode": 'cube',
+                "camera": {"eye": {"x": 1.5, "y": 1.5, "z": 1.3}},  # Better default angle
+            },
+            font={"size": 12, "family": 'Arial'},
             hovermode='closest',
             height=800,
         )
@@ -314,14 +314,14 @@ def _create_plotly_figure(
         fig.update_layout(
             xaxis_title='t-SNE Dimension 1',
             yaxis_title='t-SNE Dimension 2',
-            font=dict(size=12, family='Arial'),
+            font={"size": 12, "family": 'Arial'},
             hovermode='closest',
             height=700,
             width=900,
         )
 
     # Common styling
-    fig.update_traces(marker=dict(size=12, line=dict(width=1, color='DarkSlateGray')))
+    fig.update_traces(marker={"size": 12, "line": {"width": 1, "color": 'DarkSlateGray'}})
 
     return fig
 

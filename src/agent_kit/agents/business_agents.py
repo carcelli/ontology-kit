@@ -149,7 +149,7 @@ class OptimizerAgent(BaseAgent):
         observation: AgentObservation,
     ) -> AgentActionResult:
         """Execute optimization analysis."""
-        forecast = observation.data["forecast"]
+        observation.data["forecast"]
         budget = observation.data["outreach_budget"]
         conversion_rate = observation.data["conversion_rate"]
 

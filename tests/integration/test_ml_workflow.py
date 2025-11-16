@@ -61,7 +61,7 @@ def test_openai_tool_specs(orchestrator):
 def test_end_to_end_training_then_cv(orchestrator):
     """Test complete workflow: schedule training → poll → schedule CV → poll."""
     import time
-    
+
     # Schedule training
     train = orchestrator.call(
         ML_TRAIN, {'dataset_uri': 'demo://clients', 'hyperparameters': {'lr': 0.001}}

@@ -9,11 +9,11 @@ during execution. They bridge agents with core capabilities like:
 - Vector space operations
 """
 
+from .business import optimize, predict
 from .hyperdim_leverage_viz import generate_hyperdim_leverage_viz
 from .hyperdim_viz import generate_hyperdim_viz
-from .business import predict, optimize
+from .ontology import add_ontology_statement, query_ontology
 from .vector_space import embed, embed_batch, query_vector_index
-from .ontology import query_ontology, add_ontology_statement
 
 __all__ = [
     'generate_hyperdim_viz',

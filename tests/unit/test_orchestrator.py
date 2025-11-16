@@ -1,7 +1,10 @@
 # tests/unit/test_orchestrator.py
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from agent_kit.agents.orchestrator import BusinessOrchestrator
+
 
 @pytest.mark.asyncio
 async def test_orchestrator_run():
@@ -32,7 +35,7 @@ async def test_orchestrator_run():
     # Check that the correct agents were called
     forecaster_agent = orchestrator.agents['forecaster']
     optimizer_agent = orchestrator.agents['optimizer']
-    
+
     # Get the agent from the call
     first_call_agent = mock_runner.run.call_args_list[0][0][0]
     second_call_agent = mock_runner.run.call_args_list[1][0][0]

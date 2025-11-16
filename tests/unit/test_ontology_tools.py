@@ -1,9 +1,11 @@
 # tests/unit/test_ontology_tools.py
+
 import pytest
-from pathlib import Path
-from rdflib import Graph, URIRef, Literal, Namespace
+from rdflib import Literal, URIRef
+
 from agent_kit.ontology.loader import OntologyLoader
-from agent_kit.tools.ontology import query_ontology, add_ontology_statement, NS
+from agent_kit.tools.ontology import NS, add_ontology_statement, query_ontology
+
 
 # Define a temporary ontology file for testing
 @pytest.fixture
@@ -60,7 +62,7 @@ def test_add_ontology_statement(temp_ontology_file):
 
     # Verify the triple was added and persisted
     assert len(reloaded_loader.graph) == initial_triples + 1
-    
+
     # Construct the expected triple using the same NS as the tool
     expected_subject = URIRef(NS[subject])
     expected_predicate = URIRef(NS[predicate])

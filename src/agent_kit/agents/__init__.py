@@ -1,11 +1,11 @@
 """Agent core: decision-making entities that navigate vector spaces."""
 
 from agent_kit.agents.base import (
-    AgentTask,
+    AgentActionResult,
     AgentObservation,
     AgentPlan,
-    AgentActionResult,
     AgentResult,
+    AgentTask,
     BaseAgent,
     GrokAgent,
     GrokConfig,

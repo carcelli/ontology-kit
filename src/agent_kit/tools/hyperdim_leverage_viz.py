@@ -22,12 +22,12 @@ Usage:
         actionable_terms=['OutreachCampaign', 'EmailTiming'],
         output_file='leverage_analysis.png'
     )
-    
+
     print(f"Visualization: {result['viz_path']}")
     print(f"Top levers: {result['top_levers']}")
 """
 
-import os
+import logging
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -37,6 +37,8 @@ import numpy as np
 from rdflib import Graph
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
+
+logger = logging.getLogger(__name__)
 
 from agent_kit.vectorspace.embedder import Embedder
 
@@ -143,7 +145,7 @@ def generate_hyperdim_leverage_viz(
         reverse=True,
     )[:10]
 
-    print(f"\n🎯 Top 3 Leverage Points:")
+    print("\n🎯 Top 3 Leverage Points:")
     for i, lever in enumerate(top_levers[:3], 1):
         print(f"  {i}. {lever['term']}: {lever['leverage']:.3f}")
 
@@ -197,12 +199,12 @@ def _extract_terms_and_graph(
     try:
         graph_rdf.parse(str(ontology_file), format='turtle')
     except Exception as e:
-        raise ValueError(f"Failed to parse ontology {ontology_path}: {e}")
+        raise ValueError(f"Failed to parse ontology {ontology_path}: {e}") from e
 
     terms_set = set()
     nx_graph = nx.Graph()
 
-    for subj, pred, obj in graph_rdf:
+    for subj, _pred, obj in graph_rdf:
         # Extract local names
         subj_name = str(subj).split('#')[-1].split('/')[-1]
         obj_name = str(obj).split('#')[-1].split('/')[-1]
@@ -285,7 +287,7 @@ def _compute_actionability(terms: list[str], actionable_terms: list[str] | None)
     """
     if actionable_terms is None:
         # Default: all terms actionable (MVP assumption)
-        return {t: 1.0 for t in terms}
+        return dict.fromkeys(terms, 1.0)
 
     return {t: 1.0 if t in actionable_terms else 0.0 for t in terms}
 
@@ -306,9 +308,10 @@ def _compute_centrality(nx_graph: nx.Graph, terms: list[str]) -> dict[str, float
     """
     try:
         betweenness = nx.betweenness_centrality(nx_graph)
-    except:
+    except Exception as e:
         # Fallback for disconnected graphs or errors
-        betweenness = {t: 0.0 for t in terms}
+        logger.warning(f"Failed to calculate betweenness centrality: {e}")
+        betweenness = dict.fromkeys(terms, 0.0)
 
     # Normalize to [0, 1]
     max_betweenness = max(betweenness.values()) if betweenness else 1.0
@@ -337,9 +340,10 @@ def _compute_uncertainty(embeddings: np.ndarray, terms: list[str]) -> dict[str, 
 
     try:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=10).fit(embeddings)
-    except:
+    except Exception as e:
         # Fallback: single cluster
-        return {t: 0.0 for t in terms}
+        logger.warning(f"Failed to perform clustering: {e}")
+        return dict.fromkeys(terms, 0.0)
 
     # Compute variance per cluster
     uncertainty_scores = {}
@@ -497,7 +501,7 @@ def _plot_leverage(
     try:
         plt.savefig(str(output_path), dpi=150, bbox_inches='tight')
     except Exception as e:
-        raise ValueError(f"Failed to save visualization to {output_file}: {e}")
+        raise ValueError(f"Failed to save visualization to {output_file}: {e}") from e
     finally:
         plt.close(fig)
 

@@ -18,13 +18,11 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import graphviz
-from graphviz import Digraph
+from typing import Any
+
 import plotly.graph_objects as go
-import plotly.express as px
+from graphviz import Digraph
 from plotly.subplots import make_subplots
-import networkx as nx
 
 from agent_kit.data_collection import PerformanceAnalytics
 
@@ -35,10 +33,10 @@ class FlowNode:
     id: str
     label: str
     node_type: str  # 'stage', 'decision', 'tool', 'ontology_entity', 'outcome'
-    duration: Optional[float] = None
-    confidence: Optional[float] = None
-    success: Optional[bool] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    duration: float | None = None
+    confidence: float | None = None
+    success: bool | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -178,12 +176,12 @@ class TaskFlowVisualizer:
             execution_data, workflow_flow, ontology_nav, decision_flow, performance_timeline
         )
 
-    def _load_execution_data(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def _load_execution_data(self, session_id: str) -> dict[str, Any] | None:
         """Load execution data for a specific session."""
         # Search through data directory for the session
         for json_file in self.data_dir.rglob("*.json"):
             try:
-                with open(json_file, 'r') as f:
+                with open(json_file) as f:
                     data = json.load(f)
                     if data.get("session_id") == session_id:
                         return data
@@ -191,14 +189,14 @@ class TaskFlowVisualizer:
                 continue
         return None
 
-    def _find_recent_sessions(self, agent_name: str, limit: int) -> List[Dict[str, Any]]:
+    def _find_recent_sessions(self, agent_name: str, limit: int) -> list[dict[str, Any]]:
         """Find recent sessions for a specific agent."""
         sessions = []
 
         # Find all session files
         for json_file in self.data_dir.rglob("*.json"):
             try:
-                with open(json_file, 'r') as f:
+                with open(json_file) as f:
                     data = json.load(f)
                     if data.get("agent_name") == agent_name:
                         sessions.append(data)
@@ -209,7 +207,7 @@ class TaskFlowVisualizer:
         sessions.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
         return sessions[:limit]
 
-    def _build_flow_graph(self, execution_data: Dict[str, Any]) -> Tuple[List[FlowNode], List[FlowEdge]]:
+    def _build_flow_graph(self, execution_data: dict[str, Any]) -> tuple[list[FlowNode], list[FlowEdge]]:
         """Build flow graph from execution data."""
         nodes = []
         edges = []
@@ -292,8 +290,8 @@ class TaskFlowVisualizer:
 
         return nodes, edges
 
-    def _generate_graphviz_flow(self, nodes: List[FlowNode],
-                               edges: List[FlowEdge], session_id: str) -> str:
+    def _generate_graphviz_flow(self, nodes: list[FlowNode],
+                               edges: list[FlowEdge], session_id: str) -> str:
         """Generate GraphViz flow visualization."""
         dot = Digraph(comment=f'Workflow Flow - {session_id}')
         dot.attr(rankdir='TB', size='12,8')
@@ -314,8 +312,10 @@ class TaskFlowVisualizer:
 
             # Add metrics to label
             if node.duration:
-                label += ".1f"            if node.confidence:
-                label += ".2f"            if node.success is not None:
+                label += ".1f"
+            if node.confidence:
+                label += ".2f"
+            if node.success is not None:
                 label += f"\nSuccess: {node.success}"
 
             dot.node(node.id, label, **style)
@@ -330,7 +330,7 @@ class TaskFlowVisualizer:
 
         return str(output_path.with_suffix('.png'))
 
-    def _aggregate_workflow_patterns(self, sessions: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _aggregate_workflow_patterns(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
         """Aggregate workflow patterns across multiple sessions."""
         patterns = {
             "common_stages": {},
@@ -364,7 +364,7 @@ class TaskFlowVisualizer:
                     patterns["decision_patterns"].get("confidence_scores", []) + [confidence]
 
         # Calculate averages
-        for pattern_type, pattern_data in patterns.items():
+        for _pattern_type, pattern_data in patterns.items():
             if isinstance(pattern_data, dict):
                 for key, values in pattern_data.items():
                     if isinstance(values, list) and values:
@@ -372,7 +372,7 @@ class TaskFlowVisualizer:
 
         return patterns
 
-    def _generate_pattern_visualization(self, pattern_data: Dict[str, Any], agent_name: str) -> str:
+    def _generate_pattern_visualization(self, pattern_data: dict[str, Any], agent_name: str) -> str:
         """Generate workflow pattern visualization."""
         fig = make_subplots(
             rows=2, cols=2,
@@ -403,7 +403,7 @@ class TaskFlowVisualizer:
         success_rate = sum(pattern_data["success_rates"]["overall"]) / len(pattern_data["success_rates"]["overall"])
         fig.add_trace(
             go.Scatter(x=["Current"], y=[success_rate], mode="markers",
-                      marker=dict(size=20, color="green"), name="Success Rate"),
+                      marker={"size": 20, "color": "green"}, name="Success Rate"),
             row=2, col=1
         )
 
@@ -421,7 +421,7 @@ class TaskFlowVisualizer:
 
         return str(output_path)
 
-    def _extract_ontology_navigation(self, execution_data: Dict[str, Any]) -> List[str]:
+    def _extract_ontology_navigation(self, execution_data: dict[str, Any]) -> list[str]:
         """Extract ontology navigation path from execution data."""
         navigation_path = []
 
@@ -443,7 +443,7 @@ class TaskFlowVisualizer:
 
         return unique_path
 
-    def _generate_navigation_visualization(self, navigation_path: List[str], session_id: str) -> str:
+    def _generate_navigation_visualization(self, navigation_path: list[str], session_id: str) -> str:
         """Generate ontology navigation visualization."""
         if not navigation_path:
             return ""
@@ -456,7 +456,7 @@ class TaskFlowVisualizer:
             fig.add_trace(go.Scatter(
                 x=[i], y=[0],
                 mode='markers+text',
-                marker=dict(size=30, color=i, colorscale='Viridis'),
+                marker={"size": 30, "color": i, "colorscale": 'Viridis'},
                 text=[entity],
                 textposition="bottom center",
                 name=entity,
@@ -469,14 +469,14 @@ class TaskFlowVisualizer:
                 fig.add_trace(go.Scatter(
                     x=[i, i+1], y=[0, 0],
                     mode='lines',
-                    line=dict(width=3, color='gray'),
+                    line={"width": 3, "color": 'gray'},
                     showlegend=False
                 ))
 
         fig.update_layout(
             title=f"Ontology Navigation Path - {session_id}",
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
             height=400
         )
 
@@ -485,7 +485,7 @@ class TaskFlowVisualizer:
 
         return str(output_path)
 
-    def _build_decision_flow(self, decisions: List[Dict[str, Any]]) -> Tuple[List[FlowNode], List[FlowEdge]]:
+    def _build_decision_flow(self, decisions: list[dict[str, Any]]) -> tuple[list[FlowNode], list[FlowEdge]]:
         """Build decision flow graph."""
         nodes = []
         edges = []
@@ -544,8 +544,8 @@ class TaskFlowVisualizer:
 
         return nodes, edges
 
-    def _generate_decision_diagram(self, nodes: List[FlowNode],
-                                  edges: List[FlowEdge], session_id: str) -> str:
+    def _generate_decision_diagram(self, nodes: list[FlowNode],
+                                  edges: list[FlowEdge], session_id: str) -> str:
         """Generate decision flow diagram."""
         dot = Digraph(comment=f'Decision Flow - {session_id}')
         dot.attr(rankdir='TB')
@@ -572,7 +572,7 @@ class TaskFlowVisualizer:
 
         return str(output_path.with_suffix('.png'))
 
-    def _create_performance_timeline(self, execution_data: Dict[str, Any]) -> str:
+    def _create_performance_timeline(self, execution_data: dict[str, Any]) -> str:
         """Create performance timeline for dashboard."""
         # Extract timing data from execution
         execution = execution_data.get("execution", {})
@@ -597,7 +597,7 @@ class TaskFlowVisualizer:
 
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
-    def _generate_interactive_dashboard(self, execution_data: Dict[str, Any],
+    def _generate_interactive_dashboard(self, execution_data: dict[str, Any],
                                       workflow_flow: str, ontology_nav: str,
                                       decision_flow: str, performance_timeline: str) -> str:
         """Generate interactive flow dashboard."""

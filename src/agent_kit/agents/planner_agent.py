@@ -1,12 +1,16 @@
 # src/agent_kit/agents/planner_agent.py
+
 from agents import Agent as SDKAgent
+
 from agent_kit.ontology.loader import OntologyLoader
-from typing import List
+
 
 class PlannerAgent(SDKAgent):
     """An agent that creates a plan to achieve a high-level goal."""
 
-    def __init__(self, name: str, ontology_path: str, tools: List = [], **kwargs):
+    def __init__(self, name: str, ontology_path: str, tools: list = None, **kwargs):
+        if tools is None:
+            tools = []
         self.ontology = OntologyLoader(ontology_path).load()
         instructions = self._generate_instructions()
         super().__init__(name=name, instructions=instructions, tools=tools, **kwargs)
@@ -20,7 +24,7 @@ class PlannerAgent(SDKAgent):
             "to construct a plan."
         )
 
-    def create_plan(self, goal: str) -> List[dict]:
+    def create_plan(self, goal: str) -> list[dict]:
         """Creates a plan to achieve the given goal by querying the ontology."""
         sparql = """
             PREFIX : <http://agent_kit.io/business#>
@@ -33,9 +37,9 @@ class PlannerAgent(SDKAgent):
                 ?capability rdfs:label ?capabilityName .
             }
         """
-        
+
         results = self.ontology.query(sparql)
-        
+
         plan = []
         for row in results:
             agent_name = str(row.agentName).lower()

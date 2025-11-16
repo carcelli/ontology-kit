@@ -15,18 +15,14 @@ The dashboard combines static visualizations (saved as HTML) with
 interactive exploration capabilities.
 """
 
-import json
-import os
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
 
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import networkx as nx
-from rdflib import Graph, URIRef, Literal
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from agent_kit.data_collection import PerformanceAnalytics
 from agent_kit.ontology.loader import OntologyLoader
@@ -85,7 +81,7 @@ class InteractiveDashboard:
 
         return str(dashboard_path)
 
-    def generate_performance_focused_dashboard(self, agent_name: Optional[str] = None) -> str:
+    def generate_performance_focused_dashboard(self, agent_name: str | None = None) -> str:
         """
         Generate dashboard focused on agent performance metrics.
 
@@ -120,8 +116,6 @@ class InteractiveDashboard:
     def _create_ontology_graph(self) -> str:
         """Create interactive 3D ontology graph visualization."""
         # Extract nodes and edges from ontology
-        nodes = []
-        edges = []
         node_types = {}
 
         # Query for all triples
@@ -192,7 +186,7 @@ class InteractiveDashboard:
         edge_trace = go.Scatter3d(
             x=edge_x, y=edge_y, z=edge_z,
             mode='lines',
-            line=dict(width=2, color='#888'),
+            line={"width": 2, "color": '#888'},
             hoverinfo='text',
             text=edge_text * 3,  # Repeat for each segment
             showlegend=False
@@ -202,15 +196,15 @@ class InteractiveDashboard:
         node_trace = go.Scatter3d(
             x=node_x, y=node_y, z=node_z,
             mode='markers+text',
-            marker=dict(
-                size=8,
-                color=node_colors,
-                colorscale='Viridis',
-                showscale=True,
-                colorbar=dict(title="Node Type")
-            ),
+            marker={
+                "size": 8,
+                "color": node_colors,
+                "colorscale": 'Viridis',
+                "showscale": True,
+                "colorbar": {"title": "Node Type"}
+            },
             text=node_labels,
-            hovertext=[f"{label}<br>Type: {node_types.get(node, 'Concept')}" for node, label in zip(G.nodes(), node_labels)],
+            hovertext=[f"{label}<br>Type: {node_types.get(node, 'Concept')}" for node, label in zip(G.nodes(), node_labels, strict=False)],
             textposition="top center",
             showlegend=False
         )
@@ -220,18 +214,18 @@ class InteractiveDashboard:
 
         fig.update_layout(
             title="Ontology Relationship Graph (3D)",
-            scene=dict(
-                xaxis=dict(showbackground=False),
-                yaxis=dict(showbackground=False),
-                zaxis=dict(showbackground=False),
-            ),
-            margin=dict(l=0, r=0, b=0, t=40),
+            scene={
+                "xaxis": {"showbackground": False},
+                "yaxis": {"showbackground": False},
+                "zaxis": {"showbackground": False},
+            },
+            margin={"l": 0, "r": 0, "b": 0, "t": 40},
             height=600
         )
 
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
-    def _create_performance_dashboard(self, performance_data: Dict[str, Any]) -> str:
+    def _create_performance_dashboard(self, performance_data: dict[str, Any]) -> str:
         """Create performance metrics dashboard."""
         if "error" in performance_data:
             return f"<div class='alert alert-warning'>No performance data available: {performance_data['error']}</div>"
@@ -327,9 +321,9 @@ class InteractiveDashboard:
 
         fig.update_layout(
             title="Workflow Stage Analysis",
-            xaxis=dict(title="Workflow Stage"),
-            yaxis=dict(title="Duration (seconds)", side="left"),
-            yaxis2=dict(title="Success Rate", side="right", overlaying="y"),
+            xaxis={"title": "Workflow Stage"},
+            yaxis={"title": "Duration (seconds)", "side": "left"},
+            yaxis2={"title": "Success Rate", "side": "right", "overlaying": "y"},
             height=400
         )
 
@@ -362,7 +356,7 @@ class InteractiveDashboard:
 
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
-    def _create_performance_timeline(self, performance_data: Dict[str, Any]) -> str:
+    def _create_performance_timeline(self, performance_data: dict[str, Any]) -> str:
         """Create performance timeline visualization."""
         # Sample timeline data
         dates = pd.date_range(start=datetime.now() - timedelta(days=7), periods=7, freq='D')
@@ -375,7 +369,7 @@ class InteractiveDashboard:
             y=success_rates,
             mode='lines+markers',
             name='Success Rate',
-            line=dict(color='green', width=3)
+            line={"color": 'green', "width": 3}
         ))
 
         fig.update_layout(
@@ -387,7 +381,7 @@ class InteractiveDashboard:
 
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
-    def _create_confidence_distribution(self, performance_data: Dict[str, Any]) -> str:
+    def _create_confidence_distribution(self, performance_data: dict[str, Any]) -> str:
         """Create confidence score distribution."""
         # Sample confidence data
         confidence_scores = [0.95, 0.88, 0.72, 0.91, 0.85, 0.78, 0.92, 0.67, 0.89, 0.94]
@@ -609,7 +603,7 @@ class InteractiveDashboard:
     def _create_performance_dashboard_html(self, timeline_chart: str,
                                          confidence_chart: str,
                                          bottleneck_chart: str,
-                                         agent_name: Optional[str]) -> str:
+                                         agent_name: str | None) -> str:
         """Create performance-focused dashboard HTML."""
         agent_title = f" - {agent_name}" if agent_name else " - All Agents"
 
@@ -734,7 +728,7 @@ def generate_full_dashboard(ontology_path: str = "assets/ontologies/core.ttl",
     return dashboard.generate_full_dashboard(days)
 
 
-def generate_performance_dashboard(agent_name: Optional[str] = None,
+def generate_performance_dashboard(agent_name: str | None = None,
                                  ontology_path: str = "assets/ontologies/core.ttl",
                                  data_dir: str = "outputs/agent_data") -> str:
     """Generate performance-focused dashboard."""

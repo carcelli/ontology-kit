@@ -10,14 +10,14 @@ from __future__ import annotations
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
 # --- mock job store (swap with Redis/Celery/K8s) ---
-MOCK_JOB_DB: Dict[str, Dict[str, Any]] = {}
+MOCK_JOB_DB: dict[str, dict[str, Any]] = {}
 
 
 # ---------------- Pydantic Schemas ----------------
@@ -25,7 +25,7 @@ class ModelTrainingInput(BaseModel):
     """Input schema for model training."""
 
     dataset_uri: str = Field(..., description='URI of ml:Dataset for training')
-    hyperparameters: Dict[str, Any] = Field(default_factory=dict)
+    hyperparameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class JobStatusInput(BaseModel):
@@ -43,7 +43,7 @@ class CrossValidationInput(BaseModel):
 
 
 # -------------- Tool Implementations --------------
-def train_model(input_data: ModelTrainingInput) -> Dict[str, Any]:
+def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
     """
     ASYNC: schedule training, return job_id immediately.
 
@@ -66,7 +66,7 @@ def train_model(input_data: ModelTrainingInput) -> Dict[str, Any]:
     return {'status': 'SCHEDULED', 'job_id': job_id, 'message': 'Use check_job_status to monitor.'}
 
 
-def run_cross_validation(input_data: CrossValidationInput) -> Dict[str, Any]:
+def run_cross_validation(input_data: CrossValidationInput) -> dict[str, Any]:
     """
     ASYNC: schedule cross-validation, return job_id immediately.
 
@@ -89,7 +89,7 @@ def run_cross_validation(input_data: CrossValidationInput) -> Dict[str, Any]:
     return {'status': 'SCHEDULED', 'job_id': job_id, 'message': 'Use check_job_status to monitor.'}
 
 
-def _finalize_job(job: Dict[str, Any]) -> Dict[str, Any]:
+def _finalize_job(job: dict[str, Any]) -> dict[str, Any]:
     """Helper to finalize job and return completion payload."""
     job['status'] = 'COMPLETED'
     if job['type'] == 'TRAIN':
@@ -108,7 +108,7 @@ def _finalize_job(job: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def advance_mock_jobs(now: Optional[float] = None) -> None:
+def advance_mock_jobs(now: float | None = None) -> None:
     """
     Dev helper: advance job states deterministically. Call from tests or a cron.
 
@@ -127,7 +127,7 @@ def advance_mock_jobs(now: Optional[float] = None) -> None:
                 job.update(_finalize_job(job))
 
 
-def check_job_status(input_data: JobStatusInput) -> Dict[str, Any]:
+def check_job_status(input_data: JobStatusInput) -> dict[str, Any]:
     """
     Poll job state. In prod, your worker updates real status/metrics.
 
@@ -165,12 +165,12 @@ class LeverageAnalysisInput(BaseModel):
     actionable_terms: list[str] = Field(
         default_factory=list, description='Terms that can be intervened upon'
     )
-    ontology_path: Optional[str] = Field(
+    ontology_path: str | None = Field(
         None, description='Optional ontology path for graph structure analysis'
     )
 
 
-def analyze_leverage(input_data: LeverageAnalysisInput) -> Dict[str, Any]:
+def analyze_leverage(input_data: LeverageAnalysisInput) -> dict[str, Any]:
     """
     Analyze high-leverage intervention points using t-SNE dimensionality reduction.
 
@@ -219,7 +219,7 @@ def analyze_leverage(input_data: LeverageAnalysisInput) -> Dict[str, Any]:
 # ------------ OpenAI tool spec (Pydantic → JSON) ------------
 def pydantic_to_openai_tool(
     name: str, description: str, schema_model: type[BaseModel]
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert Pydantic schema to OpenAI function tool spec."""
     return {
         'type': 'function',
@@ -273,14 +273,14 @@ ML_TOOL_REGISTRY = {
 class ClusteringInput(BaseModel):
     """Input schema for clustering analysis."""
 
-    data: List[List[float]] = Field(..., description='2D array of data points to cluster')
+    data: list[list[float]] = Field(..., description='2D array of data points to cluster')
     eps: float = Field(default=0.5, gt=0.0, description='Maximum distance between points in cluster (DBSCAN)')
     min_samples: int = Field(default=5, ge=1, description='Minimum points to form dense region (DBSCAN)')
     algorithm: str = Field(default='DBSCAN', description='Clustering algorithm: DBSCAN, KMeans, or Hierarchical')
-    n_clusters: Optional[int] = Field(None, description='Number of clusters (for KMeans/Hierarchical)')
+    n_clusters: int | None = Field(None, description='Number of clusters (for KMeans/Hierarchical)')
 
 
-def cluster_data(input_data: ClusteringInput) -> Dict[str, Any]:
+def cluster_data(input_data: ClusteringInput) -> dict[str, Any]:
     """
     Cluster data points using DBSCAN, KMeans, or Hierarchical clustering.
 
@@ -303,7 +303,7 @@ def cluster_data(input_data: ClusteringInput) -> Dict[str, Any]:
 
     try:
         import numpy as np
-        from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
+        from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
 
         X = np.array(input_data.data)
 
@@ -389,7 +389,10 @@ except ImportError:
 
 # Import and merge interactive visualization tools
 try:
-    from agent_kit.tools.interactive_viz import generate_interactive_leverage_viz, INTERACTIVE_VIZ_TOOL_SPEC
+    from agent_kit.tools.interactive_viz import (
+        INTERACTIVE_VIZ_TOOL_SPEC,
+        generate_interactive_leverage_viz,
+    )
 
     ML_TOOL_REGISTRY['generate_interactive_leverage_viz'] = {
         'function': generate_interactive_leverage_viz,

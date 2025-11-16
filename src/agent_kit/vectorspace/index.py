@@ -10,9 +10,9 @@ import numpy as np
 class VectorIndex:
     """
     FAISS-based vector index for efficient similarity search.
-    
+
     Supports add, query, save/load operations with metadata tracking.
-    
+
     Example:
         >>> index = VectorIndex(dim=384)
         >>> index.add(embeddings, ids=list(range(100)))
@@ -24,7 +24,7 @@ class VectorIndex:
     def __init__(self, dim: int, metric: str = 'cosine') -> None:
         """
         Initialize vector index.
-        
+
         Args:
             dim: Dimensionality of vectors
             metric: 'cosine' or 'euclidean'
@@ -57,7 +57,7 @@ class VectorIndex:
     ) -> None:
         """
         Add vectors to the index.
-        
+
         Args:
             vectors: 2D numpy array of shape (N, dim)
             ids: Optional list of IDs; auto-generated if None
@@ -90,7 +90,7 @@ class VectorIndex:
 
         # Store metadata
         if metadata is not None:
-            for custom_id, meta in zip(ids, metadata):
+            for custom_id, meta in zip(ids, metadata, strict=False):
                 self.metadata[custom_id] = meta
 
     def query(
@@ -100,11 +100,11 @@ class VectorIndex:
     ) -> list[dict[str, Any]]:
         """
         Find k nearest neighbors.
-        
+
         Args:
             vector: 1D or 2D query vector(s)
             k: Number of neighbors to return
-            
+
         Returns:
             List of dicts with 'id', 'distance', and optional 'metadata'
         """
@@ -121,7 +121,7 @@ class VectorIndex:
 
         # Format results
         results = []
-        for dist, faiss_idx in zip(distances[0], indices[0]):
+        for dist, faiss_idx in zip(distances[0], indices[0], strict=False):
             # Skip invalid indices (happens with empty index or k > size)
             if faiss_idx == -1:
                 continue

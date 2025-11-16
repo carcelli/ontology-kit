@@ -1,13 +1,11 @@
 """Unit tests for the BusinessOrchestrator."""
 
-import asyncio
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pytest
 
 from agent_kit.agents.orchestrator import BusinessOrchestrator
-from agent_kit.agents.ontology_agent import OntologyAgent
 
 
 class StubSDKAgent:
@@ -27,7 +25,7 @@ class StubRunner:
     def __init__(self) -> None:
         self.calls = []
 
-    async def run(self, agent: Any, input: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def run(self, agent: Any, input: dict[str, Any], context: dict[str, Any] | None = None) -> dict[str, Any]:
         self.calls.append(agent)
         goal = input.get('goal', '')
         return {'final_output': f"{agent} → {goal}"}

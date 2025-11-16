@@ -16,10 +16,9 @@ import json
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import networkx as nx
-import numpy as np
 from pydantic import BaseModel, Field
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -30,11 +29,11 @@ logger = logging.getLogger(__name__)
 class SemanticGraphInput(BaseModel):
     """Input schema for building semantic graph."""
 
-    terms: List[str] = Field(..., description='Domain concepts/entities to analyze')
+    terms: list[str] = Field(..., description='Domain concepts/entities to analyze')
     similarity_threshold: float = Field(
         default=0.7, ge=0.0, le=1.0, description='Minimum cosine similarity for edges'
     )
-    corpus_path: Optional[str] = Field(
+    corpus_path: str | None = Field(
         None, description='Optional text corpus to extract relations (drives, depends_on, etc.)'
     )
     output_path: str = Field(
@@ -47,7 +46,7 @@ class TargetLeverageInput(BaseModel):
 
     graph_path: str = Field(..., description='Path to semantic graph JSON')
     target: str = Field(..., description='Target node/KPI (e.g., Revenue)')
-    model_shap_path: Optional[str] = Field(
+    model_shap_path: str | None = Field(
         None, description='Optional path to SHAP values JSON for model effects'
     )
     top_k: int = Field(default=5, ge=1, le=50, description='Number of top levers to return')
@@ -59,14 +58,14 @@ class InterventionRecommendationInput(BaseModel):
     graph_path: str = Field(..., description='Path to semantic graph JSON')
     node: str = Field(..., description='Lever node to intervene on')
     target: str = Field(..., description='Target node/KPI')
-    historical_data_path: Optional[str] = Field(
+    historical_data_path: str | None = Field(
         None, description='Optional historical experiment data for effect size estimates'
     )
     top_paths: int = Field(default=3, ge=1, le=10, description='Number of paths to analyze')
 
 
 # -------------- Tool Implementations --------------
-def build_semantic_graph(input_data: SemanticGraphInput) -> Dict[str, Any]:
+def build_semantic_graph(input_data: SemanticGraphInput) -> dict[str, Any]:
     """
     Build weighted semantic graph from term embeddings and optional text relations.
 
@@ -194,7 +193,7 @@ def build_semantic_graph(input_data: SemanticGraphInput) -> Dict[str, Any]:
         return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
 
 
-def compute_target_leverage(input_data: TargetLeverageInput) -> Dict[str, Any]:
+def compute_target_leverage(input_data: TargetLeverageInput) -> dict[str, Any]:
     """
     Compute targeted leverage scores for nodes with respect to a specific KPI.
 
@@ -212,7 +211,7 @@ def compute_target_leverage(input_data: TargetLeverageInput) -> Dict[str, Any]:
 
     try:
         # Load graph
-        with open(input_data.graph_path, 'r') as f:
+        with open(input_data.graph_path) as f:
             graph_data = json.load(f)
 
         G = nx.Graph()
@@ -235,7 +234,7 @@ def compute_target_leverage(input_data: TargetLeverageInput) -> Dict[str, Any]:
         # Load SHAP values if provided
         shap_values = {}
         if input_data.model_shap_path and Path(input_data.model_shap_path).exists():
-            with open(input_data.model_shap_path, 'r') as f:
+            with open(input_data.model_shap_path) as f:
                 shap_data = json.load(f)
                 shap_values = shap_data.get(input_data.target, {})
 
@@ -290,7 +289,7 @@ def compute_target_leverage(input_data: TargetLeverageInput) -> Dict[str, Any]:
         return {'status': 'ERROR', 'job_id': job_id, 'message': str(e)}
 
 
-def recommend_interventions(input_data: InterventionRecommendationInput) -> Dict[str, Any]:
+def recommend_interventions(input_data: InterventionRecommendationInput) -> dict[str, Any]:
     """
     Generate experiment recommendations for a high-leverage node.
 
@@ -311,7 +310,7 @@ def recommend_interventions(input_data: InterventionRecommendationInput) -> Dict
 
     try:
         # Load graph
-        with open(input_data.graph_path, 'r') as f:
+        with open(input_data.graph_path) as f:
             graph_data = json.load(f)
 
         G = nx.Graph()
@@ -399,8 +398,8 @@ def recommend_interventions(input_data: InterventionRecommendationInput) -> Dict
 
 # -------------- Helper Functions --------------
 def _extract_text_relations(
-    corpus_path: str, terms: List[str]
-) -> List[Tuple[str, str, str]]:
+    corpus_path: str, terms: list[str]
+) -> list[tuple[str, str, str]]:
     """
     Extract explicit relations (drives, depends_on, precedes) from text corpus.
 
@@ -408,7 +407,7 @@ def _extract_text_relations(
     """
     relations = []
     try:
-        with open(corpus_path, 'r') as f:
+        with open(corpus_path) as f:
             text = f.read().lower()
 
         relation_patterns = {
@@ -469,7 +468,7 @@ def _compute_targeted_betweenness(G: nx.Graph, node: str, target: str) -> float:
 
 def _compute_path_strength(
     G: nx.Graph, node: str, target: str
-) -> Tuple[float, List[str]]:
+) -> tuple[float, list[str]]:
     """
     Compute path strength as sum of weighted paths from node to target.
 
@@ -547,7 +546,7 @@ def _estimate_duration(sample_size: int) -> str:
         return '6-8 weeks'
 
 
-def _identify_guardrails(node: str, intermediates: List[str]) -> List[str]:
+def _identify_guardrails(node: str, intermediates: list[str]) -> list[str]:
     """Identify guardrail metrics to monitor during experiment."""
     guardrails = [
         'Customer satisfaction score',
@@ -572,7 +571,7 @@ def _identify_guardrails(node: str, intermediates: List[str]) -> List[str]:
 # ------------ OpenAI tool spec generation ------------
 def pydantic_to_openai_tool(
     name: str, description: str, schema_model: type[BaseModel]
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Convert Pydantic schema to OpenAI function tool spec."""
     return {
         'type': 'function',

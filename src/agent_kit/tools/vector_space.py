@@ -1,9 +1,10 @@
 # src/agent_kit/tools/vector_space.py
+
+import numpy as np
 from agents import function_tool
+
 from agent_kit.vectorspace.embedder import Embedder
 from agent_kit.vectorspace.index import VectorIndex
-from typing import List, Dict
-import numpy as np
 
 embedder = Embedder()
 
@@ -14,19 +15,19 @@ dummy_vectors = np.random.rand(10, embedder.dimension)
 dummy_index.add(dummy_vectors)
 
 @function_tool
-def embed(text: str) -> List[float]:
+def embed(text: str) -> list[float]:
     """Embed a single text string."""
     embedding = embedder.embed(text)
     return embedding.tolist()
 
 @function_tool
-def embed_batch(texts: List[str]) -> List[List[float]]:
+def embed_batch(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts efficiently."""
     embeddings = embedder.embed_batch(texts)
     return embeddings.tolist()
 
 @function_tool
-def query_vector_index(query_text: str, k: int = 5) -> List[Dict]:
+def query_vector_index(query_text: str, k: int = 5) -> list[dict]:
     """Query the vector index for similar items."""
     query_vector = embedder.embed(query_text)
     results = dummy_index.query(query_vector, k=k)

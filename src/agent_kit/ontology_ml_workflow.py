@@ -17,12 +17,11 @@ Key Components:
 - Performance Analytics: Measuring success across different task types
 """
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-import json
-import os
 from pathlib import Path
+from typing import Any
 
 from agent_kit.ontology.loader import OntologyLoader
 from agent_kit.tools.hyperdim_viz import generate_hyperdim_viz
@@ -33,10 +32,10 @@ class WorkflowStage:
     """Represents a stage in the ontology-ML workflow."""
     name: str
     description: str
-    ontology_entities: List[str]
-    required_tools: List[str]
-    expected_outputs: List[str]
-    success_metrics: List[str]
+    ontology_entities: list[str]
+    required_tools: list[str]
+    expected_outputs: list[str]
+    success_metrics: list[str]
     duration_estimate: float  # in seconds
 
 
@@ -49,9 +48,9 @@ class AgentDecision:
     ontology_query: str
     decision_made: str
     confidence_score: float
-    outcome: Optional[str] = None
-    execution_time: Optional[float] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    outcome: str | None = None
+    execution_time: float | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -59,11 +58,11 @@ class WorkflowExecution:
     """Complete execution record of an ontology-ML workflow."""
     workflow_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    stages: List[WorkflowStage] = field(default_factory=list)
-    decisions: List[AgentDecision] = field(default_factory=list)
-    final_outcome: Optional[str] = None
-    performance_metrics: Dict[str, float] = field(default_factory=dict)
+    end_time: datetime | None = None
+    stages: list[WorkflowStage] = field(default_factory=list)
+    decisions: list[AgentDecision] = field(default_factory=list)
+    final_outcome: str | None = None
+    performance_metrics: dict[str, float] = field(default_factory=dict)
 
 
 class OntologyMLWorkflowAnalyzer:
@@ -79,12 +78,12 @@ class OntologyMLWorkflowAnalyzer:
 
     def __init__(self, ontology_path: str = "assets/ontologies/core.ttl"):
         self.ontology = OntologyLoader(ontology_path).load()
-        self.workflows: Dict[str, WorkflowExecution] = {}
-        self.decision_log: List[AgentDecision] = []
+        self.workflows: dict[str, WorkflowExecution] = {}
+        self.decision_log: list[AgentDecision] = []
         self.data_dir = Path("outputs/workflow_data")
         self.data_dir.mkdir(exist_ok=True)
 
-    def define_workflow_stages(self) -> List[WorkflowStage]:
+    def define_workflow_stages(self) -> list[WorkflowStage]:
         """
         Define the standard stages of ontology-driven ML workflows.
 
@@ -197,7 +196,7 @@ class OntologyMLWorkflowAnalyzer:
             # Save decision to file for persistence
             self._save_decision(decision)
 
-    def complete_workflow(self, workflow_id: str, outcome: str, metrics: Dict[str, float]) -> None:
+    def complete_workflow(self, workflow_id: str, outcome: str, metrics: dict[str, float]) -> None:
         """
         Mark a workflow as completed and record final metrics.
 
@@ -252,7 +251,7 @@ class OntologyMLWorkflowAnalyzer:
             output_file=output_file
         )
 
-    def analyze_agent_performance(self, agent_name: Optional[str] = None) -> Dict[str, Any]:
+    def analyze_agent_performance(self, agent_name: str | None = None) -> dict[str, Any]:
         """
         Analyze agent performance across all tracked workflows.
 
@@ -304,7 +303,7 @@ class OntologyMLWorkflowAnalyzer:
             "recent_trends": self._calculate_recent_trends(decisions)
         }
 
-    def _calculate_recent_trends(self, decisions: List[AgentDecision]) -> Dict[str, Any]:
+    def _calculate_recent_trends(self, decisions: list[AgentDecision]) -> dict[str, Any]:
         """Calculate performance trends over recent decisions."""
         if len(decisions) < 10:
             return {"insufficient_data": True}

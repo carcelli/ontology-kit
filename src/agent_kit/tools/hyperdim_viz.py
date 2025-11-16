@@ -21,7 +21,6 @@ Usage (direct call):
     )
 """
 
-import os
 from pathlib import Path
 from typing import Annotated
 
@@ -135,7 +134,7 @@ def _extract_terms(ontology_path: str | None, terms: list[str] | None, max_terms
     try:
         graph.parse(str(ontology_file), format='turtle')
     except Exception as e:
-        raise ValueError(f"Failed to parse ontology {ontology_path}: {e}")
+        raise ValueError(f"Failed to parse ontology {ontology_path}: {e}") from e
 
     extracted = set()
     for subj, pred, obj in graph:
@@ -213,7 +212,7 @@ def _plot_embeddings(embed_low_d: np.ndarray, terms: list[str], n_components: in
     try:
         plt.savefig(str(output_path), dpi=150, bbox_inches='tight')
     except Exception as e:
-        raise ValueError(f"Failed to save visualization to {output_file}: {e}")
+        raise ValueError(f"Failed to save visualization to {output_file}: {e}") from e
     finally:
         plt.close(fig)  # Free memory
 
