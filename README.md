@@ -138,6 +138,12 @@ agent_kit/
 
 ---
 
+## 🧭 Engineering Outline
+
+Want the short version of how everything fits together? Read [`docs/guides/ENGINEERING_OUTLINE.md`](docs/guides/ENGINEERING_OUTLINE.md) for a working breakdown of the active code paths, workflows, demos, and extension playbooks that engineers rely on.
+
+---
+
 ## 🤖 Agent Patterns
 
 ### 1. **Custom BaseAgent** (Ontology-Driven)
