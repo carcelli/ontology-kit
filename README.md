@@ -35,9 +35,7 @@
 │  • Vercel Serverless Deployment                        │
 └─────────────────────────────────────────────────────────┘
 
-
-📂 ontology-kit/
-
+# 📂 ontology-kit/
 📖 AI_DEVELOPMENT_GUIDE.md
 📖 CONTRIBUTING.md
 📖 GROK_INTEGRATION_SUMMARY.md
