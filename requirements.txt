@@ -51,3 +51,7 @@ owlready2>=0.45
 
 # Enhanced ML
 transformers>=4.35.0
+
+# Interactive Computing
+notebook>=7.0.0
+networkx>=3.1

@@ -35,7 +35,14 @@
 │  • Vercel Serverless Deployment                        │
 └─────────────────────────────────────────────────────────┘
 
+## Current project status
+- Imports fail until dependencies like `rdflib`, `numpy`, and `scikit-learn` are installed; `PYTHONPATH=src python3 -c "import agent_kit"` currently errors at `src/agent_kit/ontology/loader.py:8`.
+- SPARQL/regex filters interpolate user/task text directly, risking malformed queries or injection in `src/agent_kit/ontology_extensions/ontology_mcp.py:112` and `src/agent_kit/ontology_extensions/ontology_memory.py:276`.
+- Embedding caches are unbounded dictionaries that will grow without limit in long sessions (`src/agent_kit/ontology_extensions/ontology_memory.py:74`, `src/agent_kit/ontology_extensions/ontology_mcp.py:67`), and OntologyLoader’s cache uses FIFO with inaccurate stats (`src/agent_kit/ontology/loader.py:100`).
+- Tests haven’t been run here due to missing dependencies; coverage gate is 90% per `pyproject.toml`, so new features need accompanying tests once deps are installed.
+
 # 📂 ontology-kit/
+📖 AGENT_NAVIGATION_GUIDE.md
 📖 AI_DEVELOPMENT_GUIDE.md
 📖 CONTRIBUTING.md
 📖 GROK_INTEGRATION_SUMMARY.md
