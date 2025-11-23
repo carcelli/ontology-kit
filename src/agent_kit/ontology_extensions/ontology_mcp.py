@@ -8,7 +8,6 @@ which MCP tools are relevant based on semantic reasoning and business rules.
 from __future__ import annotations
 
 import hashlib
-from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -157,14 +156,14 @@ class OntologyMCPToolFilter:
     def _get_embedding(self, text: str) -> np.ndarray | None:
         """Get embedding for text with caching."""
         cache_key = hashlib.md5(text.encode()).hexdigest()
-        
+
         if cache_key in self._embedding_cache:
             return self._embedding_cache[cache_key]
-        
+
         embedder = self._get_embedder()
         if embedder is None:
             return None
-        
+
         try:
             embedding = embedder.embed(text)
             self._embedding_cache[cache_key] = embedding
@@ -176,18 +175,18 @@ class OntologyMCPToolFilter:
         """Extract ontology concepts mentioned in text."""
         if not self.ontology_loader:
             return []
-        
+
         try:
             text_lower = text.lower()
             concepts = []
-            
+
             # Get all classes from ontology
             classes = self.ontology_loader.get_classes()
             for cls_uri in classes:
                 local_name = cls_uri.split('#')[-1] if '#' in cls_uri else cls_uri.split('/')[-1]
                 if local_name.lower() in text_lower:
                     concepts.append(local_name)
-            
+
             return concepts[:10]
         except Exception:
             return []
@@ -222,28 +221,28 @@ class OntologyMCPToolFilter:
             context_parts.append(agent_context)
         if task_context:
             context_parts.append(task_context)
-        
+
         if not context_parts:
             return True  # No context to match against
-        
+
         context_text = ' '.join(context_parts)
         tool_text = f"{tool_name} {tool_description}"
 
         # Use semantic similarity if embedder available
         tool_embedding = self._get_embedding(tool_text)
         context_embedding = self._get_embedding(context_text)
-        
+
         if tool_embedding is not None and context_embedding is not None:
             similarity = float(cosine_similarity([tool_embedding], [context_embedding])[0][0])
-            
+
             # Boost similarity if ontology concepts match
             tool_concepts = self._extract_ontology_concepts(tool_text)
             context_concepts = self._extract_ontology_concepts(context_text)
-            
+
             concept_overlap = len(set(tool_concepts) & set(context_concepts))
             if concept_overlap > 0:
                 similarity += 0.2 * min(concept_overlap / max(len(tool_concepts), 1), 1.0)
-            
+
             return similarity >= similarity_threshold
 
         # Fallback to keyword matching
@@ -286,7 +285,7 @@ class OntologyMCPToolFilter:
 
         # Query ontology for tool capabilities
         tool_capabilities = set()
-        
+
         try:
             # Try to find tool in ontology and its capabilities
             sparql = f"""
@@ -339,14 +338,14 @@ class OntologyMCPToolFilter:
         # Score based on how many required capabilities match
         required_lower = {c.lower() for c in required_capabilities}
         matches = len(tool_capabilities & required_lower)
-        
+
         # Also check for partial matches (substring)
         for req_cap in required_capabilities:
             req_lower = req_cap.lower()
             for tool_cap in tool_capabilities:
                 if req_lower in tool_cap or tool_cap in req_lower:
                     matches += 0.5
-        
+
         # Normalize score
         score = min(matches / len(required_capabilities), 1.0) if required_capabilities else 1.0
         return score

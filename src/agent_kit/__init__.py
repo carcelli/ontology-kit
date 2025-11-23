@@ -15,8 +15,8 @@ from agent_kit.vectorspace import Embedder, VectorIndex
 # Ontology-enhanced SDK extensions
 from agent_kit.ontology_extensions import OntologyAgent, OntologyMemorySession, OntologyMCPToolFilter
 
-# Agent implementations
-from agent_kit.agents import OntologyAgent as BaseOntologyAgent, OntologyOrchestratorAgent
+# Base agent implementations
+from agent_kit.agents import BaseAgent, GrokAgent, GrokConfig
 
 __all__ = [
     # Core functionality
@@ -29,8 +29,9 @@ __all__ = [
     'OntologyMemorySession',
     'OntologyMCPToolFilter',
 
-    # Agent implementations
-    'BaseOntologyAgent',
-    'OntologyOrchestratorAgent',
+    # Base agent implementations
+    'BaseAgent',
+    'GrokAgent',
+    'GrokConfig',
 ]
 

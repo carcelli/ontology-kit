@@ -104,14 +104,14 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         """Get embedding for text with caching."""
         # Create cache key
         cache_key = hashlib.md5(text.encode()).hexdigest()
-        
+
         if cache_key in self._embedding_cache:
             return self._embedding_cache[cache_key]
-        
+
         embedder = self._get_embedder()
         if embedder is None:
             return None
-        
+
         try:
             embedding = embedder.embed(text)
             self._embedding_cache[cache_key] = embedding
@@ -123,13 +123,13 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         """Extract relevant ontology concepts from query."""
         if not self.ontology_loader:
             return []
-        
+
         try:
             # Query ontology for concepts mentioned in query
             # This is a simple implementation - can be enhanced with NLP
             query_lower = query.lower()
             concepts = []
-            
+
             # Get all classes from ontology
             classes = self.ontology_loader.get_classes()
             for cls_uri in classes:
@@ -137,7 +137,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                 local_name = cls_uri.split('#')[-1] if '#' in cls_uri else cls_uri.split('/')[-1]
                 if local_name.lower() in query_lower:
                     concepts.append(local_name)
-            
+
             return concepts[:10]  # Limit to top 10
         except Exception:
             return []
@@ -161,7 +161,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         """
         # Get more items than needed for better semantic filtering
         candidate_items = await self.get_items(limit=limit * 3)
-        
+
         if not candidate_items:
             return []
 
@@ -172,20 +172,20 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
 
         # Extract ontology concepts from query
         ontology_concepts = self._extract_ontology_concepts(query)
-        
+
         # Score items by semantic similarity
         scored_items = []
         for item in candidate_items:
             item_text = self._get_text_from_item(item)
             item_embedding = self._get_embedding(item_text)
-            
+
             if item_embedding is None:
                 scored_items.append((0.0, item))
                 continue
-            
+
             # Calculate cosine similarity
             similarity = float(cosine_similarity([query_embedding], [item_embedding])[0][0])
-            
+
             # Boost score if ontology concepts match
             ontology_boost = 0.0
             if ontology_concepts and self.ontology:
@@ -193,14 +193,14 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                 for concept in ontology_concepts:
                     if concept.lower() in item_text_lower:
                         ontology_boost += 0.1
-            
+
             final_score = similarity + ontology_boost
             scored_items.append((final_score, item))
 
         # Sort by score (descending) and return top items
         scored_items.sort(key=lambda x: x[0], reverse=True)
         top_items = [item for _, item in scored_items[:limit]]
-        
+
         # Add ontology metadata to results
         enhanced_items = []
         for item in top_items:
@@ -258,20 +258,20 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
 
         # Get candidate items
         candidate_items = await self.get_items(limit=limit * 3)
-        
+
         # Filter items by ontology concept relevance
         relevant_items = []
         concept_lower = [c.lower() for c in ontology_concepts]
-        
+
         for item in candidate_items:
             item_text = self._get_text_from_item(item).lower()
-            
+
             # Check if item text contains any ontology concept
             relevance_score = 0
             for concept in concept_lower:
                 if concept in item_text:
                     relevance_score += 1
-            
+
             # Also check for related concepts via ontology queries
             if self.ontology_loader:
                 try:
@@ -300,10 +300,10 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                             pass
                 except Exception:
                     pass
-            
+
             if relevance_score > 0:
                 relevant_items.append((relevance_score, item))
-        
+
         # Sort by relevance and return top items
         relevant_items.sort(key=lambda x: x[0], reverse=True)
         return [item for _, item in relevant_items[:limit]]
@@ -332,14 +332,14 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         if self.ontology and self.ontology_loader:
             # Extract ontology concepts from query
             concepts = self._extract_ontology_concepts(query)
-            
+
             # Extract concepts from context items
             context_text = ' '.join([self._get_text_from_item(item) for item in context_items])
             context_concepts = self._extract_ontology_concepts(context_text)
-            
+
             # Combine and deduplicate
             all_concepts = list(set(concepts + context_concepts))
-            
+
             # Find semantic relationships
             relationships = []
             if all_concepts and self.ontology_loader:
@@ -373,7 +373,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                             pass
                 except Exception:
                     pass
-            
+
             enrichment["ontology_concepts"] = all_concepts
             enrichment["semantic_relationships"] = relationships
         else:

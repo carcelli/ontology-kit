@@ -1,7 +1,7 @@
 # src/agent_kit/agents/ontology_agent.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from agents import Agent
 
@@ -10,7 +10,7 @@ from agent_kit.tools.business import optimize, predict
 from agent_kit.tools.github_tools import write_to_github
 
 if TYPE_CHECKING:
-    from agents.run_context import RunContextWrapper
+    pass
 
 # Ontology-driven tools registered with SDK decorators
 TOOL_REGISTRY = {

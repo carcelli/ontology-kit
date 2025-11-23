@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from agents import Agent, Runner, handoff
 
@@ -10,7 +10,7 @@ from agent_kit.agents.ontology_agent import OntologyAgent
 from agent_kit.agents.planner_agent import PlannerAgent
 
 if TYPE_CHECKING:
-    from agents.run_context import RunContextWrapper
+    pass
 
 
 class OntologyOrchestratorAgent(Agent):

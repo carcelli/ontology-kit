@@ -24,9 +24,9 @@ Usage (direct call):
 from pathlib import Path
 from typing import Annotated
 
-from agents import function_tool
 import matplotlib.pyplot as plt
 import numpy as np
+from agents import function_tool
 from rdflib import Graph
 from sklearn.manifold import TSNE
 

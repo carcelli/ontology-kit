@@ -14,7 +14,7 @@ from typing import Any
 import numpy as np
 from pydantic import BaseModel
 
-from agent_kit.agents.base import BaseAgent, GrokAgent, GrokConfig
+from agent_kit.agents.base import GrokAgent, GrokConfig
 from agent_kit.ontology.loader import OntologyLoader
 
 
@@ -62,14 +62,14 @@ class TradingRecommendation(BaseModel):
 class AlgoTradingAgent(GrokAgent):
     """
     Ontology-driven algorithmic trading agent with risk management.
-    
+
     Example:
         >>> loader = OntologyLoader('assets/ontologies/trading.ttl')
         >>> loader.load()
         >>> agent = AlgoTradingAgent(loader, portfolio_value=100000, strategy="MeanReversion")
         >>> recommendations = agent.generate_signals(assets, market_data)
     """
-    
+
     def __init__(
         self,
         ontology: OntologyLoader,
@@ -80,7 +80,7 @@ class AlgoTradingAgent(GrokAgent):
     ):
         """
         Initialize algo trading agent.
-        
+
         Args:
             ontology: Loaded ontology with trading.ttl
             portfolio_value: Current portfolio value in dollars
@@ -93,15 +93,15 @@ class AlgoTradingAgent(GrokAgent):
         self.strategy = strategy
         self.risk_rules = self._load_risk_rules()
         self.indicators = self._load_indicators()
-        
+
         # Portfolio state
         self.positions: dict[str, float] = {}  # ticker -> position size
         self.entry_prices: dict[str, float] = {}  # ticker -> entry price
         self.peak_portfolio_value = portfolio_value
-        
+
         # Generate ontology-driven instructions
         instructions = self._generate_trading_instructions()
-        
+
         super().__init__(
             name="AlgoTradingAgent",
             ontology=ontology,
@@ -109,13 +109,13 @@ class AlgoTradingAgent(GrokAgent):
             grok_config=grok_config or GrokConfig(),
             **kwargs
         )
-    
+
     def _load_risk_rules(self) -> dict[str, Any]:
         """Query ontology for risk rules associated with strategy."""
         sparql = f"""
             PREFIX trade: <http://agent-kit.com/ontology/trading#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            
+
             SELECT ?maxPos ?maxDD ?minSharpe ?stopLoss ?corrLimit
             WHERE {{
                 trade:{self.strategy} trade:enforcesRule ?rule .
@@ -136,7 +136,7 @@ class AlgoTradingAgent(GrokAgent):
                 "stop_loss_percent": 0.03,
                 "correlation_limit": 0.5
             }
-        
+
         row = results[0]
         return {
             "max_position_size": float(row.maxPos),
@@ -145,13 +145,13 @@ class AlgoTradingAgent(GrokAgent):
             "stop_loss_percent": float(row.stopLoss),
             "correlation_limit": float(row.corrLimit)
         }
-    
+
     def _load_indicators(self) -> list[str]:
         """Query ontology for indicators used by strategy."""
         sparql = f"""
             PREFIX trade: <http://agent-kit.com/ontology/trading#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            
+
             SELECT ?indicator
             WHERE {{
                 trade:{self.strategy} trade:usesIndicator ?ind .
@@ -160,13 +160,13 @@ class AlgoTradingAgent(GrokAgent):
         """
         results = list(self.ontology.graph.query(sparql))
         return [str(row.indicator) for row in results]
-    
+
     def _generate_trading_instructions(self) -> str:
         """Generate instructions from ontology."""
         sparql = """
             PREFIX trade: <http://agent-kit.com/ontology/trading#>
             PREFIX core: <http://agent-kit.com/ontology/core#>
-            
+
             SELECT ?instructions
             WHERE {
                 trade:AlgoTradingAgent core:hasInstructions ?instructions .
@@ -175,10 +175,10 @@ class AlgoTradingAgent(GrokAgent):
         results = list(self.ontology.graph.query(sparql))
         if results:
             return str(results[0].instructions)
-        
-        return """You are a quantitative trading system. 
+
+        return """You are a quantitative trading system.
 Analyze market data, generate signals, and manage risk."""
-    
+
     def calculate_position_size(
         self,
         expected_return: float,
@@ -187,33 +187,33 @@ Analyze market data, generate signals, and manage risk."""
     ) -> float:
         """
         Calculate risk-adjusted position size.
-        
+
         Uses volatility scaling: size = (target_return / volatility) * signal_strength
         """
         if volatility <= 0:
             return 0.0
-        
+
         # Target 10% annual return
         target_return = 0.10
-        
+
         # Size inversely proportional to volatility
         base_size = target_return / volatility
-        
+
         # Scale by signal strength
         position_size = base_size * signal_strength
-        
+
         # Cap at max position size from risk rules
         return min(position_size, self.risk_rules["max_position_size"])
-    
+
     def calculate_stop_loss(self, entry_price: float) -> float:
         """Calculate stop loss price based on risk rules."""
         stop_loss_percent = self.risk_rules["stop_loss_percent"]
         return entry_price * (1 - stop_loss_percent)
-    
+
     def calculate_take_profit(self, entry_price: float, expected_return: float) -> float:
         """Calculate take profit price based on expected return."""
         return entry_price * (1 + expected_return)
-    
+
     def calculate_portfolio_metrics(
         self,
         signals: list[TradingSignal],
@@ -221,34 +221,34 @@ Analyze market data, generate signals, and manage risk."""
     ) -> PortfolioMetrics:
         """
         Calculate portfolio-level risk metrics.
-        
+
         Args:
             signals: Current trading signals
             historical_returns: Dict of ticker -> list of historical returns
-        
+
         Returns:
             PortfolioMetrics with Sharpe, drawdown, correlation, etc.
         """
         # Current drawdown
         current_drawdown = 1 - (self.portfolio_value / self.peak_portfolio_value)
-        
+
         # Total exposure
         total_exposure = sum(sig.position_size for sig in signals)
-        
+
         # Calculate Sharpe ratio (stub - needs historical data)
         sharpe_ratio = 0.0
         if historical_returns:
             # Simplified Sharpe calculation
             # In production: use proper portfolio returns, risk-free rate
             pass  # TODO: Implement with real data
-        
+
         # Calculate VaR (95% confidence)
         var_95 = 0.0
         if historical_returns:
             # Simplified VaR
             # In production: use parametric or historical VaR
             pass  # TODO: Implement
-        
+
         # Calculate correlation matrix
         correlation_matrix = {}
         if historical_returns and len(historical_returns) > 1:
@@ -264,7 +264,7 @@ Analyze market data, generate signals, and manage risk."""
                         if len(returns1) > 1 and len(returns2) > 1:
                             corr = np.corrcoef(returns1, returns2)[0, 1]
                             correlation_matrix[ticker1][ticker2] = float(corr)
-        
+
         return PortfolioMetrics(
             sharpe_ratio=sharpe_ratio,
             max_drawdown=self.risk_rules["max_drawdown"],
@@ -273,7 +273,7 @@ Analyze market data, generate signals, and manage risk."""
             correlation_matrix=correlation_matrix,
             total_exposure=total_exposure
         )
-    
+
     def validate_risk_constraints(
         self,
         signals: list[TradingSignal],
@@ -281,12 +281,12 @@ Analyze market data, generate signals, and manage risk."""
     ) -> tuple[bool, list[str]]:
         """
         Validate trading signals against risk rules.
-        
+
         Returns:
             (passed, violations)
         """
         violations = []
-        
+
         # Check individual position sizes
         for signal in signals:
             if signal.position_size > self.risk_rules["max_position_size"]:
@@ -294,20 +294,20 @@ Analyze market data, generate signals, and manage risk."""
                     f"{signal.asset.ticker}: Position size {signal.position_size:.2%} > "
                     f"max {self.risk_rules['max_position_size']:.2%}"
                 )
-        
+
         # Check total exposure
         if portfolio_metrics.total_exposure > 1.0:
             violations.append(
                 f"Total exposure {portfolio_metrics.total_exposure:.2%} > 100%"
             )
-        
+
         # Check drawdown
         if portfolio_metrics.current_drawdown >= self.risk_rules["max_drawdown"]:
             violations.append(
                 f"Drawdown {portfolio_metrics.current_drawdown:.2%} >= "
                 f"max {self.risk_rules['max_drawdown']:.2%} - CIRCUIT BREAKER!"
             )
-        
+
         # Check correlations
         for ticker1, corrs in portfolio_metrics.correlation_matrix.items():
             for ticker2, corr in corrs.items():
@@ -320,9 +320,9 @@ Analyze market data, generate signals, and manage risk."""
                             f"Correlation {ticker1}-{ticker2}: {corr:.2f} > "
                             f"limit {self.risk_rules['correlation_limit']:.2f}"
                         )
-        
+
         return (len(violations) == 0, violations)
-    
+
     def generate_signals(
         self,
         assets: list[Asset],
@@ -331,36 +331,36 @@ Analyze market data, generate signals, and manage risk."""
     ) -> TradingRecommendation:
         """
         Generate trading signals for assets.
-        
+
         Args:
             assets: List of assets to analyze
             market_data: Dict with indicator values, price history, etc.
             historical_returns: Historical returns for risk calculation
-        
+
         Returns:
             TradingRecommendation with validated signals
         """
         signals = []
-        
+
         for asset in assets:
             # Get indicator values from market data
             indicators = market_data.get(asset.ticker, {}).get("indicators", {})
-            
+
             # Generate signal based on strategy
             signal = self._generate_signal_for_asset(asset, indicators)
-            
+
             if signal:
                 signals.append(signal)
-        
+
         # Calculate portfolio metrics
         portfolio_metrics = self.calculate_portfolio_metrics(signals, historical_returns)
-        
+
         # Validate risk constraints
         passed_risk, violations = self.validate_risk_constraints(signals, portfolio_metrics)
-        
+
         # Check for circuit breaker
         circuit_breaker = portfolio_metrics.current_drawdown >= self.risk_rules["max_drawdown"]
-        
+
         return TradingRecommendation(
             signals=signals if not circuit_breaker else [],
             portfolio_metrics=portfolio_metrics,
@@ -368,7 +368,7 @@ Analyze market data, generate signals, and manage risk."""
             risk_violations=violations,
             circuit_breaker_triggered=circuit_breaker
         )
-    
+
     def _generate_signal_for_asset(
         self,
         asset: Asset,
@@ -376,7 +376,7 @@ Analyze market data, generate signals, and manage risk."""
     ) -> TradingSignal | None:
         """
         Generate signal for single asset based on strategy.
-        
+
         This is strategy-specific logic. In production, this would:
         1. Use ontology to determine which indicators to check
         2. Apply strategy rules (e.g., RSI < 30 for mean reversion)
@@ -385,7 +385,7 @@ Analyze market data, generate signals, and manage risk."""
         # Stub: Mean reversion logic
         if self.strategy == "MeanReversion":
             rsi = indicators.get("RSI", 50)
-            
+
             if rsi < 30:  # Oversold
                 signal_type = "BUY"
                 signal_strength = (30 - rsi) / 30  # Stronger signal if more oversold
@@ -396,16 +396,16 @@ Analyze market data, generate signals, and manage risk."""
                 expected_return = -0.05
             else:
                 return None  # No signal
-            
+
             position_size = self.calculate_position_size(
                 expected_return,
                 asset.volatility,
                 signal_strength
             )
-            
+
             stop_loss = self.calculate_stop_loss(asset.current_price)
             take_profit = self.calculate_take_profit(asset.current_price, abs(expected_return))
-            
+
             return TradingSignal(
                 asset=asset,
                 signal_type=signal_type,
@@ -417,19 +417,19 @@ Analyze market data, generate signals, and manage risk."""
                 strategy=self.strategy,
                 indicators=indicators
             )
-        
+
         return None
-    
+
     def update_portfolio(self, ticker: str, price: float, position_size: float):
         """Update portfolio state after trade execution."""
         self.positions[ticker] = position_size
         self.entry_prices[ticker] = price
-        
+
         # Update peak portfolio value
         current_value = self.calculate_portfolio_value()
         if current_value > self.peak_portfolio_value:
             self.peak_portfolio_value = current_value
-    
+
     def calculate_portfolio_value(self) -> float:
         """Calculate current portfolio value (stub - needs live prices)."""
         # In production, fetch live prices and calculate:

@@ -16,6 +16,8 @@ from pydantic import BaseModel
 
 class MarketData(BaseModel):
     """Market data for an asset."""
+    model_config = {'extra': 'forbid'}
+    
     ticker: str
     timestamp: datetime
     open: float
@@ -27,6 +29,8 @@ class MarketData(BaseModel):
 
 class TechnicalIndicators(BaseModel):
     """Technical indicators for an asset."""
+    model_config = {'extra': 'forbid'}
+    
     ticker: str
     timestamp: datetime
     rsi: float | None = None  # Relative Strength Index

@@ -42,6 +42,8 @@ class ToolCategory:
 
 class ToolMetadata(BaseModel):
     """Metadata for a tool."""
+    model_config = {'extra': 'forbid'}
+    
     name: str
     category: str
     description: str
@@ -57,6 +59,8 @@ class ToolMetadata(BaseModel):
 
 class ToolSpec(BaseModel):
     """Complete tool specification."""
+    model_config = {'extra': 'forbid'}
+    
     metadata: ToolMetadata
     function: Callable
     tool_spec: dict[str, Any]  # OpenAI tool spec format

@@ -1,7 +1,6 @@
 """Load and query RDF/OWL ontologies."""
 
 import hashlib
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -132,10 +131,10 @@ class OntologyLoader:
     def get_classes(self, use_cache: bool = True) -> list[str]:
         """
         Get all OWL/RDFS classes defined in the ontology.
-        
+
         Args:
             use_cache: Whether to use query cache (default: True)
-        
+
         Returns:
             List of class URIs
         """
@@ -155,10 +154,10 @@ class OntologyLoader:
     def get_properties(self, use_cache: bool = True) -> list[str]:
         """
         Get all properties (object + datatype) defined in the ontology.
-        
+
         Args:
             use_cache: Whether to use query cache (default: True)
-        
+
         Returns:
             List of property URIs
         """

@@ -15,6 +15,8 @@ from pydantic import BaseModel
 
 class OddsData(BaseModel):
     """Odds data from sportsbook."""
+    model_config = {'extra': 'forbid'}
+    
     bookmaker: str
     event_id: str
     event_description: str
@@ -27,6 +29,8 @@ class OddsData(BaseModel):
 
 class ArbitrageOpportunity(BaseModel):
     """Arbitrage opportunity across bookmakers."""
+    model_config = {'extra': 'forbid'}
+    
     event_id: str
     event_description: str
     bookmaker1: str

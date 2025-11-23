@@ -7,6 +7,7 @@ Training and validation return job_id immediately; poll with check_job_status.
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
 import uuid
@@ -24,19 +25,25 @@ MOCK_JOB_DB: dict[str, dict[str, Any]] = {}
 # ---------------- Pydantic Schemas ----------------
 class ModelTrainingInput(BaseModel):
     """Input schema for model training."""
+    model_config = {'extra': 'forbid'}
 
     dataset_uri: str = Field(..., description='URI of ml:Dataset for training')
-    hyperparameters: dict[str, Any] = Field(default_factory=dict)
+    hyperparameters: str = Field(
+        default='{}',
+        description='JSON string of hyperparameters (e.g., \'{"learning_rate": 0.01}\')'
+    )
 
 
 class JobStatusInput(BaseModel):
     """Input schema for job status checking."""
+    model_config = {'extra': 'forbid'}
 
     job_id: str = Field(..., description='Job identifier to check')
 
 
 class CrossValidationInput(BaseModel):
     """Input schema for cross-validation."""
+    model_config = {'extra': 'forbid'}
 
     model_uri: str = Field(..., description='URI of ml:TrainedModel to evaluate')
     dataset_uri: str = Field(..., description='URI of ml:Dataset to use for validation')
@@ -57,11 +64,21 @@ def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
     """
     job_id = f'train-job-{uuid.uuid4()}'
     logger.info('Scheduling training: %s on %s', job_id, input_data.dataset_uri)
+    
+    # Parse hyperparameters JSON string
+    try:
+        hyperparameters = json.loads(input_data.hyperparameters)
+    except json.JSONDecodeError:
+        hyperparameters = {}
+    
+    params_dict = input_data.model_dump()
+    params_dict['hyperparameters'] = hyperparameters
+    
     MOCK_JOB_DB[job_id] = {
         'status': 'SCHEDULED',
         'type': 'TRAIN',
         'start_time': time.time(),
-        'params': input_data.model_dump(),
+        'params': params_dict,
         'artifact_uri': f'ml:TrainedModel_{job_id}',
         'progress': 0.0,
     }
@@ -163,6 +180,7 @@ def check_job_status(input_data: JobStatusInput) -> dict[str, Any]:
 # -------------- Dimensionality Reduction / Leverage Analysis --------------
 class LeverageAnalysisInput(BaseModel):
     """Input schema for leverage analysis."""
+    model_config = {'extra': 'forbid'}
 
     terms: list[str] = Field(..., description='Business entities/terms to analyze')
     kpi_term: str = Field(..., description='Key Performance Indicator for sensitivity analysis')
@@ -277,6 +295,7 @@ ML_TOOL_REGISTRY = {
 # -------------- Clustering Tool --------------
 class ClusteringInput(BaseModel):
     """Input schema for clustering analysis."""
+    model_config = {'extra': 'forbid'}
 
     data: list[list[float]] = Field(..., description='2D array of data points to cluster')
     eps: float = Field(default=0.5, gt=0.0, description='Maximum distance between points in cluster (DBSCAN)')
