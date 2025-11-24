@@ -22,9 +22,66 @@ References:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from enum import Enum
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+# ============================================================================
+# Base Schema with Strict Validation
+# ============================================================================
+
+
+class StrictBaseModel(BaseModel):
+    """
+    Base model that forbids extra fields (critical for LLM structured outputs).
+
+    Prevents model drift from silently leaking junk fields into agent outputs.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+
+# ============================================================================
+# Enums for Type Safety
+# ============================================================================
+
+
+class Domain(str, Enum):
+    """Domain identifiers for agent orchestration."""
+    BUSINESS = "business"
+    BETTING = "betting"
+    TRADING = "trading"
+
+
+class SignalType(str, Enum):
+    """Trading signal types."""
+    BUY = "BUY"
+    SELL = "SELL"
+    HOLD = "HOLD"
+
+
+class RiskLevel(str, Enum):
+    """Risk level classifications."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+# ============================================================================
+# Schema Name Literal for Type Safety
+# ============================================================================
+
+SchemaName = Literal[
+    "BusinessOptimizationResult",
+    "BettingRecommendation",
+    "TradingRecommendation",
+    "ForecastResult",
+    "InterventionRecommendation",
+    "BettingEdge",
+    "TradingSignal",
+    "PortfolioMetrics",
+]
 
 
 # ============================================================================
@@ -32,17 +89,19 @@ from pydantic import BaseModel, Field, field_validator
 # ============================================================================
 
 
-class ForecastResult(BaseModel):
+class ForecastResult(StrictBaseModel):
     """Revenue or metric forecast with confidence intervals."""
 
     forecast: list[float] = Field(
         ..., description="Predicted values for each time step", min_length=1
     )
-    horizon_days: int = Field(..., description="Forecast horizon in days", ge=1, le=365)
+    horizon_days: int = Field(...,
+                              description="Forecast horizon in days", ge=1, le=365)
     timestamps: list[str] = Field(
         ..., description="ISO 8601 timestamps for each forecast point"
     )
-    model_name: str = Field(..., description="Model used (ARIMA, Prophet, Ensemble)")
+    model_name: str = Field(...,
+                            description="Model used (ARIMA, Prophet, Ensemble)")
     confidence_intervals: dict[str, list[float]] | None = Field(
         None, description="Upper/lower bounds at 95% confidence"
     )
@@ -63,11 +122,13 @@ class ForecastResult(BaseModel):
         return v
 
 
-class InterventionRecommendation(BaseModel):
+class InterventionRecommendation(StrictBaseModel):
     """Actionable intervention to improve a business metric."""
 
-    action: str = Field(..., description="What to do (e.g., 'Increase email frequency')")
-    target_node: str = Field(..., description="What metric/concept this affects")
+    action: str = Field(...,
+                        description="What to do (e.g., 'Increase email frequency')")
+    target_node: str = Field(...,
+                             description="What metric/concept this affects")
     expected_impact: float = Field(
         ..., description="Expected change in target KPI (%)", ge=-100, le=100
     )
@@ -80,22 +141,23 @@ class InterventionRecommendation(BaseModel):
     estimated_duration: str | None = Field(
         None, description="Time to see results (e.g., '2-4 weeks')"
     )
-    risk_level: str = Field(
-        "medium", description="Risk level (low/medium/high)"
+    risk_level: RiskLevel = Field(
+        default=RiskLevel.MEDIUM, description="Risk level"
     )
     guardrails: list[str] = Field(
         default_factory=list, description="Metrics to monitor for adverse effects"
     )
 
 
-class BusinessOptimizationResult(BaseModel):
+class BusinessOptimizationResult(StrictBaseModel):
     """
     Comprehensive result for business domain workflows.
 
     Combines forecasting, leverage analysis, and interventions.
     """
 
-    domain: str = Field(default="business", description="Domain identifier")
+    domain: Domain = Field(default=Domain.BUSINESS,
+                           description="Domain identifier")
     goal: str = Field(..., description="Original goal/query from user")
     forecast: ForecastResult | None = Field(
         None, description="Forecast results if requested"
@@ -108,7 +170,8 @@ class BusinessOptimizationResult(BaseModel):
         default_factory=dict,
         description="Leverage scores for key business concepts",
     )
-    summary: str = Field(..., description="Plain-English summary for stakeholders")
+    summary: str = Field(...,
+                         description="Plain-English summary for stakeholders")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional context (model versions, etc.)"
     )
@@ -130,7 +193,7 @@ class BusinessOptimizationResult(BaseModel):
 # ============================================================================
 
 
-class BettingEdge(BaseModel):
+class BettingEdge(StrictBaseModel):
     """Detected edge with Kelly-optimal bet sizing."""
 
     event_id: str = Field(..., description="Unique event identifier")
@@ -160,25 +223,33 @@ class BettingEdge(BaseModel):
     )
     strategy: str = Field(default="ValueBetting", description="Strategy used")
 
-    @field_validator("edge")
-    @classmethod
-    def edge_makes_sense(cls, v: float, info) -> float:
-        """Warn if edge is extreme (likely error)."""
-        if abs(v) > 0.5:  # 50% edge is suspicious
-            # In production, log warning but allow (might be arb opportunity)
-            pass
-        return v
+    @model_validator(mode="after")
+    def validate_edge_consistency(self) -> "BettingEdge":
+        """Validate that edge approximately equals true_prob - implied_prob."""
+        expected_edge = self.true_probability - self.implied_probability
+        if abs(self.edge - expected_edge) > 0.01:  # Allow small floating point differences
+            raise ValueError(
+                f"Edge ({self.edge}) should equal true_prob ({self.true_probability}) "
+                f"- implied_prob ({self.implied_probability}) = {expected_edge}"
+            )
+        if abs(self.edge) > 0.5:  # 50% edge is suspicious
+            import warnings
+            warnings.warn(
+                f"Extreme edge detected: {self.edge:.2%}. Verify probabilities.")
+        return self
 
 
-class BettingRecommendation(BaseModel):
+class BettingRecommendation(StrictBaseModel):
     """Final betting recommendation with risk checks."""
 
-    domain: str = Field(default="betting", description="Domain identifier")
+    domain: Domain = Field(default=Domain.BETTING,
+                           description="Domain identifier")
     goal: str = Field(..., description="Original goal/query")
     edges: list[BettingEdge] = Field(
         default_factory=list, description="Detected edges with positive EV"
     )
-    total_stake: float = Field(..., description="Sum of all recommended stakes ($)", ge=0.0)
+    total_stake: float = Field(...,
+                               description="Sum of all recommended stakes ($)", ge=0.0)
     total_exposure: float = Field(
         ..., description="Total exposure as fraction of bankroll", ge=0.0, le=1.0
     )
@@ -204,17 +275,16 @@ class BettingRecommendation(BaseModel):
 # ============================================================================
 
 
-class TradingSignal(BaseModel):
+class TradingSignal(StrictBaseModel):
     """Buy/sell signal for an asset."""
 
     ticker: str = Field(..., description="Asset ticker symbol")
-    signal_type: str = Field(
-        ..., description="BUY, SELL, or HOLD", pattern="^(BUY|SELL|HOLD)$"
-    )
+    signal_type: SignalType = Field(..., description="BUY, SELL, or HOLD")
     signal_strength: float = Field(
         ..., description="Signal strength (0.0 to 1.0)", ge=0.0, le=1.0
     )
-    entry_price: float = Field(..., description="Recommended entry price", gt=0.0)
+    entry_price: float = Field(...,
+                               description="Recommended entry price", gt=0.0)
     stop_loss: float = Field(..., description="Stop loss price", gt=0.0)
     take_profit: float = Field(..., description="Take profit price", gt=0.0)
     position_size: float = Field(
@@ -226,7 +296,8 @@ class TradingSignal(BaseModel):
     risk_reward_ratio: float = Field(
         ..., description="Risk/reward ratio", ge=0.0
     )
-    strategy: str = Field(..., description="Strategy name (e.g., MeanReversion)")
+    strategy: str = Field(...,
+                          description="Strategy name (e.g., MeanReversion)")
     indicators: dict[str, float] = Field(
         default_factory=dict, description="Technical indicators (RSI, MACD, etc.)"
     )
@@ -234,18 +305,35 @@ class TradingSignal(BaseModel):
         ..., description="Agent confidence", ge=0.0, le=1.0
     )
 
-    @field_validator("stop_loss", "take_profit")
-    @classmethod
-    def validate_prices(cls, v: float, info) -> float:
-        """Ensure stop/take profit make sense relative to entry."""
-        # Can't validate without access to other fields in v1 (need model_validator)
-        return v
+    @model_validator(mode="after")
+    def validate_price_relationships(self) -> "TradingSignal":
+        """Validate stop loss and take profit relative to entry price."""
+        if self.signal_type == SignalType.BUY:
+            if self.stop_loss >= self.entry_price:
+                raise ValueError(
+                    f"For BUY signals, stop_loss ({self.stop_loss}) must be below entry_price ({self.entry_price})"
+                )
+            if self.take_profit <= self.entry_price:
+                raise ValueError(
+                    f"For BUY signals, take_profit ({self.take_profit}) must be above entry_price ({self.entry_price})"
+                )
+        elif self.signal_type == SignalType.SELL:
+            if self.stop_loss <= self.entry_price:
+                raise ValueError(
+                    f"For SELL signals, stop_loss ({self.stop_loss}) must be above entry_price ({self.entry_price})"
+                )
+            if self.take_profit >= self.entry_price:
+                raise ValueError(
+                    f"For SELL signals, take_profit ({self.take_profit}) must be below entry_price ({self.entry_price})"
+                )
+        return self
 
 
-class PortfolioMetrics(BaseModel):
+class PortfolioMetrics(StrictBaseModel):
     """Portfolio-level risk metrics."""
 
-    sharpe_ratio: float = Field(..., description="Sharpe ratio (risk-adjusted return)")
+    sharpe_ratio: float = Field(...,
+                                description="Sharpe ratio (risk-adjusted return)")
     max_drawdown: float = Field(
         ..., description="Maximum drawdown (%)", ge=0.0, le=100.0
     )
@@ -266,10 +354,21 @@ class PortfolioMetrics(BaseModel):
     )
 
 
-class TradingRecommendation(BaseModel):
+class TradingRecommendation(StrictBaseModel):
     """Final trading recommendation with risk checks."""
 
-    domain: str = Field(default="trading", description="Domain identifier")
+    domain: Domain = Field(default=Domain.TRADING,
+                           description="Domain identifier")
+
+    @model_validator(mode="after")
+    def validate_portfolio_metrics(self) -> "TradingRecommendation":
+        """Validate portfolio metrics consistency."""
+        if self.portfolio_metrics.current_drawdown > self.portfolio_metrics.max_drawdown:
+            raise ValueError(
+                f"Current drawdown ({self.portfolio_metrics.current_drawdown:.2%}) "
+                f"cannot exceed max drawdown ({self.portfolio_metrics.max_drawdown:.2%})"
+            )
+        return self
     goal: str = Field(..., description="Original goal/query")
     signals: list[TradingSignal] = Field(
         default_factory=list, description="Trading signals for assets"
@@ -298,7 +397,21 @@ class TradingRecommendation(BaseModel):
 # Schema Registry (for dynamic lookup by name)
 # ============================================================================
 
-SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
+SCHEMA_REGISTRY: dict[str, type[StrictBaseModel]] = {}
+
+
+def register_schema(cls: type[StrictBaseModel]) -> type[StrictBaseModel]:
+    """
+    Decorator to auto-register schemas in the registry.
+
+    Keeps schema ontology in one place as the system grows.
+    """
+    SCHEMA_REGISTRY[cls.__name__] = cls
+    return cls
+
+
+# Manually register all schemas (auto-registration would require decorators on class definitions)
+SCHEMA_REGISTRY.update({
     "BusinessOptimizationResult": BusinessOptimizationResult,
     "BettingRecommendation": BettingRecommendation,
     "TradingRecommendation": TradingRecommendation,
@@ -307,10 +420,10 @@ SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "BettingEdge": BettingEdge,
     "TradingSignal": TradingSignal,
     "PortfolioMetrics": PortfolioMetrics,
-}
+})
 
 
-def get_schema(name: str) -> type[BaseModel]:
+def get_schema(name: SchemaName | str) -> type[StrictBaseModel]:
     """
     Get a schema class by name.
 
@@ -328,9 +441,9 @@ def get_schema(name: str) -> type[BaseModel]:
         >>> result = schema(goal="Forecast", forecast=None, summary="Done")
     """
     if name not in SCHEMA_REGISTRY:
+        available = list(SCHEMA_REGISTRY.keys())
         raise ValueError(
             f"Unknown schema: '{name}'. "
-            f"Available schemas: {list(SCHEMA_REGISTRY.keys())}"
+            f"Available schemas: {available}"
         )
     return SCHEMA_REGISTRY[name]
-

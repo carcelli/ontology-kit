@@ -76,12 +76,13 @@ class OntologyMLWorkflowAnalyzer:
     - Collecting data for continuous improvement
     """
 
-    def __init__(self, ontology_path: str = "assets/ontologies/core.ttl"):
+    def __init__(self, ontology_path: str = "assets/ontologies/core.ttl",
+                 data_dir: str | Path = "outputs/workflow_data"):
         self.ontology = OntologyLoader(ontology_path).load()
         self.workflows: dict[str, WorkflowExecution] = {}
         self.decision_log: list[AgentDecision] = []
-        self.data_dir = Path("outputs/workflow_data")
-        self.data_dir.mkdir(exist_ok=True)
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(exist_ok=True, parents=True)
 
     def define_workflow_stages(self) -> list[WorkflowStage]:
         """
@@ -417,9 +418,10 @@ Generated: {datetime.now().isoformat()}
 
 
 # Convenience functions for easy access
-def create_workflow_analyzer(ontology_path: str = "assets/ontologies/core.ttl") -> OntologyMLWorkflowAnalyzer:
+def create_workflow_analyzer(ontology_path: str = "assets/ontologies/core.ttl",
+                           data_dir: str | Path = "outputs/workflow_data") -> OntologyMLWorkflowAnalyzer:
     """Create a new workflow analyzer instance."""
-    return OntologyMLWorkflowAnalyzer(ontology_path)
+    return OntologyMLWorkflowAnalyzer(ontology_path, data_dir)
 
 
 def start_tracking_workflow(analyzer: OntologyMLWorkflowAnalyzer, workflow_id: str, task: str) -> WorkflowExecution:

@@ -36,7 +36,7 @@ class AgentActionResult(BaseModel):
 
 class AgentResult(BaseModel):
     """The final result of an agent's work."""
-    result: str
+    result: Any
 
 class BaseAgent(ABC):
     """

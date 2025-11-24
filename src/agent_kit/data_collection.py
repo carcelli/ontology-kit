@@ -14,8 +14,9 @@ agent performance in ontology-driven ML workflows. It collects:
 Data is stored in structured format for analysis and visualization.
 """
 
+import contextvars
 import json
-import threading
+import subprocess
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -103,9 +104,21 @@ class AgentPerformanceRecord:
     environment_info: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class MonitoringConfig:
+    """Configuration for monitoring and data collection."""
+    data_dir: Path = Path("outputs/agent_data")
+    include_env: bool = True
+    track_cpu: bool = True
+    track_memory: bool = True
+    max_memory_samples: int = 100  # Track max RSS over run, not just end-start
+
+
 class AgentDataCollector:
     """
     Collects comprehensive performance data during agent execution.
+
+    Thread-safe using contextvars for concurrent execution tracking.
 
     Usage:
         collector = AgentDataCollector()
@@ -121,17 +134,25 @@ class AgentDataCollector:
             collector.record_decision("Use ARIMA model", 0.85, ["ARIMA", "Prophet"])
     """
 
-    def __init__(self, data_dir: str = "outputs/agent_data"):
-        self.data_dir = Path(data_dir)
-        self.data_dir.mkdir(exist_ok=True)
-        self.current_record: AgentPerformanceRecord | None = None
-        self._lock = threading.Lock()
+    def __init__(self, config: MonitoringConfig | None = None):
+        self.config = config or MonitoringConfig()
+        self.config.data_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Use contextvars for thread-safe per-execution tracking
+        self._record_var: contextvars.ContextVar[AgentPerformanceRecord | None] = (
+            contextvars.ContextVar("current_record", default=None)
+        )
+        
+        # Track max memory over execution
+        self._memory_samples: list[float] = []
 
     @contextmanager
     def track_execution(self, agent_name: str, task_type: str, task_description: str,
                        session_id: str | None = None):
         """
         Context manager to track complete agent execution.
+
+        Thread-safe using contextvars for concurrent execution tracking.
 
         Args:
             agent_name: Name of the executing agent
@@ -146,48 +167,69 @@ class AgentDataCollector:
 
         # Start resource monitoring
         process = psutil.Process()
-        initial_cpu = process.cpu_percent(interval=None)
+        if self.config.track_cpu:
+            process.cpu_percent(interval=None)  # Prime CPU counter
+        
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        self._memory_samples = [initial_memory]
 
         try:
-            self.current_record = AgentPerformanceRecord(
+            record = AgentPerformanceRecord(
                 agent_name=agent_name,
                 task_type=task_type,
                 task_description=task_description,
                 session_id=session_id,
                 timestamp=datetime.now(),
-                execution=execution_metrics
+                execution=execution_metrics,
+                environment_info=self._get_environment_info()
             )
 
-            yield self.current_record
+            # Set in contextvar for this execution context
+            token = self._record_var.set(record)
+
+            yield record
 
             # Mark as successful
-            self.current_record.execution.success = True
+            record.execution.success = True
 
         except Exception as e:
             # Record failure
-            self.current_record.execution.success = False
-            self.current_record.execution.error_message = str(e)
+            record = self._record_var.get()
+            if record:
+                record.execution.success = False
+                record.execution.error_message = str(e)
             raise
         finally:
-            # Complete execution metrics
-            end_time = datetime.now()
-            self.current_record.execution.end_time = end_time
-            self.current_record.execution.duration_seconds = (
-                end_time - self.current_record.execution.start_time
-            ).total_seconds()
+            record = self._record_var.get()
+            if record:
+                # Complete execution metrics
+                end_time = datetime.now()
+                record.execution.end_time = end_time
+                duration = (end_time - record.execution.start_time).total_seconds()
+                record.execution.duration_seconds = duration
 
-            # Resource usage
-            final_cpu = process.cpu_percent(interval=None)
-            final_memory = process.memory_info().rss / 1024 / 1024  # MB
-            self.current_record.execution.cpu_usage_percent = final_cpu - initial_cpu
-            self.current_record.execution.memory_usage_mb = final_memory - initial_memory
+                # Resource usage
+                if self.config.track_cpu:
+                    # CPU usage since last call (non-blocking)
+                    cpu_pct = process.cpu_percent(interval=0.0)
+                    record.execution.cpu_usage_percent = cpu_pct
+                
+                if self.config.track_memory:
+                    # Track max RSS over execution, not just end-start
+                    final_memory = process.memory_info().rss / 1024 / 1024  # MB
+                    self._memory_samples.append(final_memory)
+                    max_memory = max(self._memory_samples)
+                    record.execution.memory_usage_mb = max_memory - initial_memory
 
-            # Calculate derived metrics
-            self._calculate_derived_metrics()
+                # Calculate derived metrics
+                self._calculate_derived_metrics(record)
 
-            # Save the record
-            self._save_record(self.current_record)
+                # Save the record
+                self._save_record(record)
+            
+            # Reset contextvar
+            self._record_var.reset(token)
+            self._memory_samples = []
 
     @contextmanager
     def track_ontology_query(self, query_type: str, query_text: str):
@@ -198,7 +240,8 @@ class AgentDataCollector:
             query_type: Type of query (SPARQL, entity_lookup, etc.)
             query_text: The actual query text
         """
-        if not self.current_record:
+        record = self._record_var.get()
+        if not record:
             raise RuntimeError("No active execution record. Use track_execution() first.")
 
         start_time = time.time()
@@ -213,7 +256,7 @@ class AgentDataCollector:
             yield query_metrics
         finally:
             query_metrics.execution_time_seconds = time.time() - start_time
-            self.current_record.ontology_queries.append(query_metrics)
+            record.ontology_queries.append(query_metrics)
 
     @contextmanager
     def track_tool_usage(self, tool_name: str, tool_category: str = "general",
@@ -226,7 +269,8 @@ class AgentDataCollector:
             tool_category: Category of tool (ml_training, visualization, etc.)
             input_params: Input parameters passed to the tool
         """
-        if not self.current_record:
+        record = self._record_var.get()
+        if not record:
             raise RuntimeError("No active execution record. Use track_execution() first.")
 
         start_time = time.time()
@@ -247,7 +291,7 @@ class AgentDataCollector:
             raise
         finally:
             tool_metrics.execution_time_seconds = time.time() - start_time
-            self.current_record.tool_usage.append(tool_metrics)
+            record.tool_usage.append(tool_metrics)
 
     def record_decision(self, decision_context: str, final_decision: str,
                        confidence_score: float, alternatives: list[str] | None = None,
@@ -264,7 +308,8 @@ class AgentDataCollector:
             ontology_entities: Ontology entities used in decision
             tools_consulted: Tools consulted for decision
         """
-        if not self.current_record:
+        record = self._record_var.get()
+        if not record:
             raise RuntimeError("No active execution record. Use track_execution() first.")
 
         decision_metrics = DecisionMetrics(
@@ -276,7 +321,7 @@ class AgentDataCollector:
             final_decision=final_decision
         )
 
-        self.current_record.decisions.append(decision_metrics)
+        record.decisions.append(decision_metrics)
 
     def update_decision_outcome(self, decision_index: int, success: bool,
                                quality_score: float | None = None) -> None:
@@ -288,19 +333,44 @@ class AgentDataCollector:
             success: Whether the decision led to success
             quality_score: Quality score of the outcome (0-1)
         """
-        if not self.current_record:
+        record = self._record_var.get()
+        if not record:
             raise RuntimeError("No active execution record. Use track_execution() first.")
 
-        if 0 <= decision_index < len(self.current_record.decisions):
-            self.current_record.decisions[decision_index].outcome_success = success
-            self.current_record.decisions[decision_index].outcome_quality_score = quality_score
+        if 0 <= decision_index < len(record.decisions):
+            record.decisions[decision_index].outcome_success = success
+            record.decisions[decision_index].outcome_quality_score = quality_score
 
-    def _calculate_derived_metrics(self) -> None:
+    def _get_environment_info(self) -> dict[str, Any]:
+        """Collect environment information for tracking."""
+        env_info = {}
+        
+        if self.config.include_env:
+            # Git commit (if available)
+            try:
+                git_sha = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"],
+                    stderr=subprocess.DEVNULL,
+                    text=True
+                ).strip()
+                env_info["git_sha"] = git_sha[:8]  # Short SHA
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                pass
+            
+            # Python version
+            import sys
+            env_info["python_version"] = sys.version.split()[0]
+            
+            # Platform
+            import platform
+            env_info["platform"] = platform.platform()
+        
+        return env_info
+
+    def _calculate_derived_metrics(self, record: AgentPerformanceRecord) -> None:
         """Calculate derived performance metrics."""
-        if not self.current_record:
+        if not record:
             return
-
-        record = self.current_record
 
         # Total query time
         record.total_query_time = sum(q.execution_time_seconds for q in record.ontology_queries)
@@ -325,8 +395,8 @@ class AgentDataCollector:
     def _save_record(self, record: AgentPerformanceRecord) -> None:
         """Save performance record to persistent storage."""
         # Create date-based directory structure
-        date_dir = self.data_dir / record.timestamp.strftime("%Y-%m-%d")
-        date_dir.mkdir(exist_ok=True)
+        date_dir = self.config.data_dir / record.timestamp.strftime("%Y-%m-%d")
+        date_dir.mkdir(exist_ok=True, parents=True)
 
         # Save as JSON
         filename = f"{record.agent_name}_{record.session_id}.json"
@@ -418,7 +488,7 @@ class AgentDataCollector:
     def _update_daily_summary(self, record: AgentPerformanceRecord) -> None:
         """Update daily performance summary for quick analytics."""
         date_str = record.timestamp.strftime("%Y-%m-%d")
-        summary_file = self.data_dir / f"daily_summary_{date_str}.json"
+        summary_file = self.config.data_dir / f"daily_summary_{date_str}.json"
 
         # Load existing summary or create new one
         if summary_file.exists():
@@ -494,7 +564,7 @@ class PerformanceAnalytics:
     Provides insights into agent performance, bottlenecks, and improvement opportunities.
     """
 
-    def __init__(self, data_dir: str = "outputs/agent_data"):
+    def __init__(self, data_dir: str | Path = "outputs/agent_data"):
         self.data_dir = Path(data_dir)
 
     def get_agent_performance_summary(self, agent_name: str | None = None,
@@ -676,11 +746,11 @@ class PerformanceAnalytics:
 
 
 # Convenience functions
-def create_data_collector(data_dir: str = "outputs/agent_data") -> AgentDataCollector:
+def create_data_collector(config: MonitoringConfig | None = None) -> AgentDataCollector:
     """Create a new data collector instance."""
-    return AgentDataCollector(data_dir)
+    return AgentDataCollector(config)
 
 
-def create_performance_analytics(data_dir: str = "outputs/agent_data") -> PerformanceAnalytics:
+def create_performance_analytics(data_dir: str | Path = "outputs/agent_data") -> PerformanceAnalytics:
     """Create a new performance analytics instance."""
     return PerformanceAnalytics(data_dir)

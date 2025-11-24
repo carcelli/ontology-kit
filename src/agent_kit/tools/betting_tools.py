@@ -21,7 +21,7 @@ from agent_kit.monitoring.circuit_breaker import with_circuit_breaker
 class OddsData(BaseModel):
     """Odds data from sportsbook."""
     model_config = {'extra': 'forbid'}
-    
+
     bookmaker: str
     event_id: str
     event_description: str
@@ -35,7 +35,7 @@ class OddsData(BaseModel):
 class ArbitrageOpportunity(BaseModel):
     """Arbitrage opportunity across bookmakers."""
     model_config = {'extra': 'forbid'}
-    
+
     event_id: str
     event_description: str
     bookmaker1: str
@@ -60,19 +60,19 @@ def fetch_odds(
 ) -> list[dict]:
     """
     Fetch live odds from sportsbooks.
-    
+
     Args:
         sport: Sport key (e.g., "basketball_nba", "soccer_epl", "americanfootball_nfl")
         market: Market type ("h2h" = moneyline, "spreads", "totals", "player_props")
         bookmakers: Comma-separated bookmaker keys
-    
+
     Returns:
         List of odds data dictionaries
-    
+
     Example:
         >>> odds = fetch_odds(sport="basketball_nba", market="h2h")
         >>> print(f"Found {len(odds)} games with odds")
-    
+
     Note:
         In production, this integrates with The Odds API (theoddsapi.com)
         or direct bookmaker APIs. For now, returns mock data.
@@ -85,7 +85,7 @@ def fetch_odds(
     #     params={"apiKey": api_key, "regions": "us", "markets": market, "bookmakers": bookmakers}
     # )
     # return response.json()
-    
+
     # Mock data for demo
     mock_odds = [
         {
@@ -109,7 +109,7 @@ def fetch_odds(
             "timestamp": datetime.now().isoformat()
         }
     ]
-    
+
     return mock_odds
 
 
@@ -121,21 +121,21 @@ def fetch_player_props(
 ) -> list[dict]:
     """
     Fetch player proposition bets.
-    
+
     Args:
         sport: Sport key
         player_name: Optional player name to filter (e.g., "LeBron James")
-    
+
     Returns:
         List of player prop dictionaries
-    
+
     Example:
         >>> props = fetch_player_props(sport="basketball_nba", player_name="LeBron James")
         >>> for prop in props:
         ...     print(f"{prop['description']}: {prop['odds']}")
     """
     # TODO: Integrate with Pinnacle, Betonline, or sportsbook APIs
-    
+
     # Mock data
     mock_props = [
         {
@@ -163,10 +163,11 @@ def fetch_player_props(
             "timestamp": datetime.now().isoformat()
         }
     ]
-    
+
     if player_name:
-        mock_props = [p for p in mock_props if player_name.lower() in p["player"].lower()]
-    
+        mock_props = [p for p in mock_props if player_name.lower()
+                      in p["player"].lower()]
+
     return mock_props
 
 
@@ -177,25 +178,25 @@ def detect_arbitrage(
 ) -> list[dict]:
     """
     Detect arbitrage opportunities across bookmakers.
-    
+
     Args:
         odds_data: List of odds data (from fetch_odds)
         min_profit_margin: Minimum profit margin to report (default 1%)
-    
+
     Returns:
         List of arbitrage opportunities
-    
+
     Example:
         >>> odds = fetch_odds()
         >>> arbs = detect_arbitrage(odds, min_profit_margin=0.02)
         >>> for arb in arbs:
         ...     print(f"Profit: {arb['profit_margin']:.2%}")
-    
+
     Note:
         Arbitrage formula: 1/odds1 + 1/odds2 < 1 (profit exists)
     """
     arbitrage_ops = []
-    
+
     # Group odds by event
     events: dict[str, list[dict]] = {}
     for odd in odds_data:
@@ -204,7 +205,7 @@ def detect_arbitrage(
             if event_id not in events:
                 events[event_id] = []
             events[event_id].append(odd)
-    
+
     # Check for arbitrage within each event
     for event_id, event_odds in events.items():
         # Simple two-way arbitrage (home vs away, over vs under)
@@ -216,17 +217,17 @@ def detect_arbitrage(
                     implied1 = 1 / odd1["odds"]
                     implied2 = 1 / odd2["odds"]
                     total_implied = implied1 + implied2
-                    
+
                     if total_implied < 1.0:  # Arbitrage exists!
                         profit_margin = (1 / total_implied) - 1
-                        
+
                         if profit_margin >= min_profit_margin:
                             # Calculate stakes (assume $1000 total)
                             total_stake = 1000
                             stake1 = total_stake * implied1 / total_implied
                             stake2 = total_stake * implied2 / total_implied
                             guaranteed_profit = total_stake * profit_margin
-                            
+
                             arbitrage_ops.append({
                                 "event_id": event_id,
                                 "event_description": odd1.get("event_description", ""),
@@ -242,7 +243,7 @@ def detect_arbitrage(
                                 "total_stake": total_stake,
                                 "guaranteed_profit": guaranteed_profit
                             })
-    
+
     return arbitrage_ops
 
 
@@ -250,14 +251,14 @@ def detect_arbitrage(
 def calculate_implied_probability(odds: float, odds_format: str = "decimal") -> float:
     """
     Convert odds to implied probability.
-    
+
     Args:
         odds: Odds value
         odds_format: "decimal", "american", or "fractional"
-    
+
     Returns:
         Implied probability (0.0 to 1.0)
-    
+
     Example:
         >>> prob = calculate_implied_probability(2.50, "decimal")
         >>> print(f"Implied probability: {prob:.2%}")
@@ -289,21 +290,21 @@ def fetch_historical_betting_data(
 ) -> list[dict]:
     """
     Fetch historical betting data for backtesting.
-    
+
     Args:
         sport: Sport key
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
-    
+
     Returns:
         List of historical game results with closing odds
-    
+
     Example:
         >>> history = fetch_historical_betting_data("basketball_nba", "2024-01-01", "2024-12-31")
         >>> print(f"Fetched {len(history)} games")
     """
     # TODO: Integrate with historical odds providers (e.g., SportsBookReview, Pinnacle)
-    
+
     # Mock data
     return [
         {
@@ -327,5 +328,3 @@ __all__ = [
     "calculate_implied_probability",
     "fetch_historical_betting_data"
 ]
-
-
