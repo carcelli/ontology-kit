@@ -110,6 +110,13 @@ class PropBettingAgent(GrokAgent):
                       bet:dailyBetLimit ?dailyLimit .
             }}
         """
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            # Fallback to defaults if graph not loaded
+            return {
+                "max_bet_size": 0.02,
+                "min_edge": 0.05,
+                "daily_limit": 10
+            }
         results = list(self.ontology.graph.query(sparql))
         if not results:
             # Default to conservative if strategy not found
@@ -137,8 +144,11 @@ class PropBettingAgent(GrokAgent):
                 bet:PropBettingAgent core:hasInstructions ?instructions .
             }
         """
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return """You are a professional sports betting analyst.
+Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
         results = list(self.ontology.graph.query(sparql))
-        if results:
+        if results and results[0].instructions is not None:
             return str(results[0].instructions)
 
         # Fallback instructions

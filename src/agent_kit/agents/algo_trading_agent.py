@@ -126,6 +126,15 @@ class AlgoTradingAgent(GrokAgent):
                       trade:correlationLimit ?corrLimit .
             }}
         """
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            # Fallback to defaults if graph not loaded
+            return {
+                "max_position_size": 0.10,
+                "max_drawdown": 0.15,
+                "min_sharpe_ratio": 1.0,
+                "stop_loss_percent": 0.03,
+                "correlation_limit": 0.5
+            }
         results = list(self.ontology.graph.query(sparql))
         if not results:
             # Default to conservative
@@ -158,8 +167,10 @@ class AlgoTradingAgent(GrokAgent):
                 ?ind rdfs:label ?indicator .
             }}
         """
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return []
         results = list(self.ontology.graph.query(sparql))
-        return [str(row.indicator) for row in results]
+        return [str(row.indicator) for row in results if row.indicator is not None]
 
     def _generate_trading_instructions(self) -> str:
         """Generate instructions from ontology."""
@@ -172,8 +183,11 @@ class AlgoTradingAgent(GrokAgent):
                 trade:AlgoTradingAgent core:hasInstructions ?instructions .
             }
         """
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return """You are a quantitative trading system.
+Analyze market data, generate signals, and manage risk."""
         results = list(self.ontology.graph.query(sparql))
-        if results:
+        if results and results[0].instructions is not None:
             return str(results[0].instructions)
 
         return """You are a quantitative trading system.
@@ -229,8 +243,12 @@ Analyze market data, generate signals, and manage risk."""
         Returns:
             PortfolioMetrics with Sharpe, drawdown, correlation, etc.
         """
-        # Current drawdown
-        current_drawdown = 1 - (self.portfolio_value / self.peak_portfolio_value)
+        # Current drawdown (protect against division by zero)
+        current_drawdown = (
+            1 - (self.portfolio_value / self.peak_portfolio_value)
+            if self.peak_portfolio_value > 0
+            else 0.0
+        )
 
         # Total exposure
         total_exposure = sum(sig.position_size for sig in signals)

@@ -19,7 +19,7 @@ from agent_kit.agents.base import (
 # Lazy imports
 try:
     from openai import OpenAI
-    OPENAI_AVAILABLE = False
+    OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
@@ -98,6 +98,9 @@ class GrokAgent(BaseAgent):
         if not hasattr(self, 'memory'):
             self.memory: list[str] = []
 
+        if not config.api_key:
+            raise ValueError("Grok API key is required. Set XAI_API_KEY env var or pass api_key to GrokConfig.")
+        
         self.client = OpenAI(
             api_key=config.api_key,
             base_url=config.base_url
@@ -116,7 +119,7 @@ class GrokAgent(BaseAgent):
         """
         # Extract key terms from task for SPARQL query
         # In production: use NER or keyword extraction
-        task.prompt.lower()
+        task_lower = task.prompt.lower()
 
         # Construct SPARQL query based on task type
         sparql = """
@@ -131,9 +134,24 @@ class GrokAgent(BaseAgent):
         """
 
         try:
-            results = list(self.ontology.query(sparql))
+            # Check if ontology has query method (OntologyLoader) or graph.query (rdflib Graph)
+            if hasattr(self.ontology, 'query'):
+                results = self.ontology.query(sparql)
+            elif hasattr(self.ontology, 'graph') and self.ontology.graph is not None:
+                results = self.ontology.graph.query(sparql)
+                # Convert rdflib results to list of dicts
+                results = [
+                    {
+                        str(var): str(row[var]) if row[var] is not None else None
+                        for var in results.vars
+                    }
+                    for row in results
+                ]
+            else:
+                results = []
+            
             observations = [
-                f"{row['entity']}: {row['property']} = {row['value']}"
+                f"{row.get('entity', 'N/A')}: {row.get('property', 'N/A')} = {row.get('value', 'N/A')}"
                 for row in results
             ]
             content = "\n".join(observations) if observations else "No ontology data found for task."
@@ -142,7 +160,7 @@ class GrokAgent(BaseAgent):
 
         # Return object compatible with Pydantic or NamedTuple
         # We will make AgentObservation flexible in base.py
-        return AgentObservation(content=content, data={"raw_sparql": sparql})
+        return AgentObservation(content=content, data={"raw_sparql": sparql, "task_lower": task_lower})
 
     def plan(self, task: AgentTask, observation: AgentObservation) -> AgentPlan:
         """
