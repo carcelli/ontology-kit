@@ -93,7 +93,9 @@ class OntologyLoader:
         for row in results:
             binding = {}
             for var in results.vars:
-                binding[str(var)] = row[var]
+                # Handle case where variable might not be in row
+                value = row.get(var) if hasattr(row, 'get') else (row[var] if var in row else None)
+                binding[str(var)] = value
             output.append(binding)
 
         # Cache result if enabled

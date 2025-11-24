@@ -173,9 +173,9 @@ class OptimizerAgent(BaseAgent):
         observation: AgentObservation,
     ) -> AgentActionResult:
         """Execute optimization analysis."""
-        observation.data["forecast"]
-        budget = observation.data["outreach_budget"]
-        conversion_rate = observation.data["conversion_rate"]
+        forecast = observation.data.get("forecast", [145, 150, 160])
+        budget = observation.data.get("outreach_budget", 5.0)
+        conversion_rate = observation.data.get("conversion_rate", 0.12)
 
         # Calculate optimization impact
         expected_uplift = budget * conversion_rate * 10  # Simplified model

@@ -69,6 +69,7 @@ class CircuitBreaker:
 
         # State tracking
         self.errors: list[datetime] = []
+        self.successes: list[datetime] = []  # Track successes for error rate calculation
         self.peak_portfolio_value = 0.0
         self.current_portfolio_value = 0.0
         self.current_sharpe_ratio = 0.0
@@ -147,19 +148,27 @@ class CircuitBreaker:
         # Remove old errors outside check window
         cutoff = datetime.now() - timedelta(minutes=self.config.check_window_minutes)
         self.errors = [e for e in self.errors if e > cutoff]
+        self.successes = [e for e in self.successes if e > cutoff]
 
-        # Check error rate (assume 100 calls per window for rate calculation)
-        if len(self.errors) > 0:
-            error_rate = len(self.errors) / 100  # Simplified rate
+        # Calculate error rate based on actual call count
+        total_calls = len(self.errors) + len(self.successes)
+        if total_calls > 0:
+            error_rate = len(self.errors) / total_calls
 
             if error_rate >= self.config.error_rate_threshold:
                 self._open_circuit(
                     reason=f"Error rate {error_rate:.2%} >= threshold {self.config.error_rate_threshold:.2%}",
-                    metrics={"error_count": len(self.errors), "error_rate": error_rate}
+                    metrics={"error_count": len(self.errors), "total_calls": total_calls, "error_rate": error_rate}
                 )
 
     def _record_success(self):
         """Record successful execution."""
+        self.successes.append(datetime.now())
+        
+        # Remove old successes outside check window
+        cutoff = datetime.now() - timedelta(minutes=self.config.check_window_minutes)
+        self.successes = [e for e in self.successes if e > cutoff]
+        
         if self.state == CircuitState.HALF_OPEN:
             # Success in HALF_OPEN state -> close circuit
             self._close_circuit()
@@ -239,9 +248,14 @@ class CircuitBreaker:
             "state": self.state.value,
             "portfolio_value": self.current_portfolio_value,
             "peak_value": self.peak_portfolio_value,
-            "current_drawdown": 1 - (self.current_portfolio_value / self.peak_portfolio_value) if self.peak_portfolio_value > 0 else 0.0,
+            "current_drawdown": (
+                1 - (self.current_portfolio_value / self.peak_portfolio_value)
+                if self.peak_portfolio_value > 0
+                else 0.0
+            ),
             "sharpe_ratio": self.current_sharpe_ratio,
             "recent_errors": len(self.errors),
+            "recent_successes": len(self.successes),
             "last_state_change": self.last_state_change.isoformat() if self.last_state_change else None,
             "recent_events": [
                 {
@@ -270,6 +284,7 @@ class CircuitBreaker:
 
 
 # Global circuit breaker instances (one per agent/tool)
+# Note: Not thread-safe. Wrap in lock if used in multi-threaded context.
 _circuit_breakers: dict[str, CircuitBreaker] = {}
 
 

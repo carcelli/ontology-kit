@@ -202,13 +202,15 @@ class OntologyOrchestratorAgent(BaseAgent):
         """
         # Business domain policies
         if self.domain == "business":
-            horizon = result.get("forecast", {}).get("horizon_days", 0)
-            max_horizon = self.risk_policies.get("max_forecast_horizon_days", 90)
-            if horizon > max_horizon:
-                raise ValueError(
-                    f"Policy violation: Forecast horizon ({horizon} days) "
-                    f"exceeds limit ({max_horizon} days)"
-                )
+            forecast_data = result.get("forecast", {})
+            if isinstance(forecast_data, dict):
+                horizon = forecast_data.get("horizon_days", 0)
+                max_horizon = self.risk_policies.get("max_forecast_horizon_days", 90)
+                if horizon > max_horizon:
+                    raise ValueError(
+                        f"Policy violation: Forecast horizon ({horizon} days) "
+                        f"exceeds limit ({max_horizon} days)"
+                    )
 
         # Betting domain policies
         if self.domain == "betting":
@@ -222,13 +224,15 @@ class OntologyOrchestratorAgent(BaseAgent):
 
         # Trading domain policies
         if self.domain == "trading":
-            max_drawdown = result.get("portfolio_metrics", {}).get("current_drawdown", 0.0)
-            max_dd_threshold = self.risk_policies.get("max_drawdown_threshold", 0.15)
-            if max_drawdown > max_dd_threshold:
-                raise ValueError(
-                    f"Policy violation: Current drawdown ({max_drawdown:.2%}) "
-                    f"exceeds limit ({max_dd_threshold:.2%})"
-                )
+            portfolio_metrics = result.get("portfolio_metrics", {})
+            if isinstance(portfolio_metrics, dict):
+                max_drawdown = portfolio_metrics.get("current_drawdown", 0.0)
+                max_dd_threshold = self.risk_policies.get("max_drawdown_threshold", 0.15)
+                if max_drawdown > max_dd_threshold:
+                    raise ValueError(
+                        f"Policy violation: Current drawdown ({max_drawdown:.2%}) "
+                        f"exceeds limit ({max_dd_threshold:.2%})"
+                    )
 
     def _aggregate_results(self, goal: str, results: list[dict]) -> dict:
         """
