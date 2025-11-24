@@ -42,15 +42,14 @@
 - Tests haven’t been run here due to missing dependencies; coverage gate is 90% per `pyproject.toml`, so new features need accompanying tests once deps are installed.
 
 # 📂 ontology-kit/
-📖 AGENT_NAVIGATION_GUIDE.md
-📖 AI_DEVELOPMENT_GUIDE.md
-📖 CONTRIBUTING.md
-📖 GROK_INTEGRATION_SUMMARY.md
+📖 AGENT_NAVIGATION_GUIDE.md - Repository map for AI agents
+📖 AI_DEVELOPMENT_GUIDE.md - Development workflow guide
+📖 CONTRIBUTING.md - Contributor guidelines
 ⚖️ LICENSE
 🔨 Makefile
 📖 QUALITY_CHECKLIST.md
-📖 QUICKSTART.md
-📖 README.md
+📖 QUICKSTART.md - Quick start guide
+📖 README.md - This file
 📖 VERCEL_DEPLOYMENT.md
 🎨 assets
 └── 📁 ontologies
@@ -58,7 +57,8 @@
     ├── 📄 core.ttl
     └── 📄 ml_tools.ttl
 📚 docs
-├── 📖 GROK_INTEGRATION_GUIDE.md
+├── 📖 GROK_INTEGRATION_GUIDE.md - Complete Grok integration guide
+├── 📖 MONEY_MAKING_AGENTS.md - Production deployment guide
 ├── 📁 guides
 │   ├── 📖 AGENTS.md
 │   ├── 📖 ARCHITECTURE_DECISION.md
@@ -68,12 +68,11 @@
 │   ├── 📖 ML_TOOL_ONTOLOGY.md
 │   └── 📖 ORCHESTRATION_INTEGRATION.md
 ├── 📁 history
-│   ├── 📖 ADVANCED_FEATURES_SUMMARY.md
-│   ├── 📖 EXECUTION_SUMMARY.md
-│   ├── 📖 IMPLEMENTATION_SUMMARY.md
-│   ├── 📖 IMPROVEMENTS_SUMMARY.md
-│   ├── 📖 OPENAI_SDK_INTEGRATION_SUMMARY.md
-│   └── 📖 SDK_INTEGRATION_COMPLETE.md
+│   ├── 📖 ADVANCED_FEATURES_SUMMARY.md - Visualization & ML tools
+│   ├── 📖 EXECUTION_SUMMARY.md - Phase 1/2A completion
+│   ├── 📖 IMPLEMENTATION_SUMMARY.md - ML tool ontology
+│   ├── 📖 IMPROVEMENTS_SUMMARY.md - Production enhancements
+│   └── 📖 OPENAI_SDK_INTEGRATION_SUMMARY.md - SDK adapter pattern
 ├── 📖 index.md
 ├── 📁 models
 │   └── 📁 gemini
