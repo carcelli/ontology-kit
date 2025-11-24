@@ -106,9 +106,13 @@ def run(domain: str, goal: str, output: str | None, verbose: bool):
 
             # Save to file if requested
             if output:
-                with open(output, "w") as f:
-                    json.dump(result_data, f, indent=2, default=str)
-                console.print(f"\n[dim]Results saved to {output}[/dim]")
+                try:
+                    with open(output, "w", encoding="utf-8") as f:
+                        json.dump(result_data, f, indent=2, default=str)
+                    console.print(f"\n[dim]Results saved to {output}[/dim]")
+                except (IOError, OSError) as e:
+                    console.print(f"\n[bold red]✗ Failed to save results:[/bold red] {e}", style="red")
+                    sys.exit(1)
         else:
             # Plain text result
             console.print(f"[bold]Result:[/bold] {result_data}")
@@ -181,9 +185,9 @@ def validate_config(domain: str | None):
         try:
             cfg = registry.get(domain_id)
 
-            # Check required fields
+            # Check required fields (DomainConfig is dict subclass, so .get() works)
             required = ["id", "description", "default_agents", "allowed_tools"]
-            missing = [field for field in required if not cfg.get(field)]
+            missing = [field for field in required if field not in cfg or not cfg.get(field)]
 
             if missing:
                 console.print(f"[red]✗ {domain_id}: Missing fields {missing}[/red]")

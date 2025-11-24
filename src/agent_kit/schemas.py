@@ -238,7 +238,10 @@ class TradingSignal(BaseModel):
     @classmethod
     def validate_prices(cls, v: float, info) -> float:
         """Ensure stop/take profit make sense relative to entry."""
-        # Can't validate without access to other fields in v1 (need model_validator)
+        # Note: Cross-field validation (e.g., stop_loss < entry_price) requires
+        # model_validator in Pydantic v2. This validator only checks individual field bounds.
+        if v <= 0:
+            raise ValueError("Price must be positive")
         return v
 
 

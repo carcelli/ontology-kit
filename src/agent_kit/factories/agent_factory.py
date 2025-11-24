@@ -346,6 +346,12 @@ class AgentFactory:
             }}
         """
 
+        # Check if ontology has graph attribute and it's loaded
+        if not hasattr(self, 'ontology') or self.ontology is None:
+            return {}
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return {}
+        
         results = list(self.ontology.graph.query(sparql))
 
         config = {}
@@ -380,6 +386,12 @@ class AgentFactory:
             }
         """
 
+        # Check if ontology has graph attribute and it's loaded
+        if not hasattr(self, 'ontology') or self.ontology is None:
+            return {}
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return {}
+        
         results = list(self.ontology.graph.query(sparql))
 
         agents = {}
@@ -444,9 +456,13 @@ class IndustryAgentBuilder:
 
         # Instantiate agent
         if base_class == OntologyAgent:
+            # OntologyLoader uses .path attribute, not .ontology_path
+            ontology_path = str(self.ontology.path) if hasattr(self.ontology, 'path') else None
+            if ontology_path is None:
+                raise ValueError("OntologyLoader must have a valid path")
             return OntologyAgent(
                 name=name,
-                ontology_path=self.ontology.ontology_path,
+                ontology_path=ontology_path,
                 **kwargs
             )
         elif issubclass(base_class, GrokAgent):
@@ -471,8 +487,11 @@ class IndustryAgentBuilder:
             }}
         """
 
+        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+            return f"You are the {agent_iri} agent with ontology-driven capabilities."
+        
         results = list(self.ontology.graph.query(sparql))
-        if results:
+        if results and results[0].instructions is not None:
             return str(results[0].instructions)
 
         return f"You are the {agent_iri} agent with ontology-driven capabilities."
