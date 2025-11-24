@@ -10,6 +10,7 @@ from agent_kit.agents.base import (
     AgentActionResult,
     AgentObservation,
     AgentPlan,
+    AgentResult,
     AgentTask,
     BaseAgent,
 )
@@ -90,6 +91,29 @@ class ForecastAgent(BaseAgent):
         ]
 
         return AgentActionResult(summary=summary, artifacts=artifacts, log=log)
+
+    def run(self, task: AgentTask) -> AgentResult:
+        """
+        Execute forecast workflow (observe → plan → act).
+
+        This is the simplified entrypoint for orchestrator integration.
+        """
+        observation = self.observe(task)
+        plan = self.plan(task, observation)
+        action_result = self.act(task, plan, observation)
+
+        # Convert to AgentResult format expected by orchestrator
+        result_dict = {
+            "forecast": {
+                "forecast": action_result.artifacts.get("forecast_values", []),
+                "horizon_days": 90,  # 3 months
+                "model_name": plan.metadata.get("model", "ARIMA"),
+                "cv_metrics": {"confidence": action_result.artifacts.get("model_accuracy", 0.8)},
+            },
+            "summary": action_result.summary,
+        }
+
+        return AgentResult(result=result_dict)
 
 
 class OptimizerAgent(BaseAgent):
@@ -178,4 +202,29 @@ class OptimizerAgent(BaseAgent):
         ]
 
         return AgentActionResult(summary=summary, artifacts=artifacts, log=log)
+
+    def run(self, task: AgentTask) -> AgentResult:
+        """
+        Execute optimization workflow (observe → plan → act).
+
+        This is the simplified entrypoint for orchestrator integration.
+        """
+        observation = self.observe(task)
+        plan = self.plan(task, observation)
+        action_result = self.act(task, plan, observation)
+
+        # Convert to AgentResult format expected by orchestrator
+        result_dict = {
+            "interventions": [
+                {
+                    "action": action_result.artifacts.get("leverage_point", ""),
+                    "expected_impact": action_result.artifacts.get("expected_uplift", 0),
+                    "confidence": 0.8,
+                    "estimated_cost": action_result.artifacts.get("cost", 0),
+                }
+            ],
+            "summary": action_result.summary,
+        }
+
+        return AgentResult(result=result_dict)
 

@@ -54,6 +54,7 @@ dependencies = [
     "pyyaml>=6.0.1",
     "python-dotenv>=1.0.0",
     "click>=8.1.0",  # CLI framework
+    "rich>=13.0.0",  # Terminal formatting for CLI
     "treelib>=1.6.1",
     "pydantic>=2.0.0",  # Data validation & settings
     "openai>=1.0.0",  # For xAI/Grok API compatibility
@@ -133,7 +134,7 @@ Repository = "https://github.com/your-org/agent_kit"
 Issues = "https://github.com/your-org/agent_kit/issues"
 
 [project.scripts]
-agent-kit = "agent_kit.cli:main"
+ontology-kit = "agent_kit.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

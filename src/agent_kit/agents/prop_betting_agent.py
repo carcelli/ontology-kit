@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from agent_kit.agents.base import GrokAgent, GrokConfig
+from agent_kit.agents.grok_agent import GrokAgent, GrokConfig
 from agent_kit.ontology.loader import OntologyLoader
 
 

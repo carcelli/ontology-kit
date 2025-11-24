@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel  # pyright: ignore[reportMissingImports]
 
 
 class CircuitState(str, Enum):
@@ -269,7 +269,7 @@ class CircuitBreaker:
         print("⚠️  Circuit breaker manually reset")
 
 
-# Global circuit breaker instances (one per agent)
+# Global circuit breaker instances (one per agent/tool)
 _circuit_breakers: dict[str, CircuitBreaker] = {}
 
 
@@ -287,4 +287,100 @@ def get_circuit_breaker(agent_name: str, config: CircuitBreakerConfig | None = N
     if agent_name not in _circuit_breakers:
         _circuit_breakers[agent_name] = CircuitBreaker(config)
     return _circuit_breakers[agent_name]
+
+
+# ============================================================================
+# Decorator for Functional Composition (Apply circuit breaker to any function)
+# ============================================================================
+
+from functools import wraps
+
+
+def with_circuit_breaker(
+    max_failures: int = 3,
+    reset_timeout: int = 60,
+    failure_threshold: float = 0.5
+):
+    """
+    Decorator to apply circuit breaker pattern to any function.
+
+    From first principles: Functional composition—wrap function with resilience logic.
+    Uses nonlocal state (failure count) to track errors across invocations.
+
+    Args:
+        max_failures: Max consecutive failures before opening circuit
+        reset_timeout: Seconds before attempting recovery
+        failure_threshold: Error rate threshold (0.0 to 1.0)
+
+    Returns:
+        Decorated function with circuit breaker protection
+
+    Example:
+        >>> @with_circuit_breaker(max_failures=3, reset_timeout=60)
+        ... def fetch_api_data(url: str) -> dict:
+        ...     response = requests.get(url)
+        ...     return response.json()
+
+    References:
+        - Release It! by Michael Nygard (Circuit Breaker pattern)
+        - Python decorators: PEP 318
+    """
+    def decorator(func: Callable) -> Callable:
+        # Nonlocal state for circuit breaker (closure pattern)
+        state: dict[str, Any] = {
+            "failures": 0,
+            "successes": 0,
+            "last_failure_time": None,
+            "is_open": False,
+        }
+
+        @wraps(func)  # Preserve function metadata
+        def wrapper(*args, **kwargs):
+            # Check if circuit is open
+            if state["is_open"]:
+                # Check if timeout elapsed
+                if state["last_failure_time"]:
+                    elapsed = (datetime.now() - state["last_failure_time"]).total_seconds()
+                    if elapsed >= reset_timeout:
+                        # Try half-open state
+                        state["is_open"] = False
+                        state["failures"] = 0  # Reset
+                        print(f"🔄 Circuit breaker HALF-OPEN for {func.__name__} - testing recovery")
+                    else:
+                        raise Exception(
+                            f"Circuit breaker OPEN for {func.__name__}. "
+                            f"Wait {reset_timeout - elapsed:.0f}s before retry."
+                        )
+                else:
+                    raise Exception(f"Circuit breaker OPEN for {func.__name__}")
+
+            # Execute function
+            try:
+                result = func(*args, **kwargs)
+                state["successes"] += 1
+                state["failures"] = 0  # Reset on success
+                return result
+            except Exception as e:
+                state["failures"] += 1
+                state["last_failure_time"] = datetime.now()
+
+                # Check if should open circuit
+                total_calls = state["successes"] + state["failures"]
+                error_rate = state["failures"] / total_calls if total_calls > 0 else 0
+
+                if state["failures"] >= max_failures or error_rate >= failure_threshold:
+                    state["is_open"] = True
+                    print(
+                        f"🚨 Circuit breaker OPENED for {func.__name__} - "
+                        f"{state['failures']} failures, {error_rate:.2%} error rate"
+                    )
+
+                raise e
+
+        # Expose state for testing/monitoring
+        wrapper.circuit_state = state  # type: ignore
+
+        return wrapper
+
+    return decorator
 

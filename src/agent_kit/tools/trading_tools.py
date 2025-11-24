@@ -1,8 +1,11 @@
 """
-Trading data pipeline tools.
+Trading data pipeline tools with circuit breaker protection.
 
 Tools for fetching market data, calculating indicators, and executing trades.
 Integrates with financial data APIs (Alpha Vantage, Polygon, Binance, etc.)
+
+From first principles: External APIs are unreliable—circuit breakers prevent
+cascading failures by failing fast when error rates spike.
 """
 from __future__ import annotations
 
@@ -12,6 +15,8 @@ from typing import Any
 import numpy as np
 from agents import function_tool
 from pydantic import BaseModel
+
+from agent_kit.monitoring.circuit_breaker import with_circuit_breaker
 
 
 class MarketData(BaseModel):
@@ -44,6 +49,7 @@ class TechnicalIndicators(BaseModel):
 
 
 @function_tool
+@with_circuit_breaker(max_failures=5, reset_timeout=120)
 def fetch_market_data(
     ticker: str,
     interval: str = "1day",
@@ -324,6 +330,7 @@ def calculate_volatility(prices: list[float], period: int = 20, annualize: bool 
 
 
 @function_tool
+@with_circuit_breaker(max_failures=3, reset_timeout=300)  # Stricter for trades
 def execute_trade(
     ticker: str,
     side: str,

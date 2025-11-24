@@ -1,8 +1,11 @@
 """
-Betting data pipeline tools.
+Betting data pipeline tools with circuit breaker protection.
 
 Tools for fetching odds, analyzing lines, and detecting arbitrage opportunities.
 Integrates with sportsbook APIs (DraftKings, FanDuel, Pinnacle, etc.)
+
+From first principles: Sportsbook APIs have rate limits—circuit breakers prevent
+exhausting quotas and getting banned.
 """
 from __future__ import annotations
 
@@ -11,6 +14,8 @@ from typing import Any
 
 from agents import function_tool
 from pydantic import BaseModel
+
+from agent_kit.monitoring.circuit_breaker import with_circuit_breaker
 
 
 class OddsData(BaseModel):
@@ -47,6 +52,7 @@ class ArbitrageOpportunity(BaseModel):
 
 
 @function_tool
+@with_circuit_breaker(max_failures=5, reset_timeout=180)
 def fetch_odds(
     sport: str = "basketball_nba",
     market: str = "h2h",
@@ -108,6 +114,7 @@ def fetch_odds(
 
 
 @function_tool
+@with_circuit_breaker(max_failures=5, reset_timeout=180)
 def fetch_player_props(
     sport: str = "basketball_nba",
     player_name: str | None = None

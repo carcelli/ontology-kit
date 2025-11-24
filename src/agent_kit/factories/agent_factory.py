@@ -1,94 +1,321 @@
 """
-Industry-Agnostic Agent Factory
+Industry-Agnostic Agent Factory with Dependency Injection
 
 Pattern for spawning domain-specific agents from ontologies.
 Use this to create agents for ANY industry (betting, trading, healthcare, logistics, etc.)
 
+From first principles: Dependency Injection decouples object creation from usage,
+allowing runtime configuration and testability. Factory pattern centralizes
+instantiation logic, ensuring consistent agent creation.
+
 Architecture:
-1. Define domain ontology with agent specs, tools, risk rules
-2. Factory queries ontology and instantiates agent
-3. Agent inherits instructions, tools, and constraints from ontology
+1. Domain configs (YAML) define relations (agents/tools/policies)
+2. Factory queries registry and assembles dependencies
+3. Agents receive injected deps (clients, ontologies, tools)
+4. Orchestrator coordinates specialists via handoffs
+
+Design choices:
+- Registry-driven to avoid hardcoded class mappings
+- Dynamic tool loading via importlib for extensibility
+- Client injection for centralized API management
+- Comprehensive error messages for debugging
+
+References:
+- Dependency Injection: Martin Fowler, Inversion of Control Containers
+- Factory Pattern: Gang of Four Design Patterns
 """
 from __future__ import annotations
 
-from typing import Any
+import os
+from importlib import import_module
+from typing import Any, Callable, Type
 
 from agent_kit.agents.algo_trading_agent import AlgoTradingAgent
-from agent_kit.agents.base import GrokAgent, GrokConfig
+from agent_kit.agents.base import BaseAgent
+from agent_kit.agents.business_agents import ForecastAgent, OptimizerAgent
+from agent_kit.agents.grok_agent import GrokConfig
 from agent_kit.agents.ontology_agent import OntologyAgent
 from agent_kit.agents.prop_betting_agent import PropBettingAgent
+from agent_kit.domains.registry import DomainRegistry, get_global_registry
 from agent_kit.ontology.loader import OntologyLoader
 
 
 class AgentFactory:
     """
-    Factory for creating domain-specific agents from ontologies.
+    Factory for creating domain-specific agents with dependency injection.
+
+    From first principles: Centralizes instantiation logic, injecting dependencies
+    (clients, ontologies, tools) to avoid hardcoded coupling.
 
     Example:
-        >>> loader = OntologyLoader('assets/ontologies/betting.ttl')
-        >>> loader.load()
-        >>> factory = AgentFactory(loader)
-        >>> agent = factory.create_agent("bet:PropBettingAgent", bankroll=10000)
+        >>> factory = AgentFactory()
+        >>> orchestrator = factory.create_orchestrator("business")
+        >>> result = orchestrator.run("Forecast next 30 days")
     """
 
-    # Registry of agent classes by IRI
-    AGENT_REGISTRY: dict[str, type[GrokAgent | OntologyAgent]] = {
-        "bet:PropBettingAgent": PropBettingAgent,
-        "trade:AlgoTradingAgent": AlgoTradingAgent,
-        # Add more as you build them
+    # Registry of agent classes by name
+    AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {
+        "ForecastAgent": ForecastAgent,
+        "OptimizerAgent": OptimizerAgent,
+        "AlgoTradingAgent": AlgoTradingAgent,
+        "PropBettingAgent": PropBettingAgent,
+        "OntologyAgent": OntologyAgent,
     }
 
-    def __init__(self, ontology: OntologyLoader):
+    def __init__(
+        self,
+        domain_registry: DomainRegistry | None = None,
+        ontology_loader: OntologyLoader | None = None,
+        grok_api_key: str | None = None,
+    ):
         """
-        Initialize factory with ontology.
+        Initialize factory with injected dependencies.
 
         Args:
-            ontology: Loaded ontology with agent definitions
+            domain_registry: Registry for domain configs (defaults to global)
+            ontology_loader: Ontology loader (defaults to None, loaded per domain)
+            grok_api_key: xAI API key (defaults to XAI_API_KEY env var)
+
+        Raises:
+            ValueError: If Grok API key not provided and not in environment
         """
-        self.ontology = ontology
+        self.registry = domain_registry or get_global_registry()
+        self.ontology_loader = ontology_loader
+        self.grok_api_key = grok_api_key or os.getenv("XAI_API_KEY")
+
+        # Warn if no API key (allow for testing with mock agents)
+        if not self.grok_api_key:
+            import warnings
+            warnings.warn(
+                "No XAI_API_KEY found. Grok-based agents will fail. "
+                "Set XAI_API_KEY env var or pass grok_api_key to factory."
+            )
+
+    def create_orchestrator(self, domain: str, **kwargs) -> BaseAgent:
+        """
+        Create domain-specific orchestrator with specialists and tools.
+
+        From first principles: Orchestrator is a coordinator (not executor) that
+        delegates to specialists via handoffs, enforcing domain policies.
+
+        Args:
+            domain: Domain identifier (e.g., 'business', 'betting', 'trading')
+            **kwargs: Override defaults (e.g., grok_config, custom tools)
+
+        Returns:
+            Orchestrator agent ready to run
+
+        Raises:
+            ValueError: If domain unknown or agents missing
+
+        Example:
+            >>> factory = AgentFactory()
+            >>> orch = factory.create_orchestrator("business")
+            >>> result = orch.run("Forecast revenue for next 30 days")
+        """
+        cfg = self.registry.get(domain)
+
+        # Load specialists from config
+        specialists = self._create_specialists(domain, cfg, **kwargs)
+
+        # Load tools dynamically
+        tools = self._load_tools(cfg.allowed_tools)
+
+        # Load ontology if needed
+        ontology = self._load_ontology(cfg.ontology_iri)
+
+        # Create orchestrator (simplified; enhance with handoffs in orchestrator.py)
+        from agent_kit.agents.orchestrator import OntologyOrchestratorAgent
+
+        grok_config = kwargs.get("grok_config") or GrokConfig(
+            api_key=self.grok_api_key,
+            temperature=0.7,
+            max_tokens=4096,
+        )
+
+        orchestrator = OntologyOrchestratorAgent(
+            domain=domain,
+            specialists=specialists,
+            tools=tools,
+            ontology=ontology,
+            risk_policies=cfg.get("risk_policies", {}),
+            output_schema=cfg.get("output_schema"),
+            grok_config=grok_config,
+        )
+
+        return orchestrator
+
+    def _create_specialists(
+        self, domain: str, cfg, **kwargs
+    ) -> list[BaseAgent]:
+        """
+        Instantiate specialist agents from domain config.
+
+        Args:
+            domain: Domain identifier
+            cfg: Domain config
+            **kwargs: Agent-specific overrides
+
+        Returns:
+            List of specialist agents
+
+        Raises:
+            ValueError: If agent class not in registry
+        """
+        specialists = []
+        grok_config = kwargs.get("grok_config") or GrokConfig(
+            api_key=self.grok_api_key
+        )
+
+        for agent_name in cfg.default_agents:
+            if agent_name not in self.AGENT_REGISTRY:
+                available = list(self.AGENT_REGISTRY.keys())
+                raise ValueError(
+                    f"Agent '{agent_name}' not found in registry for domain '{domain}'. "
+                    f"Available agents: {available}"
+                )
+
+            agent_class = self.AGENT_REGISTRY[agent_name]
+
+            # Inject dependencies based on agent type
+            agent_kwargs = kwargs.get(agent_name, {})
+
+            # For Grok-based agents (betting/trading), inject ontology + config
+            if agent_class in [AlgoTradingAgent, PropBettingAgent]:
+                ontology = self._load_ontology(cfg.ontology_iri)
+                specialist = agent_class(
+                    ontology=ontology,
+                    grok_config=grok_config,
+                    **agent_kwargs
+                )
+            # For simple BaseAgent subclasses (business agents)
+            elif agent_class in [ForecastAgent, OptimizerAgent]:
+                specialist = agent_class(**agent_kwargs)
+            else:
+                # Fallback: attempt instantiation
+                specialist = agent_class(**agent_kwargs)
+
+            specialists.append(specialist)
+
+        return specialists
+
+    def _load_tools(self, tool_paths: list[str]) -> list[Callable]:
+        """
+        Dynamically load tool functions from module paths.
+
+        Args:
+            tool_paths: List of dot-separated paths (e.g., 'tools.business.predict')
+
+        Returns:
+            List of callable tool functions
+
+        Example:
+            >>> tools = factory._load_tools(['tools.business.predict'])
+            >>> tools[0].__name__  # 'predict'
+        """
+        tools = []
+        for tool_path in tool_paths:
+            try:
+                # Parse path: 'tools.business.predict' -> module='tools.business', func='predict'
+                parts = tool_path.split(".")
+                module_path = ".".join(parts[:-1])
+                func_name = parts[-1]
+
+                # Dynamic import
+                module = import_module(f"agent_kit.{module_path}")
+                func = getattr(module, func_name)
+                tools.append(func)
+            except (ImportError, AttributeError) as e:
+                import warnings
+                warnings.warn(f"Failed to load tool '{tool_path}': {e}")
+
+        return tools
+
+    def _load_ontology(self, ontology_iri: str) -> OntologyLoader:
+        """
+        Load ontology by IRI (maps to file path).
+
+        Args:
+            ontology_iri: Ontology IRI (e.g., 'http://agent_kit.io/business#')
+
+        Returns:
+            Loaded OntologyLoader
+
+        Note:
+            In production, map IRI -> file path via registry.
+            For now, use heuristic: IRI fragment -> assets/ontologies/{fragment}.ttl
+        """
+        if self.ontology_loader:
+            return self.ontology_loader
+
+        # Extract fragment from IRI (e.g., 'business' from 'http://...io/business#')
+        fragment = ontology_iri.rstrip("#/").split("/")[-1]
+        ontology_path = f"assets/ontologies/{fragment}.ttl"
+
+        # Check if file exists; if not, warn and use core.ttl
+        import pathlib
+        if not pathlib.Path(ontology_path).exists():
+            import warnings
+            warnings.warn(
+                f"Ontology file not found: {ontology_path}. Falling back to core.ttl"
+            )
+            ontology_path = "assets/ontologies/core.ttl"
+
+        loader = OntologyLoader(ontology_path)
+        loader.load()
+        return loader
 
     def create_agent(
         self,
-        agent_iri: str,
-        grok_config: GrokConfig | None = None,
-        **agent_kwargs
-    ) -> GrokAgent | OntologyAgent:
+        agent_name: str,
+        domain: str | None = None,
+        **kwargs
+    ) -> BaseAgent:
         """
-        Create agent from ontology definition.
+        Create individual agent (specialist) by name.
 
         Args:
-            agent_iri: Agent IRI (e.g., "bet:PropBettingAgent")
-            grok_config: Optional Grok configuration
-            **agent_kwargs: Additional agent-specific parameters
+            agent_name: Agent class name (e.g., 'ForecastAgent')
+            domain: Optional domain to inherit config from
+            **kwargs: Agent-specific parameters
 
         Returns:
             Instantiated agent
 
-        Raises:
-            ValueError: If agent IRI not found in registry or ontology
+        Example:
+            >>> agent = factory.create_agent('ForecastAgent', domain='business')
         """
-        # Check if agent is in registry
-        if agent_iri not in self.AGENT_REGISTRY:
+        if agent_name not in self.AGENT_REGISTRY:
             raise ValueError(
-                f"Agent {agent_iri} not found in registry. "
+                f"Agent '{agent_name}' not found. "
                 f"Available: {list(self.AGENT_REGISTRY.keys())}"
             )
 
-        # Query ontology for agent configuration
-        agent_config = self._query_agent_config(agent_iri)
+        agent_class = self.AGENT_REGISTRY[agent_name]
 
-        # Get agent class
-        agent_class = self.AGENT_REGISTRY[agent_iri]
+        # Load domain config if provided
+        if domain:
+            cfg = self.registry.get(domain)
+            # Merge domain defaults with kwargs
+            defaults = cfg.get("defaults", {})
+            kwargs = {**defaults, **kwargs}
 
-        # Merge ontology config with provided kwargs
-        merged_kwargs = {**agent_config, **agent_kwargs}
-
-        # Instantiate agent
-        return agent_class(
-            ontology=self.ontology,
-            grok_config=grok_config,
-            **merged_kwargs
-        )
+        # Instantiate based on agent type
+        if agent_class in [AlgoTradingAgent, PropBettingAgent]:
+            # Grok-based agents need ontology
+            ontology_iri = kwargs.pop("ontology_iri", "http://agent_kit.io/business#")
+            ontology = self._load_ontology(ontology_iri)
+            grok_config = kwargs.pop("grok_config", None) or GrokConfig(
+                api_key=self.grok_api_key
+            )
+            return agent_class(
+                ontology=ontology,
+                grok_config=grok_config,
+                **kwargs
+            )
+        else:
+            # Simple agents (ForecastAgent, OptimizerAgent)
+            return agent_class(**kwargs)
 
     def _query_agent_config(self, agent_iri: str) -> dict[str, Any]:
         """
