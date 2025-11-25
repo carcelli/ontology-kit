@@ -59,6 +59,7 @@ dependencies = [
     "pydantic>=2.0.0",  # Data validation & settings
     "openai>=1.0.0",  # For xAI/Grok API compatibility
     "openai-agents>=0.5.0",  # Full agent orchestration SDK
+    "google-adk>=1.0.0",  # Google Agent Development Kit for infrastructure
     "polars>=0.20.0",  # For ontology-ML example
     "pyshacl>=0.25.0",  # SHACL validation
     "tenacity>=8.2.0",  # Retry logic for API calls
