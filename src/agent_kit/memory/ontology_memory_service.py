@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 # Try to import ADK memory services
 try:
-    from google.adk.memory.base_memory_service import BaseMemoryService
+    from google.adk.memory.base_memory_service import BaseMemoryService  # type: ignore[import-not-found]
     ADK_MEMORY_AVAILABLE = True
 except ImportError:
     ADK_MEMORY_AVAILABLE = False
-    BaseMemoryService = None  # type: ignore
+    BaseMemoryService = None  # type: ignore[assignment]
 
 
 @dataclass

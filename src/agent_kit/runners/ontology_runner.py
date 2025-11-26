@@ -41,11 +41,11 @@ except ImportError:
 
 # Try to import ADK
 try:
-    from google.adk.runners import Runner as ADKRunner
+    from google.adk.runners import Runner as ADKRunner  # type: ignore[import-not-found]
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
-    ADKRunner = None  # type: ignore
+    ADKRunner = None  # type: ignore[assignment]
 
 
 class RunConfig(BaseModel):

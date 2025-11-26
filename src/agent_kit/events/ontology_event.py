@@ -20,11 +20,12 @@ from pydantic import BaseModel, Field
 
 # Try to import ADK Event, fallback to standalone if not available
 try:
+    # type: ignore[import-not-found]
     from google.adk.events.event import Event as ADKEvent
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
-    ADKEvent = None  # type: ignore
+    ADKEvent = None  # type: ignore[assignment]
 
 
 class OntologyEventContent(BaseModel):
@@ -149,7 +150,7 @@ class OntologyEvent(BaseModel):
             return None
 
         try:
-            from google.genai import types
+            from google.genai import types  # type: ignore[import-not-found]
 
             # Create ADK-compatible content
             parts = [types.Part(text=self.content.text)]
