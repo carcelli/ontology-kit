@@ -5,40 +5,59 @@ Comprehensive agent framework extending OpenAI Agents SDK with ontology-driven
 capabilities, MCP integration, persistent memory, and enterprise-grade orchestration.
 
 Architecture:
-    Ontology Layer (Foundation)
-        - OntologyLoader: RDF/OWL graph management
-        - SPARQL queries for entity relationships
-        - Domain schemas (business, betting, trading)
-    
-    Adapter Layer (Integration)
-        - OntologyAgentAdapter: Wraps OpenAI SDK agents
-        - OntologyEventLogger: Enriches ADK events
-        - OntologySessionService: Wraps ADK sessions
-        - OntologyMemoryService: Cross-session recall
-    
-    SDK Layer (Execution)
-        - ADK (Google): Sessions, events, memory infrastructure
-        - OpenAI SDK: Agent execution, handoffs, guardrails
+    ┌─────────────────────────────────────────────────────────────┐
+    │                    Ontology Layer (Foundation)              │
+    │  • SPARQL queries for routing                               │
+    │  • Entity extraction & linking                              │
+    │  • Domain schemas (business, betting, trading)              │
+    │  • Leverage score computation                               │
+    └─────────────────────────────────────────────────────────────┘
+                                ↓
+    ┌─────────────────────────────────────────────────────────────┐
+    │                    Adapter Layer (Integration)              │
+    │  • OntologyEventLogger (enriches ADK events)                │
+    │  • OntologySessionService (wraps ADK sessions)              │
+    │  • OntologyAgentAdapter (wraps OpenAI SDK agents)           │
+    │  • OntologyToolFilter (filters tools by domain)             │
+    │  • OntologyMemoryService (cross-session recall)             │
+    │  • OntologyHandoffManager (multi-agent coordination)        │
+    └─────────────────────────────────────────────────────────────┘
+                                ↓
+    ┌─────────────────────────────────────────────────────────────┐
+    │                    SDK Layer (Execution)                    │
+    │  ┌──────────────────────┐  ┌──────────────────────────┐    │
+    │  │   ADK (Infrastructure)│  │  OpenAI SDK (Agents)     │    │
+    │  │  • Event System      │  │  • Handoffs              │    │
+    │  │  • Session Mgmt      │  │  • Guardrails            │    │
+    │  │  • Memory Service    │  │  • MCP Tools             │    │
+    │  │  • Evaluation        │  │  • Tracing               │    │
+    │  └──────────────────────┘  └──────────────────────────┘    │
+    └─────────────────────────────────────────────────────────────┘
+
+Quick Start:
+    >>> from agent_kit import OntologyRunner, OntologyAgentAdapter
+    >>> from agents import Agent
+    >>>
+    >>> ontology = OntologyLoader("business.ttl")
+    >>> agent = Agent(name="ForecastAgent", instructions="...")
+    >>> adapter = OntologyAgentAdapter(agent, ontology, "business")
+    >>>
+    >>> runner = OntologyRunner(ontology)
+    >>> result = await runner.run(adapter, "Forecast next 30 days")
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Agent Kit Team'
 
-# Core vector space and ontology functionality
+# =============================================================================
+# Core: Ontology and Vector Space
+# =============================================================================
 from agent_kit.ontology import OntologyLoader
 from agent_kit.vectorspace import Embedder, VectorIndex
 
-# Ontology-enhanced SDK extensions
-from agent_kit.ontology_extensions import (
-    OntologyAgent,
-    OntologyMCPToolFilter,
-    OntologyMemorySession,
-)
-
-# Base agent implementations
-from agent_kit.agents import BaseAgent, GrokAgent, GrokConfig
-
-# SDK Integration adapters
+# =============================================================================
+# SDK Adapters
+# =============================================================================
 from agent_kit.adapters import (
     OntologyAgentAdapter,
     OntologyInputGuardrail,
@@ -47,47 +66,162 @@ from agent_kit.adapters import (
     OpenAISDKAdapter,
 )
 
-# Event system
-from agent_kit.events import OntologyEvent, OntologyEventContent, OntologyEventLogger
+# =============================================================================
+# Event System
+# =============================================================================
+from agent_kit.events import (
+    OntologyEvent,
+    OntologyEventContent,
+    OntologyEventLogger,
+)
 
-# Session management
-from agent_kit.sessions import OntologySessionService
+# =============================================================================
+# Session Management
+# =============================================================================
+from agent_kit.sessions import (
+    OntologySessionService,
+    InMemorySessionBackend,
+    SqliteSessionBackend,
+    create_session_backend,
+)
 
-# Memory service
-from agent_kit.memory import InMemoryBackend, OntologyMemoryService
+# =============================================================================
+# Memory Service
+# =============================================================================
+from agent_kit.memory import (
+    OntologyMemoryService,
+    InMemoryBackend,
+)
+
+# =============================================================================
+# Runners
+# =============================================================================
+from agent_kit.runners import (
+    OntologyRunner,
+    RunConfig,
+    RunResult,
+    StreamingRunner,
+)
+
+# =============================================================================
+# Evaluation
+# =============================================================================
+from agent_kit.evaluation import (
+    OntologyEvaluator,
+    EvalCase,
+    EvalSet,
+    EvalResult,
+    EvalMetrics,
+)
+
+# =============================================================================
+# Orchestration
+# =============================================================================
+from agent_kit.orchestrator import (
+    UnifiedOrchestrator,
+    OrchestratorConfig,
+    OrchestratorResult,
+    create_business_orchestrator,
+)
+
+# =============================================================================
+# Base Agents
+# =============================================================================
+from agent_kit.agents import (
+    BaseAgent,
+    GrokAgent,
+    GrokConfig,
+)
+
+# =============================================================================
+# Ontology Extensions (Legacy)
+# =============================================================================
+from agent_kit.ontology_extensions import (
+    OntologyAgent,
+    OntologyMCPToolFilter,
+    OntologyMemorySession,
+)
+
+# =============================================================================
+# Protocols
+# =============================================================================
+from agent_kit.protocols import (
+    AgentProtocol,
+    EventProtocol,
+    SessionProtocol,
+    MemoryServiceProtocol,
+    RunnerProtocol,
+    EvaluatorProtocol,
+    OrchestratorProtocol,
+)
 
 __all__ = [
-    # Core functionality
+    # Version
+    '__version__',
+    '__author__',
+    
+    # Core
+    'OntologyLoader',
     'Embedder',
     'VectorIndex',
-    'OntologyLoader',
-
-    # Ontology-enhanced SDK extensions
-    'OntologyAgent',
-    'OntologyMemorySession',
-    'OntologyMCPToolFilter',
-
-    # Base agent implementations
-    'BaseAgent',
-    'GrokAgent',
-    'GrokConfig',
-
-    # SDK Integration adapters
+    
+    # Adapters
     'OntologyAgentAdapter',
     'OntologyOutputGuardrail',
     'OntologyInputGuardrail',
     'OntologyToolFilter',
     'OpenAISDKAdapter',
-
-    # Event system
+    
+    # Events
     'OntologyEvent',
     'OntologyEventContent',
     'OntologyEventLogger',
-
-    # Session management
+    
+    # Sessions
     'OntologySessionService',
-
-    # Memory service
+    'InMemorySessionBackend',
+    'SqliteSessionBackend',
+    'create_session_backend',
+    
+    # Memory
     'OntologyMemoryService',
     'InMemoryBackend',
+    
+    # Runners
+    'OntologyRunner',
+    'RunConfig',
+    'RunResult',
+    'StreamingRunner',
+    
+    # Evaluation
+    'OntologyEvaluator',
+    'EvalCase',
+    'EvalSet',
+    'EvalResult',
+    'EvalMetrics',
+    
+    # Orchestration
+    'UnifiedOrchestrator',
+    'OrchestratorConfig',
+    'OrchestratorResult',
+    'create_business_orchestrator',
+    
+    # Base Agents
+    'BaseAgent',
+    'GrokAgent',
+    'GrokConfig',
+    
+    # Ontology Extensions
+    'OntologyAgent',
+    'OntologyMCPToolFilter',
+    'OntologyMemorySession',
+    
+    # Protocols
+    'AgentProtocol',
+    'EventProtocol',
+    'SessionProtocol',
+    'MemoryServiceProtocol',
+    'RunnerProtocol',
+    'EvaluatorProtocol',
+    'OrchestratorProtocol',
 ]
