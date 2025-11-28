@@ -258,6 +258,12 @@
 - **`OntologyToolFilter`**: Filters available tools based on ontology queries
 - **Purpose**: Context-aware tool selection
 
+#### `handoff_manager.py` - Multi-Agent Handoffs
+- **`OntologyHandoffManager`**: Manages handoffs between agents with ontology context
+- **`HandoffContext`**: Context passed during handoffs (entities, artifacts, session)
+- **Features**: Domain-aware routing, event logging, session preservation
+- **Integration**: Used by `UnifiedOrchestrator` for multi-agent coordination
+
 #### `openai_sdk.py` - OpenAI SDK Integration
 - **Purpose**: Direct integration with OpenAI Agents SDK
 
@@ -284,10 +290,30 @@
 
 **Purpose**: Advanced orchestration capabilities.
 
-#### `ontology_orchestrator.py` - Ontology-Driven Orchestrator
+#### `ontology_orchestrator.py` - Ontology-Driven Tool Orchestrator
 - **`OntologyOrchestrator`**: Orchestrator that uses ontology for tool discovery and routing
 - **Features**: SPARQL-based tool discovery, algorithm-based filtering
 - **Integration**: Works with `ML_TOOL_REGISTRY` for ML tool discovery
+- **Use Case**: Tool-level orchestration (not agent-level)
+
+#### `unified_orchestrator.py` - Unified Agent Orchestrator
+- **`UnifiedOrchestrator`**: Combines ADK infrastructure with OpenAI SDK execution
+- **Features**:
+  - Task understanding and intent classification
+  - Agent selection and routing
+  - Handoff management
+  - Result aggregation
+  - Session and state management
+- **Integration**: Uses `OntologyHandoffManager`, `OntologyMemoryService`, `OntologyEventLogger`
+- **Configuration**: `OrchestratorConfig` with feature flags
+- **Use Case**: Production-grade multi-agent orchestration with full observability
+
+**Note**: There are now THREE orchestrator implementations:
+1. `agents/orchestrator.py` - Basic orchestrator with policy enforcement
+2. `orchestrator/ontology_orchestrator.py` - Tool discovery orchestrator
+3. `orchestrator/unified_orchestrator.py` - Full-featured unified orchestrator
+
+**Recommendation**: Consolidate into single orchestrator (see ARCHITECTURE_SUMMARY.md)
 
 ---
 
@@ -335,7 +361,46 @@
 
 **Purpose**: Session management for agents.
 
-- **Files**: Session tracking and persistence
+- **`OntologySessionService`**: Manages agent sessions with persistence
+- **Backends**: Memory (in-memory) and SQLite (persistent)
+- **Integration**: Used by `UnifiedOrchestrator` for state management
+- **Features**: Session creation, retrieval, state tracking
+
+### 12a. **RUNNERS** (`src/agent_kit/runners/`)
+
+**Purpose**: Execution runners for agents.
+
+#### `ontology_runner.py` - Ontology-Aware Runner
+- **`OntologyRunner`**: Runs agents with ontology context
+- **`RunConfig`**: Configuration for execution (timeout, retries, etc.)
+- **`RunResult`**: Structured execution results
+- **Integration**: Used by `UnifiedOrchestrator`
+
+#### `streaming_runner.py` - Streaming Execution
+- **Purpose**: Stream agent outputs in real-time
+- **Use Case**: Long-running tasks, progress updates
+
+### 12b. **MEMORY** (`src/agent_kit/memory/`)
+
+**Purpose**: Persistent memory service for agents.
+
+#### `ontology_memory_service.py` - Semantic Memory
+- **`OntologyMemoryService`**: Stores and retrieves agent memories with ontology context
+- **Features**: Embedding-based similarity search, context-aware retrieval
+- **Integration**: Used by `UnifiedOrchestrator` for long-term memory
+- **Backend**: Vector database (FAISS) for semantic search
+
+### 12c. **EVALUATION** (`src/agent_kit/evaluation/`)
+
+**Purpose**: Agent evaluation and testing framework.
+
+#### `evaluators.py` - Evaluation Framework
+- **Purpose**: Evaluate agent performance on test cases
+- **Features**: Metrics collection, comparison, reporting
+
+#### `ontology_evaluator.py` - Ontology-Aware Evaluation
+- **Purpose**: Evaluate agents using ontology-based test cases
+- **Use Case**: Domain-specific agent testing
 
 ---
 
@@ -363,6 +428,20 @@
 
 - **`SharedContext`**: Key-value store for agents to share information
 - **Use Case**: Coordination between specialists in orchestrator
+
+### 14a. **PROTOCOLS** (`src/agent_kit/protocols.py`)
+
+**Purpose**: Type protocols and interfaces for type checking and dependency injection.
+
+- **`AgentProtocol`**: Protocol for agents (name, instructions, tools)
+- **`RunnableAgentProtocol`**: Protocol for agents with `run()` method
+- **`StructuredAgentProtocol`**: Protocol for agents with structured output
+- **`EventProtocol`**: Protocol for events
+- **`EventLoggerProtocol`**: Protocol for event loggers
+- **`OrchestratorProtocol`**: Protocol for orchestrators
+- **`MemoryProtocol`**: Protocol for memory services
+- **`SessionProtocol`**: Protocol for session services
+- **Use Case**: Type safety, dependency injection, mocking in tests
 
 ---
 
@@ -414,6 +493,18 @@
 - **`InteractiveDashboard`**: Generates HTML dashboards
 - **Methods**: `generate_full_dashboard()`, `generate_performance_focused_dashboard()`
 - **Output**: HTML files with charts and metrics
+
+### 18a. **WEB APP** (`web_app.py`)
+
+**Purpose**: Streamlit web interface for demos and exploration.
+
+- **Features**:
+  - Ontology visualization (network graphs)
+  - Agent playground
+  - SPARQL query interface
+  - Vector space exploration
+- **Deployment**: Vercel, Heroku, or any Python hosting
+- **Tech**: Streamlit, Plotly, NetworkX
 
 ---
 

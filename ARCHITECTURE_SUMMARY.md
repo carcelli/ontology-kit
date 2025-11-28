@@ -69,11 +69,16 @@
 
 ### Areas for Improvement
 
-1. **Orchestrator Duplication**: Two orchestrator implementations (`agents/orchestrator.py` vs `orchestrator/ontology_orchestrator.py`)
+1. **Orchestrator Triplication**: THREE orchestrator implementations:
+   - `agents/orchestrator.py` - Basic orchestrator with policy enforcement
+   - `orchestrator/ontology_orchestrator.py` - Tool discovery orchestrator  
+   - `orchestrator/unified_orchestrator.py` - Full-featured unified orchestrator
+   **Recommendation**: Consolidate into single orchestrator with all features
 2. **Tool Registry Fragmentation**: Tools registered in multiple places
-3. **Session Management**: Sessions exist but not fully integrated
-4. **Event System**: Events logged but not connected to monitoring
+3. **Session Management**: Sessions exist and are integrated in `UnifiedOrchestrator` but not in basic orchestrator
+4. **Event System**: Events logged and connected in `UnifiedOrchestrator` but not in basic orchestrator
 5. **Testing**: Limited integration tests for agent-tool flows
+6. **Protocol Usage**: `protocols.py` exists but not consistently used across codebase
 
 ---
 
@@ -81,21 +86,25 @@
 
 ### Phase 1: Unify Orchestrators (High Priority)
 
-**Problem**: Two orchestrator implementations with overlapping functionality.
+**Problem**: THREE orchestrator implementations with overlapping functionality:
+- `agents/orchestrator.py` - Basic orchestrator with policy enforcement
+- `orchestrator/ontology_orchestrator.py` - Tool discovery orchestrator
+- `orchestrator/unified_orchestrator.py` - Full-featured unified orchestrator
 
 **Solution**:
-1. Merge `agents/orchestrator.py` and `orchestrator/ontology_orchestrator.py`
-2. Create single `OntologyOrchestrator` that combines:
-   - Policy enforcement from `agents/orchestrator.py`
-   - Tool discovery from `orchestrator/ontology_orchestrator.py`
-   - SPARQL-based routing (enhance current heuristic routing)
+1. Use `UnifiedOrchestrator` as the base (most complete)
+2. Migrate policy enforcement from `agents/orchestrator.py` into `UnifiedOrchestrator`
+3. Integrate tool discovery from `orchestrator/ontology_orchestrator.py` into `UnifiedOrchestrator`
+4. Update `AgentFactory` to use unified orchestrator
+5. Deprecate old orchestrators (keep for backward compatibility initially)
 
 **Files to Modify**:
-- `agents/orchestrator.py` (enhance with tool discovery)
-- `orchestrator/ontology_orchestrator.py` (merge into above)
-- `factories/agent_factory.py` (update imports)
+- `orchestrator/unified_orchestrator.py` (add policy enforcement, tool discovery)
+- `agents/orchestrator.py` (mark as deprecated, redirect to unified)
+- `orchestrator/ontology_orchestrator.py` (mark as deprecated, redirect to unified)
+- `factories/agent_factory.py` (use unified orchestrator)
 
-**Estimated Effort**: 4-6 hours
+**Estimated Effort**: 6-8 hours
 
 ---
 
