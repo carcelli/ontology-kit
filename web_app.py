@@ -9,9 +9,89 @@ Deployable on Vercel, Heroku, or any Python hosting platform.
 import streamlit as st
 import sys
 from pathlib import Path
+import networkx as nx
+import plotly.express as px
+import plotly.graph_objects as go
+import random
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
+
+def visualize_ontology_network(graph, max_nodes=100):
+    """Create a Plotly network graph from RDF graph."""
+    nx_graph = nx.DiGraph()
+    
+    # Extract triples and limit count
+    triples = list(graph)[:max_nodes]
+    
+    for s, p, o in triples:
+        # Simplify labels
+        s_label = str(s).split('#')[-1].split('/')[-1]
+        o_label = str(o).split('#')[-1].split('/')[-1]
+        nx_graph.add_edge(s_label, o_label, title=str(p).split('#')[-1])
+
+    # Layout
+    pos = nx.spring_layout(nx_graph, seed=42)
+    
+    # Edges
+    edge_x = []
+    edge_y = []
+    for edge in nx_graph.edges():
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    # Nodes
+    node_x = []
+    node_y = []
+    node_text = []
+    node_adjacencies = []
+    
+    for node in nx_graph.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        node_text.append(node)
+        node_adjacencies.append(len(nx_graph[node]))
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers+text',
+        text=node_text,
+        textposition="top center",
+        hoverinfo='text',
+        marker=dict(
+            showscale=True,
+            colorscale='YlGnBu',
+            reversescale=True,
+            color=node_adjacencies,
+            size=15,
+            colorbar=dict(
+                thickness=15,
+                title='Connections',
+                xanchor='left',
+                titleside='right'
+            ),
+            line_width=2))
+
+    fig = go.Figure(data=[edge_trace, node_trace],
+                 layout=go.Layout(
+                    title='Ontology Knowledge Graph',
+                    titlefont_size=16,
+                    showlegend=False,
+                    hovermode='closest',
+                    margin=dict(b=20,l=5,r=5,t=40),
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                    )
+    return fig
 
 st.set_page_config(
     page_title="Agent Kit - Ontology-Driven ML",
@@ -29,7 +109,8 @@ page = st.sidebar.radio("Choose Demo", [
     "🔍 Ontology Explorer",
     "📊 Vector Search",
     "🎯 Leverage Analysis",
-    "⚙️ Agent Playground"
+    "⚙️ Agent Playground",
+    "📓 Notebooks"
 ])
 
 if page == "🏠 Home":
@@ -70,6 +151,11 @@ elif page == "🔍 Ontology Explorer":
             try:
                 loader = OntologyLoader(ontology_path)
                 graph = loader.load()
+                
+                # Visualize Graph
+                st.subheader("🕸️ Graph Visualization")
+                fig = visualize_ontology_network(graph)
+                st.plotly_chart(fig, use_container_width=True)
 
                 col1, col2 = st.columns(2)
 
@@ -176,6 +262,19 @@ elif page == "🎯 Leverage Analysis":
 
         import pandas as pd
         df = pd.DataFrame(leverage_data)
+        
+        # Interactive Plotly Chart
+        fig = px.bar(
+            df, 
+            x="Concept", 
+            y="Leverage Score", 
+            color="Impact Potential", 
+            title="Business Leverage Analysis",
+            hover_data=["Impact Potential"],
+            color_discrete_map={"High": "orange", "Very High": "red", "Medium": "blue"}
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
         st.dataframe(df)
 
         st.markdown("""
@@ -228,6 +327,37 @@ elif page == "⚙️ Agent Playground":
     except ImportError as e:
         st.error(f"Agent import error: {e}. Please install dependencies.")
         st.info("The ForecastAgent requires additional setup and API keys.")
+
+elif page == "📓 Notebooks":
+    st.header("Jupyter Notebooks")
+    st.markdown("Access interactive notebooks for deeper analysis and experimentation.")
+    
+    notebooks = list(Path("examples").glob("*.ipynb"))
+    
+    if notebooks:
+        st.success(f"Found {len(notebooks)} notebooks in `examples/` directory.")
+        
+        for nb in notebooks:
+            with st.expander(f"📄 {nb.name}"):
+                st.write(f"**Path:** `{nb}`")
+                st.code(f"jupyter notebook {nb}", language="bash")
+                
+                # Option to convert to HTML for viewing (if nbconvert is installed)
+                if st.button(f"Generate HTML Preview for {nb.name}"):
+                    try:
+                        import subprocess
+                        # Convert to html
+                        cmd = f"jupyter nbconvert --to html '{nb}' --stdout"
+                        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                        if result.returncode == 0:
+                            st.components.v1.html(result.stdout, height=600, scrolling=True)
+                        else:
+                            st.error(f"Conversion failed: {result.stderr}")
+                    except Exception as e:
+                        st.error(f"Error running nbconvert: {e}")
+    else:
+        st.info("No notebooks found in `examples/` directory.")
+        st.markdown("Create a notebook to get started!")
 
 # Footer
 st.markdown("---")

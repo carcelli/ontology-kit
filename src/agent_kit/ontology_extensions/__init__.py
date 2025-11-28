@@ -7,8 +7,8 @@ and knowledge graph integration.
 """
 
 from .ontology_agent import OntologyAgent
-from .ontology_memory import OntologyMemorySession
 from .ontology_mcp import OntologyMCPToolFilter
+from .ontology_memory import OntologyMemorySession
 
 __all__ = [
     "OntologyAgent",

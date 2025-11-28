@@ -1,5 +1,7 @@
 # AI-Assisted Development Guide for Agent Kit
 
+> **🔍 Navigation Helper:** If you are an AI agent looking for the repository map, file structure, or where to find specific logic, please consult [AGENT_NAVIGATION_GUIDE.md](AGENT_NAVIGATION_GUIDE.md) first.
+
 ## 🎯 Mission: Build Quality Code While Learning
 
 This guide helps you ensure high-quality development when working with AI assistants on the ontology-driven ML framework.

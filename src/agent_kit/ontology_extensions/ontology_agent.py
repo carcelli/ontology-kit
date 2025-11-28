@@ -10,7 +10,11 @@ This class adds ontology-driven capabilities including:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast, get_args, get_origin
+from collections.abc import Callable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 from ..ontology.loader import OntologyLoader
 

@@ -1,0 +1,262 @@
+@prefix tool: <http://agent-kit.com/ontology/tool#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix core: <http://agent-kit.com/ontology/core#> .
+
+# ============================================
+# TOOL ONTOLOGY
+# Purpose: Organize and categorize agent tools
+# ============================================
+
+# ----- CLASSES -----
+
+tool:Tool a rdfs:Class ;
+    rdfs:label "Tool" ;
+    rdfs:comment "A function that agents can invoke." .
+
+tool:ToolCategory a rdfs:Class ;
+    rdfs:label "Tool Category" ;
+    rdfs:comment "Grouping of related tools." .
+
+tool:ApiProvider a rdfs:Class ;
+    rdfs:label "API Provider" ;
+    rdfs:comment "External API service provider." .
+
+# ----- PROPERTIES -----
+
+tool:belongsToCategory a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range tool:ToolCategory ;
+    rdfs:label "belongs to category" .
+
+tool:hasCostEstimate a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has cost estimate" ;
+    rdfs:comment "Estimated cost per invocation ($)." .
+
+tool:hasLatency a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range xsd:integer ;
+    rdfs:label "has latency" ;
+    rdfs:comment "Expected latency (ms)." .
+
+tool:requiresApiKey a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range xsd:boolean ;
+    rdfs:label "requires API key" .
+
+tool:usesProvider a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range tool:ApiProvider ;
+    rdfs:label "uses provider" .
+
+tool:hasTag a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range xsd:string ;
+    rdfs:label "has tag" .
+
+tool:dependsOn a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range tool:Tool ;
+    rdfs:label "depends on" ;
+    rdfs:comment "This tool requires another tool to function." .
+
+tool:hasPythonIdentifier a rdf:Property ;
+    rdfs:domain tool:Tool ;
+    rdfs:range xsd:string ;
+    rdfs:label "has Python identifier" ;
+    rdfs:comment "Python function name." .
+
+# ----- TOOL CATEGORIES -----
+
+tool:BettingCategory a tool:ToolCategory ;
+    rdfs:label "Betting Tools" ;
+    rdfs:comment "Tools for sports betting, odds, and arbitrage." .
+
+tool:TradingCategory a tool:ToolCategory ;
+    rdfs:label "Trading Tools" ;
+    rdfs:comment "Tools for market data, indicators, and execution." .
+
+tool:MLTrainingCategory a tool:ToolCategory ;
+    rdfs:label "ML Training Tools" ;
+    rdfs:comment "Tools for model training and validation." .
+
+tool:BusinessCategory a tool:ToolCategory ;
+    rdfs:label "Business Tools" ;
+    rdfs:comment "Tools for business optimization and prediction." .
+
+tool:OntologyCategory a tool:ToolCategory ;
+    rdfs:label "Ontology Tools" ;
+    rdfs:comment "Tools for ontology querying and manipulation." .
+
+tool:VectorSpaceCategory a tool:ToolCategory ;
+    rdfs:label "Vector Space Tools" ;
+    rdfs:comment "Tools for embeddings and vector search." .
+
+tool:VisualizationCategory a tool:ToolCategory ;
+    rdfs:label "Visualization Tools" ;
+    rdfs:comment "Tools for generating charts and graphs." .
+
+tool:SemanticGraphCategory a tool:ToolCategory ;
+    rdfs:label "Semantic Graph Tools" ;
+    rdfs:comment "Tools for graph analysis and leverage detection." .
+
+tool:GitHubCategory a tool:ToolCategory ;
+    rdfs:label "GitHub Tools" ;
+    rdfs:comment "Tools for GitHub integration." .
+
+# ----- API PROVIDERS -----
+
+tool:OddsAPI a tool:ApiProvider ;
+    rdfs:label "The Odds API" ;
+    rdfs:comment "Sports odds and betting data provider." ;
+    tool:hasBaseUrl "https://api.the-odds-api.com" .
+
+tool:AlphaVantage a tool:ApiProvider ;
+    rdfs:label "Alpha Vantage" ;
+    rdfs:comment "Stock market data provider." ;
+    tool:hasBaseUrl "https://www.alphavantage.co/query" .
+
+tool:Binance a tool:ApiProvider ;
+    rdfs:label "Binance" ;
+    rdfs:comment "Cryptocurrency exchange API." ;
+    tool:hasBaseUrl "https://api.binance.com" .
+
+tool:OpenAI a tool:ApiProvider ;
+    rdfs:label "OpenAI" ;
+    rdfs:comment "LLM and embeddings provider." ;
+    tool:hasBaseUrl "https://api.openai.com" .
+
+tool:GitHub a tool:ApiProvider ;
+    rdfs:label "GitHub" ;
+    rdfs:comment "Code hosting and collaboration." ;
+    tool:hasBaseUrl "https://api.github.com" .
+
+# ----- BETTING TOOLS -----
+
+tool:FetchOdds a tool:Tool ;
+    rdfs:label "fetch_odds" ;
+    rdfs:comment "Fetch live odds from sportsbooks." ;
+    tool:belongsToCategory tool:BettingCategory ;
+    tool:hasCostEstimate "0.01"^^xsd:decimal ;
+    tool:hasLatency 200 ;
+    tool:requiresApiKey "true"^^xsd:boolean ;
+    tool:usesProvider tool:OddsAPI ;
+    tool:hasPythonIdentifier "fetch_odds" ;
+    tool:hasTag "sports", "odds", "data" .
+
+tool:FetchPlayerProps a tool:Tool ;
+    rdfs:label "fetch_player_props" ;
+    rdfs:comment "Fetch player proposition bets." ;
+    tool:belongsToCategory tool:BettingCategory ;
+    tool:hasCostEstimate "0.01"^^xsd:decimal ;
+    tool:hasLatency 200 ;
+    tool:requiresApiKey "true"^^xsd:boolean ;
+    tool:usesProvider tool:OddsAPI ;
+    tool:hasPythonIdentifier "fetch_player_props" ;
+    tool:hasTag "sports", "props", "player" .
+
+tool:DetectArbitrage a tool:Tool ;
+    rdfs:label "detect_arbitrage" ;
+    rdfs:comment "Detect arbitrage opportunities across bookmakers." ;
+    tool:belongsToCategory tool:BettingCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 50 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "detect_arbitrage" ;
+    tool:hasTag "arbitrage", "analysis" ;
+    tool:dependsOn tool:FetchOdds .
+
+tool:CalculateImpliedProbability a tool:Tool ;
+    rdfs:label "calculate_implied_probability" ;
+    rdfs:comment "Convert odds to implied probability." ;
+    tool:belongsToCategory tool:BettingCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 10 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "calculate_implied_probability" ;
+    tool:hasTag "math", "probability" .
+
+# ----- TRADING TOOLS -----
+
+tool:FetchMarketData a tool:Tool ;
+    rdfs:label "fetch_market_data" ;
+    rdfs:comment "Fetch historical market data for assets." ;
+    tool:belongsToCategory tool:TradingCategory ;
+    tool:hasCostEstimate "0.005"^^xsd:decimal ;
+    tool:hasLatency 300 ;
+    tool:requiresApiKey "true"^^xsd:boolean ;
+    tool:usesProvider tool:AlphaVantage ;
+    tool:hasPythonIdentifier "fetch_market_data" ;
+    tool:hasTag "market", "data", "price" .
+
+tool:CalculateRSI a tool:Tool ;
+    rdfs:label "calculate_rsi" ;
+    rdfs:comment "Calculate Relative Strength Index." ;
+    tool:belongsToCategory tool:TradingCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 50 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "calculate_rsi" ;
+    tool:hasTag "indicators", "technical" ;
+    tool:dependsOn tool:FetchMarketData .
+
+tool:CalculateMACD a tool:Tool ;
+    rdfs:label "calculate_macd" ;
+    rdfs:comment "Calculate MACD indicator." ;
+    tool:belongsToCategory tool:TradingCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 50 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "calculate_macd" ;
+    tool:hasTag "indicators", "technical" ;
+    tool:dependsOn tool:FetchMarketData .
+
+tool:ExecuteTrade a tool:Tool ;
+    rdfs:label "execute_trade" ;
+    rdfs:comment "Execute a buy or sell trade." ;
+    tool:belongsToCategory tool:TradingCategory ;
+    tool:hasCostEstimate "1.0"^^xsd:decimal ;
+    tool:hasLatency 500 ;
+    tool:requiresApiKey "true"^^xsd:boolean ;
+    tool:usesProvider tool:Binance ;
+    tool:hasPythonIdentifier "execute_trade" ;
+    tool:hasTag "execution", "trading" .
+
+# ----- ONTOLOGY TOOLS -----
+
+tool:QueryOntology a tool:Tool ;
+    rdfs:label "query_ontology" ;
+    rdfs:comment "Execute SPARQL query against ontology." ;
+    tool:belongsToCategory tool:OntologyCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 50 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "query_ontology" ;
+    tool:hasTag "sparql", "query" .
+
+tool:AddOntologyStatement a tool:Tool ;
+    rdfs:label "add_ontology_statement" ;
+    rdfs:comment "Add RDF statement to ontology." ;
+    tool:belongsToCategory tool:OntologyCategory ;
+    tool:hasCostEstimate "0.0"^^xsd:decimal ;
+    tool:hasLatency 50 ;
+    tool:requiresApiKey "false"^^xsd:boolean ;
+    tool:hasPythonIdentifier "add_ontology_statement" ;
+    tool:hasTag "sparql", "write" .
+
+# ----- AGENT TOOL COMPATIBILITY -----
+
+# Define which agents can use which tools
+core:Agent tool:canUseTool tool:Tool .
+
+bet:PropBettingAgent tool:canUseTool tool:FetchOdds, tool:FetchPlayerProps, 
+                                      tool:DetectArbitrage, tool:CalculateImpliedProbability,
+                                      tool:QueryOntology .
+
+trade:AlgoTradingAgent tool:canUseTool tool:FetchMarketData, tool:CalculateRSI,
+                                        tool:CalculateMACD, tool:ExecuteTrade,
+                                        tool:QueryOntology .
+

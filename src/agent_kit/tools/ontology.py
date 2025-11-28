@@ -13,9 +13,9 @@ global_ontology_loader = OntologyLoader('assets/ontologies/business.ttl')
 global_ontology_loader.load()
 
 @function_tool
-def query_ontology(sparql_query: str, ontology_loader: OntologyLoader = global_ontology_loader) -> list[dict]:
+def query_ontology(sparql_query: str) -> list[dict]:
     """Execute a SPARQL query against the ontology."""
-    results = ontology_loader.query(sparql_query)
+    results = global_ontology_loader.query(sparql_query)
     return results
 
 @function_tool
@@ -23,7 +23,6 @@ def add_ontology_statement(
     subject: str,
     predicate: str,
     object_value: str,
-    ontology_loader: OntologyLoader = global_ontology_loader, # Added parameter
     object_type: str | None = "literal"  # "uri" or "literal" for flexibility
 ) -> str:
     """
@@ -33,7 +32,6 @@ def add_ontology_statement(
         subject: Subject URI (e.g., "insight_002").
         predicate: Predicate URI (e.g., "informs_process").
         object_value: Object value (e.g., "outreach_campaign_005").
-        ontology_loader: Instance of OntologyLoader to modify.
         object_type: "uri" for URIRef, "literal" for Literal.
 
     Returns:
@@ -58,8 +56,8 @@ def add_ontology_statement(
         # if pred not in [RDFS.subClassOf, RDF.type]:
         #     raise ValueError(f"Unknown predicate: {predicate}")
 
-        ontology_loader.add_triple(subj, pred, obj)
-        ontology_loader.save()  # Persist immediately (or batch in prod)
+        global_ontology_loader.add_triple(subj, pred, obj)
+        global_ontology_loader.save()  # Persist immediately (or batch in prod)
         return f"Added triple: {subj} {pred} {obj}"
 
     except Exception as e:  # Broad catch for robustness

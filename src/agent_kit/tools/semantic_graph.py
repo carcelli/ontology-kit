@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # ---------------- Pydantic Schemas ----------------
 class SemanticGraphInput(BaseModel):
     """Input schema for building semantic graph."""
+    model_config = {'extra': 'forbid'}
 
     terms: list[str] = Field(..., description='Domain concepts/entities to analyze')
     similarity_threshold: float = Field(
@@ -44,6 +45,7 @@ class SemanticGraphInput(BaseModel):
 
 class TargetLeverageInput(BaseModel):
     """Input schema for targeted leverage computation."""
+    model_config = {'extra': 'forbid'}
 
     graph_path: str = Field(..., description='Path to semantic graph JSON')
     target: str = Field(..., description='Target node/KPI (e.g., Revenue)')
@@ -55,6 +57,7 @@ class TargetLeverageInput(BaseModel):
 
 class InterventionRecommendationInput(BaseModel):
     """Input schema for intervention recommendations."""
+    model_config = {'extra': 'forbid'}
 
     graph_path: str = Field(..., description='Path to semantic graph JSON')
     node: str = Field(..., description='Lever node to intervene on')

@@ -31,10 +31,10 @@ import logging
 from pathlib import Path
 from typing import Annotated, Any
 
-from agents import function_tool
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from agents import function_tool
 from rdflib import Graph
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE

@@ -23,12 +23,12 @@ import logging
 from pathlib import Path
 from typing import Annotated, Any
 
-from agents import function_tool
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+from agents import function_tool
 from sklearn.manifold import TSNE
 
 from agent_kit.vectorspace.embedder import Embedder

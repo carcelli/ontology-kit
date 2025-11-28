@@ -183,21 +183,7 @@ ml:DefaultClusteringTool a ml:ClusteringTool ;
 
 ---
 
-## Visualization Mastery Criteria (All Met ✅)
-
-### 1. Clarity ✅
-- **Intuitive layouts**: t-SNE preserves local structure
-- **Color gradients**: Viridis (perceptually uniform, colorblind-friendly)
-- **Clear labels**: Axes, titles, legends all professionally formatted
-- **Shape coding**: Actionable (circles) vs. Fixed (squares) instantly recognizable
-
-### 2. Interactivity ✅
-- **Zoom**: Drill down into clusters
-- **Rotate**: Explore 3D space from any angle
-- **Hover**: Detailed tooltips (term, score, status)
-- **Performance**: WebGL-accelerated, smooth on 100+ points
-
-### 3. Performance ✅
+## Key Achievements ✅
 - **Speed**: <1s for 50 terms (including t-SNE)
 - **Scalability**: Tested up to 100 terms without lag
 - **Efficient rendering**: Plotly WebGL backend
@@ -210,32 +196,6 @@ ml:DefaultClusteringTool a ml:ClusteringTool ;
 - **Color theory**: Perceptually uniform gradients (Viridis family)
 
 ---
-
-## ML Tool Mastery Criteria (All Met ✅)
-
-### 1. Modular Design ✅
-- **Pydantic schemas**: Type-safe, validated inputs
-- **Single Responsibility**: Each tool does one thing well
-- **Composable**: Tools chain together (embed → reduce → cluster)
-- **Extensible**: Easy to add new algorithms
-
-### 2. Algorithm Coverage ✅
-- **Supervised**: Training, cross-validation (already had)
-- **Unsupervised**: Clustering (DBSCAN, KMeans, Hierarchical) [NEW]
-- **Dimensionality Reduction**: t-SNE (already had)
-- **Semantic Analysis**: Embeddings, graph analysis (already had)
-
-### 3. Ontology Integration ✅
-- **SPARQL discoverable**: All 9 tools queryable
-- **Semantic grounding**: Tools tied to ML concepts in ontology
-- **Algorithm metadata**: `ml:implementsAlgorithm` property
-- **Python bindings**: `ml:hasPythonIdentifier` for execution
-
-### 4. Production Readiness ✅
-- **Error handling**: Comprehensive validation, graceful failures
-- **Logging**: Structured logs for debugging
-- **Documentation**: Full docstrings, examples, references
-- **Testing**: Unit tests (ready to add), integration demos (working)
 
 ---
 
@@ -272,87 +232,26 @@ ML_TOOL_REGISTRY = {
 
 ---
 
-## Usage Examples
-
-### Example 1: Interactive 3D Visualization
+## Quick Usage
 
 ```python
 from agent_kit.tools.interactive_viz import generate_interactive_leverage_viz
-
-result = generate_interactive_leverage_viz(
-    terms=['Revenue', 'Budget', 'Marketing', 'Sales', 'Product'],
-    kpi_term='Revenue',
-    actionable_terms=['Budget', 'Marketing'],
-    n_components=3,
-    output_file='outputs/leverage_3d.html',
-    color_scale='Viridis'
-)
-
-# Open in browser: file://outputs/leverage_3d.html
-# Interact: Zoom, rotate, hover for details
-```
-
-### Example 2: Static Report Export
-
-```python
-result = generate_interactive_leverage_viz(
-    terms=['Revenue', 'Budget', 'Marketing', 'Sales'],
-    kpi_term='Revenue',
-    actionable_terms=['Budget', 'Marketing'],
-    n_components=2,  # 2D for simplicity
-    output_file='outputs/report.png',  # Static PNG
-    color_scale='Plasma'
-)
-
-# Use in PowerPoint, Word, LaTeX documents
-```
-
-### Example 3: Clustering Integration
-
-```python
-# Step 1: Get t-SNE reduced coordinates
-from sklearn.manifold import TSNE
-from agent_kit.vectorspace.embedder import Embedder
-
-embedder = Embedder()
-embeddings = embedder.embed_batch(terms)
-tsne = TSNE(n_components=2, random_state=42)
-reduced = tsne.fit_transform(embeddings)
-
-# Step 2: Cluster with DBSCAN
 from agent_kit.tools.ml_training import cluster_data
 
-result = cluster_data({
-    'data': reduced.tolist(),
-    'algorithm': 'DBSCAN',
-    'eps': 1.5,
-    'min_samples': 2
-})
-
-print(f"Found {result['n_clusters']} clusters")
-print(f"Noise points: {result['n_noise']}")
-```
-
-### Example 4: Agent-Driven Workflow
-
-```python
-from agent_kit.orchestrator import OntologyOrchestrator
-
-# Agent discovers visualization tool via ontology
-viz_tool = orch.discover_tool('ml#InteractiveVisualizationTool')
-
-# Agent executes
-result = orch.call(
-    'ml#InteractiveVisualizationTool',
-    {
-        'terms': ['Revenue', 'Budget', 'Marketing'],
-        'kpi_term': 'Revenue',
-        'actionable_terms': ['Budget', 'Marketing'],
-        'output_file': 'leverage.html'
-    }
+# Interactive visualization
+result = generate_interactive_leverage_viz(
+    terms=['Revenue', 'Budget', 'Marketing'],
+    kpi_term='Revenue',
+    actionable_terms=['Budget', 'Marketing'],
+    output_file='leverage_3d.html'
 )
 
-# Agent presents: "Here's your interactive leverage map"
+# Clustering
+clusters = cluster_data({
+    'data': reduced_coords,
+    'algorithm': 'DBSCAN',
+    'eps': 1.5
+})
 ```
 
 ---
@@ -381,51 +280,14 @@ result = orch.call(
 
 ---
 
-## Technical Specifications
+## Performance
 
-### Performance Benchmarks
-
-| Operation | Dataset Size | Time | Memory |
-|-----------|--------------|------|--------|
-| t-SNE reduction | 50 terms | 0.3s | 50MB |
-| Plotly 3D render | 50 points | 0.1s | 10MB |
-| HTML export | 50 points | 0.2s | 200KB |
-| PNG export | 50 points | 1.5s | 5MB |
-| DBSCAN clustering | 50 points | 0.05s | 5MB |
-| **Total workflow** | **50 terms** | **<2s** | **<100MB** |
-
-### Scalability
-
-- **Tested**: Up to 100 terms without lag
-- **Theoretical**: 500+ terms (may need PCA pre-reduction)
-- **Optimization**: Batch embeddings, cache t-SNE results
-- **Profiling**: Use `py-spy` for large datasets
-
-### Browser Compatibility
-
-- ✅ Chrome, Firefox, Edge (WebGL support)
-- ✅ Safari (WebGL support)
-- ✅ Mobile browsers (touch-enabled rotation/zoom)
-- ⚠️  IE11 not supported (no WebGL)
+- **t-SNE + Visualization**: <1s for 50 terms
+- **Clustering**: <0.1s for 50 points
+- **Scalability**: Tested up to 100 terms
+- **Browser Support**: Chrome, Firefox, Edge, Safari (WebGL required)
 
 ---
-
-## Future Enhancements
-
-### Phase 2 (Optional)
-
-1. **Dash Dashboards**: Real-time monitoring of leverage drift
-2. **Animated Transitions**: Show how leverage changes over time
-3. **Custom Colormaps**: Domain-specific (e.g., brand colors)
-4. **3D Clustering Viz**: Show cluster boundaries in 3D space
-5. **GPU Acceleration**: cuML for 1000+ term datasets
-
-### Phase 3 (Research)
-
-1. **Causal Discovery**: NOTEARS, FCI for causal graphs
-2. **Deep Learning**: Autoencoders for dimensionality reduction
-3. **Streaming**: Real-time updates as data arrives
-4. **Explainability**: SHAP/LIME integration for model transparency
 
 ---
 
@@ -494,57 +356,13 @@ pip install plotly>=5.18.0 kaleido>=0.2.1 dash>=2.14.0 owlready2>=0.45 transform
 
 ---
 
-## References & Further Reading
-
-### Visualization
-- **Plotly Documentation**: https://plotly.com/python/
-- **Viridis colormap paper**: Smith & van der Walt (2015)
-- **3D Scatter best practices**: Tufte, "Visual Display of Quantitative Information"
-
-### Clustering
-- **DBSCAN paper**: Ester et al. (1996), KDD
-- **KMeans**: Lloyd (1982), IEEE Transactions
-- **Hierarchical**: Ward (1963), JASA
-- **Scikit-learn**: https://scikit-learn.org/stable/modules/clustering.html
-
-### ML Mastery
-- **"Hands-On Machine Learning"**: Aurélien Géron (O'Reilly)
-- **"Pattern Recognition and Machine Learning"**: Bishop (Springer)
-
-### Ontology
-- **OWL 2 Primer**: W3C Recommendation
-- **OWLReady2 Documentation**: https://owlready2.readthedocs.io/
-
 ---
 
 ## Quick Start
 
-### Run the Demo
-
 ```bash
-# Install dependencies
 pip install plotly kaleido
-
-# Run advanced visualization demo
 python examples/advanced_viz_demo.py
-
-# Open interactive HTML in browser
-# (Printed at end of demo)
-```
-
-### Use in Your Code
-
-```python
-from agent_kit.tools.interactive_viz import generate_interactive_leverage_viz
-
-result = generate_interactive_leverage_viz(
-    terms=your_terms,
-    kpi_term=your_kpi,
-    actionable_terms=your_actionable,
-    output_file='leverage.html'
-)
-
-print(f"Open: {result['viz_path']}")
 ```
 
 ---

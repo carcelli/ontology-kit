@@ -1,0 +1,40 @@
+id: business
+description: "Small business optimization and revenue forecasting"
+ontology_iri: "http://agent_kit.io/business#"
+
+# Agents specialized for this domain
+default_agents:
+  - ForecastAgent
+  - OptimizerAgent
+
+# Tools allowed in this domain (dot-separated module.function)
+allowed_tools:
+  - tools.business.predict
+  - tools.business.optimize
+  - tools.semantic_graph.build_semantic_graph
+  - tools.semantic_graph.compute_target_leverage
+  - tools.semantic_graph.recommend_interventions
+  - tools.ml_training.train_model
+  - tools.ml_training.run_cross_validation
+  - tools.ml_training.analyze_leverage
+  - tools.ontology.query_ontology
+  - tools.vector_space.embed
+  - tools.vector_space.query_vector_index
+
+# Domain-specific risk policies
+risk_policies:
+  max_forecast_horizon_days: 90
+  min_confidence_threshold: 0.7
+  require_leverage_explanation: true
+  max_intervention_count: 5
+  min_sample_size: 30
+
+# Pydantic schema for structured output
+output_schema: "BusinessOptimizationResult"
+
+# Default parameters for tools
+defaults:
+  forecast_method: "ensemble"  # ensemble, arima, prophet
+  optimization_metric: "revenue"
+  cross_validation_folds: 5
+
