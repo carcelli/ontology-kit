@@ -24,26 +24,26 @@ def test_ontology_tool_discovery(orchestrator):
     # Should discover trainer tool
     trainer = orchestrator.discover_tool(ML_TRAIN)
     assert trainer is not None
-    assert trainer["function"].__name__ == "train_model"
+    assert trainer["function"].name == "train_model"
     assert "schema" in trainer
     assert "tool_spec" in trainer
 
     # Should discover validator tool
     validator = orchestrator.discover_tool(ML_CV)
     assert validator is not None
-    assert validator["function"].__name__ == "run_cross_validation"
+    assert validator["function"].name == "run_cross_validation"
 
     # Should discover job checker
     job_checker = orchestrator.discover_tool(ML_JOB)
     assert job_checker is not None
-    assert job_checker["function"].__name__ == "check_job_status"
+    assert job_checker["function"].name == "check_job_status"
 
 
 def test_discover_by_algorithm(orchestrator):
     """Test discovering tools by implemented algorithm."""
     tools = orchestrator.discover_tools_by_algorithm("GradientDescent")
     assert len(tools) >= 1
-    assert any(t["function"].__name__ == "train_model" for t in tools)
+    assert any(t["function"].name == "train_model" for t in tools)
 
 
 def test_openai_tool_specs(orchestrator):
@@ -59,14 +59,18 @@ def test_openai_tool_specs(orchestrator):
         assert "parameters" in spec["function"]
 
 
-def test_end_to_end_training_then_cv(orchestrator):
+@pytest.mark.asyncio
+async def test_end_to_end_training_then_cv(orchestrator):
     """Test complete workflow: schedule training → poll → schedule CV → poll."""
+    import json
     import time
 
     # Schedule training
-    train = orchestrator.call(
-        ML_TRAIN, {"dataset_uri": "demo://clients", "hyperparameters": {"lr": 0.001}}
+    train = await orchestrator.call(
+        ML_TRAIN, {"dataset_uri": "demo://clients", "hyperparameters": json.dumps({"lr": 0.001})}
     )
+    if isinstance(train, str):
+        train = json.loads(train)
     assert train["status"] == "SCHEDULED"
     job_id = train["job_id"]
     assert job_id.startswith("train-job-")
@@ -77,7 +81,9 @@ def test_end_to_end_training_then_cv(orchestrator):
     for i in range(15):
         # Advance mock time by passing a future timestamp
         advance_mock_jobs(start_time + (i + 1) * 1.0)
-        status = orchestrator.call(ML_JOB, {"job_id": job_id})
+        status = await orchestrator.call(ML_JOB, {"job_id": job_id})
+        if isinstance(status, str):
+            status = json.loads(status)
         if status["status"] == "COMPLETED":
             model_uri = status["artifact_uri"]
             break
@@ -89,9 +95,11 @@ def test_end_to_end_training_then_cv(orchestrator):
     assert model_uri.startswith("ml:TrainedModel_")
 
     # Schedule cross-validation
-    cv = orchestrator.call(
+    cv = await orchestrator.call(
         ML_CV, {"model_uri": model_uri, "dataset_uri": "demo://clients", "k_folds": 5}
     )
+    if isinstance(cv, str):
+        cv = json.loads(cv)
     assert cv["status"] == "SCHEDULED"
     job2 = cv["job_id"]
     assert job2.startswith("cv-job-")
@@ -101,7 +109,9 @@ def test_end_to_end_training_then_cv(orchestrator):
     cv_start = time.time()
     for i in range(15):
         advance_mock_jobs(cv_start + (i + 1) * 1.0)
-        st2 = orchestrator.call(ML_JOB, {"job_id": job2})
+        st2 = await orchestrator.call(ML_JOB, {"job_id": job2})
+        if isinstance(st2, str):
+            st2 = json.loads(st2)
         if st2["status"] == "COMPLETED":
             assert "metrics" in st2
             break
@@ -113,11 +123,15 @@ def test_end_to_end_training_then_cv(orchestrator):
     assert "f1" in st2["metrics"]
 
 
-def test_call_by_python_id(orchestrator):
+@pytest.mark.asyncio
+async def test_call_by_python_id(orchestrator):
     """Test calling tools directly by Python identifier."""
-    result = orchestrator.call_by_python_id(
-        "train_model", {"dataset_uri": "demo://test", "hyperparameters": {}}
+    import json
+    result = await orchestrator.call_by_python_id(
+        "train_model", {"dataset_uri": "demo://test", "hyperparameters": "{}"}
     )
+    if isinstance(result, str):
+        result = json.loads(result)
     assert result["status"] == "SCHEDULED"
     assert "job_id" in result
 

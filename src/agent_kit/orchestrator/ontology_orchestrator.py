@@ -137,7 +137,7 @@ class OntologyOrchestrator:
         schema = tool["schema"]
         fn: Callable = tool["function"]
         validated = schema(**params)
-        return fn(validated)
+        return fn.on_invoke_tool(None, validated.model_dump_json())
 
     def call_by_python_id(self, python_id: str, params: dict[str, Any]) -> Any:
         """
@@ -156,4 +156,4 @@ class OntologyOrchestrator:
         schema = tool["schema"]
         fn: Callable = tool["function"]
         validated = schema(**params)
-        return fn(validated)
+        return fn.on_invoke_tool(None, validated.model_dump_json())

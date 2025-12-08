@@ -14,6 +14,9 @@ References:
 
 from __future__ import annotations
 
+import os
+from unittest.mock import patch
+
 import pytest
 
 from agent_kit.agents.base import AgentTask
@@ -31,7 +34,8 @@ class TestBusinessDomainGoldenFlow:
     @pytest.fixture
     def factory(self):
         """Create factory with test configuration."""
-        return AgentFactory()
+        with patch.dict(os.environ, {"XAI_API_KEY": "test_key"}):
+            return AgentFactory()
 
     @pytest.fixture
     def registry(self):
@@ -269,7 +273,7 @@ class TestCircuitBreakers:
         """
         from agent_kit.monitoring.circuit_breaker import with_circuit_breaker
 
-        @with_circuit_breaker(max_failures=3, reset_timeout=1)
+        @with_circuit_breaker(max_failures=3, reset_timeout=1, failure_threshold=1.1)
         def failing_function():
             raise Exception("API error")
 

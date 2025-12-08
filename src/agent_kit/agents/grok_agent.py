@@ -8,28 +8,22 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+import agent_kit.agents.base as base_module
 from agent_kit.agents.base import (
+    TENACITY_AVAILABLE,
     AgentActionResult,
     AgentObservation,
     AgentPlan,
+    AgentResult,
     AgentTask,
     BaseAgent,
+    retry,
 )
 
-# Lazy imports
-try:
-    from openai import OpenAI
-
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-try:
-    from tenacity import retry, stop_after_attempt, wait_exponential
-
-    TENACITY_AVAILABLE = True
-except ImportError:
-    TENACITY_AVAILABLE = False
+try:  # pragma: no cover - optional dependency
+    from tenacity import stop_after_attempt, wait_exponential
+except Exception:  # pragma: no cover
+    stop_after_attempt = wait_exponential = None
 
 
 class GrokConfig(BaseModel):
@@ -79,10 +73,14 @@ class GrokAgent(BaseAgent):
         """
         Initialize Grok agent with ontology and tool access.
         """
-        # Call BaseAgent init if it has one (we will ensure it does)
-        super().__init__(name="GrokAgent", description="Grok-powered ontology agent")
+        super().__init__(
+            name="GrokAgent",
+            description="Grok-powered ontology agent",
+            agent_id="GrokAgent",
+            config={"model": config.model},
+        )
 
-        if not OPENAI_AVAILABLE:
+        if not base_module.OPENAI_AVAILABLE:
             raise ImportError(
                 "openai package required for GrokAgent. Install: pip install openai>=1.0.0"
             )
@@ -99,7 +97,7 @@ class GrokAgent(BaseAgent):
                 "Grok API key is required. Set XAI_API_KEY env var or pass api_key to GrokConfig."
             )
 
-        self.client = OpenAI(api_key=config.api_key, base_url=config.base_url)
+        self.client = base_module.OpenAI(api_key=config.api_key, base_url=config.base_url)
 
         self.system_prompt = system_prompt or (
             "You are an ontology-driven AI agent for small business optimization. "
@@ -202,7 +200,7 @@ Specify which tools to invoke and why.
         return AgentPlan(thought=plan_text, action=action)
 
     def act(
-        self, task: AgentTask, plan: AgentPlan, observation: AgentObservation
+        self, plan: AgentPlan, observation: AgentObservation | None = None, task: AgentTask | None = None
     ) -> AgentActionResult:
         """
         Execute plan by invoking tools from registry.
@@ -286,10 +284,10 @@ Provide 2-3 concise insights for learning.
                         {"role": "system", "content": self.system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    temperature=self.config.temperature,
-                    max_tokens=self.config.max_tokens,
-                    seed=self.config.seed,
-                )
+                temperature=self.config.temperature,
+                max_tokens=self.config.max_tokens,
+                seed=self.config.seed,
+            )
 
             return _call()
         else:
@@ -303,3 +301,20 @@ Provide 2-3 concise insights for learning.
                 max_tokens=self.config.max_tokens,
                 seed=self.config.seed,
             )
+
+    def run(self, task: AgentTask) -> AgentResult:
+        """
+        Structured run that matches unit test expectations.
+        """
+        observation = self.observe(task)
+        plan = self.plan(task, observation)
+        action_result = self.act(plan, observation=observation, task=task)
+        self.reflect(task, action_result)
+
+        summary = (
+            f"Task: {task.prompt}\n"
+            f"Observation: {getattr(observation, 'content', observation)}\n"
+            f"Plan: {plan.thought or plan.action}\n"
+            f"Result: {action_result.output or action_result.summary}"
+        )
+        return AgentResult(result=summary)

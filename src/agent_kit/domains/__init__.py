@@ -11,9 +11,10 @@ From first principles: Domains are boundary contexts (DDD) that partition
 the agent graph into cohesive subgraphs, enabling specialization and isolation.
 """
 
-from agent_kit.domains.registry import DomainConfig, DomainRegistry
+from agent_kit.domains.registry import DomainConfig, DomainRegistry, get_global_registry
 
 __all__ = [
     "DomainConfig",
     "DomainRegistry",
+    "get_global_registry",
 ]

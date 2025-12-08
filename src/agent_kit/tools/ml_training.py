@@ -56,27 +56,32 @@ class CrossValidationInput(BaseModel):
 
 # -------------- Tool Implementations --------------
 @function_tool
-def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
+def train_model(
+    dataset_uri: str, hyperparameters: str = "{}"
+) -> dict[str, Any]:
     """
     ASYNC: schedule training, return job_id immediately.
 
     Args:
-        input_data: Training configuration
+        dataset_uri: URI of ml:Dataset for training
+        hyperparameters: JSON string of hyperparameters (e.g., '{"learning_rate": 0.01}')
 
     Returns:
         Job scheduling confirmation with job_id
     """
     job_id = f"train-job-{uuid.uuid4()}"
-    logger.info("Scheduling training: %s on %s", job_id, input_data.dataset_uri)
+    logger.info("Scheduling training: %s on %s", job_id, dataset_uri)
 
     # Parse hyperparameters JSON string
     try:
-        hyperparameters = json.loads(input_data.hyperparameters)
+        hyperparams_dict = json.loads(hyperparameters)
     except json.JSONDecodeError:
-        hyperparameters = {}
+        hyperparams_dict = {}
 
-    params_dict = input_data.model_dump()
-    params_dict["hyperparameters"] = hyperparameters
+    params_dict = {
+        "dataset_uri": dataset_uri,
+        "hyperparameters": hyperparams_dict,
+    }
 
     MOCK_JOB_DB[job_id] = {
         "status": "SCHEDULED",
@@ -94,23 +99,34 @@ def train_model(input_data: ModelTrainingInput) -> dict[str, Any]:
 
 
 @function_tool
-def run_cross_validation(input_data: CrossValidationInput) -> dict[str, Any]:
+def run_cross_validation(
+    model_uri: str, dataset_uri: str, k_folds: int = 5
+) -> dict[str, Any]:
     """
     ASYNC: schedule cross-validation, return job_id immediately.
 
     Args:
-        input_data: Cross-validation configuration
+        model_uri: URI of ml:TrainedModel to evaluate
+        dataset_uri: URI of ml:Dataset to use for validation
+        k_folds: Number of folds (default 5)
 
     Returns:
         Job scheduling confirmation with job_id
     """
     job_id = f"cv-job-{uuid.uuid4()}"
-    logger.info("Scheduling CV: %s on %s", job_id, input_data.model_uri)
+    logger.info("Scheduling CV: %s on %s", job_id, model_uri)
+    
+    params = {
+        "model_uri": model_uri,
+        "dataset_uri": dataset_uri,
+        "k_folds": k_folds,
+    }
+
     MOCK_JOB_DB[job_id] = {
         "status": "SCHEDULED",
         "type": "VALIDATE",
         "start_time": time.time(),
-        "params": input_data.model_dump(),
+        "params": params,
         "artifact_uri": f"ml:PerformanceMetric_{job_id}",
         "progress": 0.0,
     }
@@ -164,23 +180,23 @@ def advance_mock_jobs(now: float | None = None) -> None:
 
 
 @function_tool
-def check_job_status(input_data: JobStatusInput) -> dict[str, Any]:
+def check_job_status(job_id: str) -> dict[str, Any]:
     """
     Poll job state. In prod, your worker updates real status/metrics.
 
     Args:
-        input_data: Job identifier to check
+        job_id: Job identifier to check
 
     Returns:
         Current job status, progress, and artifacts when complete
     """
-    job = MOCK_JOB_DB.get(input_data.job_id)
+    job = MOCK_JOB_DB.get(job_id)
     if not job:
-        return {"status": "NOT_FOUND", "job_id": input_data.job_id}
+        return {"status": "NOT_FOUND", "job_id": job_id}
     # In dev, auto-advance to simulate work
     advance_mock_jobs()
-    job = MOCK_JOB_DB[input_data.job_id]
-    resp = {"status": job["status"], "job_id": input_data.job_id}
+    job = MOCK_JOB_DB[job_id]
+    resp = {"status": job["status"], "job_id": job_id}
     if job["status"] == "RUNNING":
         resp["progress"] = round(job.get("progress", 0.0), 3)
     if job["status"] == "COMPLETED":
@@ -220,7 +236,12 @@ class LeverageAnalysisInput(BaseModel):
 
 
 @function_tool
-def analyze_leverage(input_data: LeverageAnalysisInput) -> dict[str, Any]:
+def analyze_leverage(
+    terms: list[str],
+    kpi_term: str,
+    actionable_terms: list[str] | None = None,
+    ontology_path: str | None = None,
+) -> dict[str, Any]:
     """
     Analyze high-leverage intervention points using t-SNE dimensionality reduction.
 
@@ -228,7 +249,10 @@ def analyze_leverage(input_data: LeverageAnalysisInput) -> dict[str, Any]:
     Leverage = Actionability × (Sensitivity + Uncertainty + Centrality)
 
     Args:
-        input_data: Analysis configuration
+        terms: Business entities/terms to analyze
+        kpi_term: Key Performance Indicator for sensitivity analysis
+        actionable_terms: Terms that can be intervened upon
+        ontology_path: Optional ontology path for graph structure analysis
 
     Returns:
         Top leverage points ranked by score with visualization path
@@ -242,18 +266,14 @@ def analyze_leverage(input_data: LeverageAnalysisInput) -> dict[str, Any]:
         }
 
     job_id = f"leverage-job-{uuid.uuid4()}"
-    logger.info(
-        "Running leverage analysis: %s for KPI: %s", job_id, input_data.kpi_term
-    )
+    logger.info("Running leverage analysis: %s for KPI: %s", job_id, kpi_term)
 
     try:
         result = generate_hyperdim_leverage_viz(
-            terms=input_data.terms,
-            kpi_term=input_data.kpi_term,
-            actionable_terms=input_data.actionable_terms
-            if input_data.actionable_terms
-            else None,
-            ontology_path=input_data.ontology_path,
+            terms=terms,
+            kpi_term=kpi_term,
+            actionable_terms=actionable_terms,
+            ontology_path=ontology_path,
             output_file=f"outputs/leverage_{job_id}.png",
             n_components=2,
         )

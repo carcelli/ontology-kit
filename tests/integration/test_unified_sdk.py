@@ -143,7 +143,7 @@ class TestOntologyGuardrails:
             mock_context = MagicMock()
 
             result = await guardrail.check(mock_context, '{"summary": "test"}')
-            assert result.passed
+            assert not result.tripwire_triggered
 
     @pytest.mark.asyncio
     async def test_output_guardrail_invalid_json(self):
@@ -153,8 +153,8 @@ class TestOntologyGuardrails:
         mock_context = MagicMock()
         result = await guardrail.check(mock_context, "not valid json")
 
-        assert not result.passed
-        assert "not valid JSON" in result.error_message
+        assert result.tripwire_triggered
+        assert "not valid JSON" in result.output_info
 
     @pytest.mark.asyncio
     async def test_input_guardrail_passes_by_default(self):
@@ -168,7 +168,7 @@ class TestOntologyGuardrails:
             mock_context = MagicMock()
 
             result = await guardrail.check(mock_context, "Normal input text")
-            assert result.passed
+            assert not result.tripwire_triggered
 
 
 class TestOntologyToolFilter:

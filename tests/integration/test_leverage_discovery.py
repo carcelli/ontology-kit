@@ -1,5 +1,7 @@
 """Integration test for ontology-driven leverage analysis discovery."""
 
+import json
+
 import pytest
 
 from agent_kit.ontology.loader import OntologyLoader
@@ -21,7 +23,7 @@ def test_discover_leverage_tool(orchestrator):
     """Test that leverage analysis tool can be discovered via ontology."""
     tool = orchestrator.discover_tool(ML_LEVERAGE)
     assert tool is not None
-    assert tool["function"].__name__ == "analyze_leverage"
+    assert tool["function"].name == "analyze_leverage"
     assert "schema" in tool
     assert "tool_spec" in tool
 
@@ -31,10 +33,11 @@ def test_discover_tsne_tools(orchestrator):
     tools = orchestrator.discover_tools_by_algorithm("t-SNE")
     assert len(tools) >= 1
     # Should find at least the leverage analyzer
-    assert any(t["function"].__name__ == "analyze_leverage" for t in tools)
+    assert any(t["function"].name == "analyze_leverage" for t in tools)
 
 
-def test_leverage_analysis_execution(orchestrator):
+@pytest.mark.asyncio
+async def test_leverage_analysis_execution(orchestrator):
     """Test executing leverage analysis via orchestrator."""
     business_terms = [
         "Revenue",
@@ -46,7 +49,7 @@ def test_leverage_analysis_execution(orchestrator):
     ]
     actionable = ["Budget", "Marketing", "Advertising"]
 
-    result = orchestrator.call(
+    result = await orchestrator.call(
         ML_LEVERAGE,
         {
             "terms": business_terms,
@@ -54,6 +57,9 @@ def test_leverage_analysis_execution(orchestrator):
             "actionable_terms": actionable,
         },
     )
+
+    if isinstance(result, str):
+        result = json.loads(result)
 
     assert result["status"] in ["COMPLETED", "ERROR"]
     if result["status"] == "COMPLETED":
@@ -77,9 +83,10 @@ def test_openai_tool_spec_for_leverage(orchestrator):
     assert "parameters" in spec["function"]
 
 
-def test_leverage_analysis_direct_call(orchestrator):
+@pytest.mark.asyncio
+async def test_leverage_analysis_direct_call(orchestrator):
     """Test calling leverage analysis directly by Python ID."""
-    result = orchestrator.call_by_python_id(
+    result = await orchestrator.call_by_python_id(
         "analyze_leverage",
         {
             "terms": ["Revenue", "Budget", "Sales"],

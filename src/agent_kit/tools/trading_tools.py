@@ -251,7 +251,7 @@ def calculate_bollinger_bands(
 
 
 @function_tool
-def calculate_indicators(ticker: str, market_data: list[dict]) -> dict:
+def calculate_indicators(ticker: str, market_data: list[MarketData]) -> dict:
     """
     Calculate all technical indicators for an asset.
 
@@ -267,7 +267,7 @@ def calculate_indicators(ticker: str, market_data: list[dict]) -> dict:
         >>> indicators = calculate_indicators("AAPL", data)
         >>> print(f"RSI: {indicators['RSI']:.2f}")
     """
-    prices = [bar["close"] for bar in market_data]
+    prices = [bar.close for bar in market_data]
 
     rsi = calculate_rsi(prices)
     macd_data = calculate_macd(prices)

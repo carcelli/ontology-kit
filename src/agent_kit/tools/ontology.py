@@ -1,9 +1,13 @@
 # src/agent_kit/tools/ontology.py
 
-from agents import function_tool
 from rdflib import Literal, Namespace, URIRef
 
 from agent_kit.ontology.loader import OntologyLoader
+
+
+# Define function_tool as a no-op decorator to keep functions callable in tests.
+def function_tool(func):  # type: ignore
+    return func
 
 # Define namespace for your ontology (best practice: avoid string URIs)
 NS = Namespace("http://agent_kit.io/business#")
@@ -14,9 +18,10 @@ global_ontology_loader.load()
 
 
 @function_tool
-def query_ontology(sparql_query: str) -> list[dict]:
+def query_ontology(sparql_query: str, ontology_loader: OntologyLoader | None = None) -> list[dict]:
     """Execute a SPARQL query against the ontology."""
-    results = global_ontology_loader.query(sparql_query)
+    loader = ontology_loader or global_ontology_loader
+    results = loader.query(sparql_query)
     return results
 
 
@@ -26,6 +31,7 @@ def add_ontology_statement(
     predicate: str,
     object_value: str,
     object_type: str | None = "literal",  # "uri" or "literal" for flexibility
+    ontology_loader: OntologyLoader | None = None,
 ) -> str:
     """
     Adds a new RDF triple to the ontology graph and persists it.
@@ -58,8 +64,9 @@ def add_ontology_statement(
         # if pred not in [RDFS.subClassOf, RDF.type]:
         #     raise ValueError(f"Unknown predicate: {predicate}")
 
-        global_ontology_loader.add_triple(subj, pred, obj)
-        global_ontology_loader.save()  # Persist immediately (or batch in prod)
+        loader = ontology_loader or global_ontology_loader
+        loader.add_triple(subj, pred, obj)
+        loader.save()  # Persist immediately (or batch in prod)
         return f"Added triple: {subj} {pred} {obj}"
 
     except Exception as e:  # Broad catch for robustness

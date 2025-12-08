@@ -12,14 +12,14 @@ import json
 from typing import Any
 
 from agents import (
+    GuardrailFunctionOutput,
     InputGuardrail,
-    InputGuardrailResult,
     OutputGuardrail,
-    OutputGuardrailResult,
     RunContextWrapper,
 )
 from pydantic import ValidationError
 
+from agent_kit.domains.registry import get_global_registry
 from agent_kit.schemas import get_schema
 
 
@@ -64,7 +64,7 @@ class OntologyOutputGuardrail(OutputGuardrail):
         self,
         context: RunContextWrapper,
         output: str,
-    ) -> Any:  # OutputGuardrailResult
+    ) -> Any:  # GuardrailFunctionOutput
         """
         Validate output against domain schema.
 
@@ -73,30 +73,30 @@ class OntologyOutputGuardrail(OutputGuardrail):
             output: Agent output string (should be JSON)
 
         Returns:
-            OutputGuardrailResult with validation status
+            GuardrailFunctionOutput with validation status
         """
         if self.schema is None:
             # No schema configured - pass through
-            return OutputGuardrailResult(passed=True)
+            return GuardrailFunctionOutput(output_info=None, tripwire_triggered=False)
 
         try:
             # Parse output as JSON
             output_dict = json.loads(output)
         except json.JSONDecodeError as e:
-            return OutputGuardrailResult(
-                passed=False,
-                error_message=f"Output is not valid JSON: {e}",
+            return GuardrailFunctionOutput(
+                tripwire_triggered=True,
+                output_info=f"Output is not valid JSON: {e}",
             )
 
         try:
             # Validate against Pydantic schema
             self.schema(**output_dict)
-            return OutputGuardrailResult(passed=True)
+            return GuardrailFunctionOutput(output_info=None, tripwire_triggered=False)
         except ValidationError as e:
             errors = "; ".join([str(err) for err in e.errors()])
-            return OutputGuardrailResult(
-                passed=False,
-                error_message=f"Schema validation failed: {errors}",
+            return GuardrailFunctionOutput(
+                tripwire_triggered=True,
+                output_info=f"Schema validation failed: {errors}",
             )
 
 
@@ -116,8 +116,6 @@ class OntologyInputGuardrail(InputGuardrail):
             domain: Domain identifier
         """
         self.domain = domain
-        from agent_kit.domains.registry import get_global_registry
-
         registry = get_global_registry()
         self.domain_config = registry.get(domain)
 
@@ -125,7 +123,7 @@ class OntologyInputGuardrail(InputGuardrail):
         self,
         context: RunContextWrapper,
         input_text: str,
-    ) -> Any:  # InputGuardrailResult
+    ) -> Any:  # GuardrailFunctionOutput
         """
         Validate input against domain constraints.
 
@@ -134,10 +132,10 @@ class OntologyInputGuardrail(InputGuardrail):
             input_text: User input text
 
         Returns:
-            InputGuardrailResult with validation status
+            GuardrailFunctionOutput with validation status
         """
         if not self.domain_config or not self.domain_config.risk_policies:
-            return InputGuardrailResult(passed=True)
+            return GuardrailFunctionOutput(output_info=None, tripwire_triggered=False)
 
         # Domain-specific validation logic
         violations = []
@@ -153,9 +151,9 @@ class OntologyInputGuardrail(InputGuardrail):
             pass
 
         if violations:
-            return InputGuardrailResult(
-                passed=False,
-                error_message=f"Input violates domain constraints: {', '.join(violations)}",
+            return GuardrailFunctionOutput(
+                tripwire_triggered=True,
+                output_info=f"Input violates domain constraints: {', '.join(violations)}",
             )
 
-        return InputGuardrailResult(passed=True)
+        return GuardrailFunctionOutput(output_info=None, tripwire_triggered=False)
