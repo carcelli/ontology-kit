@@ -279,9 +279,9 @@ class TestGrokAgentReflect:
         self, mock_openai_class, mock_config, mock_ontology, mock_openai_response
     ):
         """Test reflection stores insights in memory."""
-        mock_openai_response.choices[
-            0
-        ].message.content = "Key insight: Data quality is good."
+        mock_openai_response.choices[0].message.content = (
+            "Key insight: Data quality is good."
+        )
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_openai_response
         mock_openai_class.return_value = mock_client

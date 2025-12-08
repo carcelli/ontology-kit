@@ -74,9 +74,9 @@ class CircuitBreaker:
 
         # State tracking
         self.errors: list[datetime] = []
-        self.successes: list[
-            datetime
-        ] = []  # Track successes for error rate calculation
+        self.successes: list[datetime] = (
+            []
+        )  # Track successes for error rate calculation
         self.peak_portfolio_value = 0.0
         self.current_portfolio_value = 0.0
         self.current_sharpe_ratio = 0.0
