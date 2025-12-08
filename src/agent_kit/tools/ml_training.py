@@ -115,7 +115,7 @@ def run_cross_validation(
     """
     job_id = f"cv-job-{uuid.uuid4()}"
     logger.info("Scheduling CV: %s on %s", job_id, model_uri)
-    
+
     params = {
         "model_uri": model_uri,
         "dataset_uri": dataset_uri,
