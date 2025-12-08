@@ -30,6 +30,7 @@ from agent_kit.tools.hyperdim_viz import generate_hyperdim_viz
 @dataclass
 class WorkflowStage:
     """Represents a stage in the ontology-ML workflow."""
+
     name: str
     description: str
     ontology_entities: list[str]
@@ -42,6 +43,7 @@ class WorkflowStage:
 @dataclass
 class AgentDecision:
     """Tracks individual agent decisions during workflow execution."""
+
     timestamp: datetime
     agent_name: str
     task_context: str
@@ -56,6 +58,7 @@ class AgentDecision:
 @dataclass
 class WorkflowExecution:
     """Complete execution record of an ontology-ML workflow."""
+
     workflow_id: str
     start_time: datetime
     end_time: datetime | None = None
@@ -76,12 +79,16 @@ class OntologyMLWorkflowAnalyzer:
     - Collecting data for continuous improvement
     """
 
-    def __init__(self, ontology_path: str = "assets/ontologies/core.ttl"):
+    def __init__(
+        self,
+        ontology_path: str = "assets/ontologies/core.ttl",
+        data_dir: str | Path = "outputs/workflow_data",
+    ):
         self.ontology = OntologyLoader(ontology_path).load()
         self.workflows: dict[str, WorkflowExecution] = {}
         self.decision_log: list[AgentDecision] = []
-        self.data_dir = Path("outputs/workflow_data")
-        self.data_dir.mkdir(exist_ok=True)
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(exist_ok=True, parents=True)
 
     def define_workflow_stages(self) -> list[WorkflowStage]:
         """
@@ -98,16 +105,24 @@ class OntologyMLWorkflowAnalyzer:
                 required_tools=["OntologyLoader", "SPARQLValidator"],
                 expected_outputs=["ValidatedOntology", "EntityMappings"],
                 success_metrics=["LoadTime", "ValidationErrors", "EntityCoverage"],
-                duration_estimate=5.0
+                duration_estimate=5.0,
             ),
             WorkflowStage(
                 name="Task Semantic Analysis",
                 description="Analyze ML task requirements against ontology concepts",
                 ontology_entities=["Task", "Concept", "similarTo"],
                 required_tools=["SemanticAnalyzer", "EmbeddingComparator"],
-                expected_outputs=["TaskEmbedding", "ConceptSimilarities", "NavigationPath"],
-                success_metrics=["SemanticMatchScore", "ConceptCoverage", "PathEfficiency"],
-                duration_estimate=15.0
+                expected_outputs=[
+                    "TaskEmbedding",
+                    "ConceptSimilarities",
+                    "NavigationPath",
+                ],
+                success_metrics=[
+                    "SemanticMatchScore",
+                    "ConceptCoverage",
+                    "PathEfficiency",
+                ],
+                duration_estimate=15.0,
             ),
             WorkflowStage(
                 name="Tool Discovery & Selection",
@@ -115,39 +130,69 @@ class OntologyMLWorkflowAnalyzer:
                 ontology_entities=["Tool", "requiresTool", "hasCapability"],
                 required_tools=["ToolDiscovery", "CapabilityMatcher"],
                 expected_outputs=["SelectedTools", "ToolCapabilities", "ExecutionPlan"],
-                success_metrics=["ToolMatchAccuracy", "CapabilityCoverage", "SelectionTime"],
-                duration_estimate=10.0
+                success_metrics=[
+                    "ToolMatchAccuracy",
+                    "CapabilityCoverage",
+                    "SelectionTime",
+                ],
+                duration_estimate=10.0,
             ),
             WorkflowStage(
                 name="Hyperdimensional Navigation",
                 description="Navigate vector space using ontology-guided decisions",
                 ontology_entities=["State", "navigatesTo", "transitionsTo"],
                 required_tools=["VectorNavigator", "StateTracker"],
-                expected_outputs=["NavigationPath", "StateTransitions", "DecisionConfidence"],
-                success_metrics=["NavigationAccuracy", "PathOptimality", "DecisionSpeed"],
-                duration_estimate=25.0
+                expected_outputs=[
+                    "NavigationPath",
+                    "StateTransitions",
+                    "DecisionConfidence",
+                ],
+                success_metrics=[
+                    "NavigationAccuracy",
+                    "PathOptimality",
+                    "DecisionSpeed",
+                ],
+                duration_estimate=25.0,
             ),
             WorkflowStage(
                 name="ML Model Execution",
                 description="Execute ML operations with ontology validation",
                 ontology_entities=["Action", "executesAction", "accomplishes"],
                 required_tools=["MLExecutor", "ResultValidator"],
-                expected_outputs=["ModelOutputs", "PerformanceMetrics", "ValidationResults"],
-                success_metrics=["ExecutionSuccess", "OutputQuality", "ValidationScore"],
-                duration_estimate=60.0
+                expected_outputs=[
+                    "ModelOutputs",
+                    "PerformanceMetrics",
+                    "ValidationResults",
+                ],
+                success_metrics=[
+                    "ExecutionSuccess",
+                    "OutputQuality",
+                    "ValidationScore",
+                ],
+                duration_estimate=60.0,
             ),
             WorkflowStage(
                 name="Result Integration & Learning",
                 description="Integrate results back into ontology and learn from outcomes",
                 ontology_entities=["Insight", "derivedFrom", "informs"],
                 required_tools=["ResultIntegrator", "LearningUpdater"],
-                expected_outputs=["UpdatedOntology", "LearnedPatterns", "PerformanceInsights"],
-                success_metrics=["IntegrationAccuracy", "LearningEffectiveness", "PatternQuality"],
-                duration_estimate=20.0
-            )
+                expected_outputs=[
+                    "UpdatedOntology",
+                    "LearnedPatterns",
+                    "PerformanceInsights",
+                ],
+                success_metrics=[
+                    "IntegrationAccuracy",
+                    "LearningEffectiveness",
+                    "PatternQuality",
+                ],
+                duration_estimate=20.0,
+            ),
         ]
 
-    def start_workflow_tracking(self, workflow_id: str, task_description: str) -> WorkflowExecution:
+    def start_workflow_tracking(
+        self, workflow_id: str, task_description: str
+    ) -> WorkflowExecution:
         """
         Start tracking a new workflow execution.
 
@@ -161,7 +206,7 @@ class OntologyMLWorkflowAnalyzer:
         workflow = WorkflowExecution(
             workflow_id=workflow_id,
             start_time=datetime.now(),
-            stages=self.define_workflow_stages()
+            stages=self.define_workflow_stages(),
         )
 
         # Add initial decision for workflow start
@@ -172,7 +217,7 @@ class OntologyMLWorkflowAnalyzer:
             ontology_query="SELECT DISTINCT ?task WHERE { ?task a :Task }",
             decision_made=f"Started workflow for: {task_description}",
             confidence_score=1.0,
-            metadata={"workflow_id": workflow_id, "stage": "initialization"}
+            metadata={"workflow_id": workflow_id, "stage": "initialization"},
         )
 
         workflow.decisions.append(initial_decision)
@@ -196,7 +241,9 @@ class OntologyMLWorkflowAnalyzer:
             # Save decision to file for persistence
             self._save_decision(decision)
 
-    def complete_workflow(self, workflow_id: str, outcome: str, metrics: dict[str, float]) -> None:
+    def complete_workflow(
+        self, workflow_id: str, outcome: str, metrics: dict[str, float]
+    ) -> None:
         """
         Mark a workflow as completed and record final metrics.
 
@@ -246,12 +293,12 @@ class OntologyMLWorkflowAnalyzer:
         # Generate visualization
         output_file = f"outputs/workflow_{workflow_id}_viz.png"
         return generate_hyperdim_viz(
-            terms=terms,
-            n_components=2,
-            output_file=output_file
+            terms=terms, n_components=2, output_file=output_file
         )
 
-    def analyze_agent_performance(self, agent_name: str | None = None) -> dict[str, Any]:
+    def analyze_agent_performance(
+        self, agent_name: str | None = None
+    ) -> dict[str, Any]:
         """
         Analyze agent performance across all tracked workflows.
 
@@ -273,12 +320,18 @@ class OntologyMLWorkflowAnalyzer:
         avg_confidence = sum(d.confidence_score for d in decisions) / total_decisions
 
         successful_decisions = [d for d in decisions if d.outcome == "success"]
-        success_rate = len(successful_decisions) / total_decisions if total_decisions > 0 else 0
+        success_rate = (
+            len(successful_decisions) / total_decisions if total_decisions > 0 else 0
+        )
 
         avg_execution_time = (
-            sum(d.execution_time for d in decisions if d.execution_time) /
-            len([d for d in decisions if d.execution_time])
-        ) if any(d.execution_time for d in decisions) else None
+            (
+                sum(d.execution_time for d in decisions if d.execution_time)
+                / len([d for d in decisions if d.execution_time])
+            )
+            if any(d.execution_time for d in decisions)
+            else None
+        )
 
         # Group by task context
         task_performance = {}
@@ -296,14 +349,16 @@ class OntologyMLWorkflowAnalyzer:
             "task_performance": {
                 task: {
                     "count": len(scores),
-                    "avg_confidence": sum(scores) / len(scores)
+                    "avg_confidence": sum(scores) / len(scores),
                 }
                 for task, scores in task_performance.items()
             },
-            "recent_trends": self._calculate_recent_trends(decisions)
+            "recent_trends": self._calculate_recent_trends(decisions),
         }
 
-    def _calculate_recent_trends(self, decisions: list[AgentDecision]) -> dict[str, Any]:
+    def _calculate_recent_trends(
+        self, decisions: list[AgentDecision]
+    ) -> dict[str, Any]:
         """Calculate performance trends over recent decisions."""
         if len(decisions) < 10:
             return {"insufficient_data": True}
@@ -323,26 +378,29 @@ class OntologyMLWorkflowAnalyzer:
             "recent_avg_confidence": recent_avg,
             "older_avg_confidence": older_avg,
             "confidence_trend": recent_avg - older_avg,
-            "trend_direction": "improving" if recent_avg > older_avg else "declining"
+            "trend_direction": "improving" if recent_avg > older_avg else "declining",
         }
 
     def _save_decision(self, decision: AgentDecision) -> None:
         """Save decision to persistent storage."""
         decision_file = self.data_dir / f"decisions_{decision.timestamp.date()}.jsonl"
 
-        with open(decision_file, 'a') as f:
-            json.dump({
-                "timestamp": decision.timestamp.isoformat(),
-                "agent_name": decision.agent_name,
-                "task_context": decision.task_context,
-                "ontology_query": decision.ontology_query,
-                "decision_made": decision.decision_made,
-                "confidence_score": decision.confidence_score,
-                "outcome": decision.outcome,
-                "execution_time": decision.execution_time,
-                "metadata": decision.metadata
-            }, f)
-            f.write('\n')
+        with open(decision_file, "a") as f:
+            json.dump(
+                {
+                    "timestamp": decision.timestamp.isoformat(),
+                    "agent_name": decision.agent_name,
+                    "task_context": decision.task_context,
+                    "ontology_query": decision.ontology_query,
+                    "decision_made": decision.decision_made,
+                    "confidence_score": decision.confidence_score,
+                    "outcome": decision.outcome,
+                    "execution_time": decision.execution_time,
+                    "metadata": decision.metadata,
+                },
+                f,
+            )
+            f.write("\n")
 
     def _save_workflow(self, workflow: WorkflowExecution) -> None:
         """Save complete workflow to persistent storage."""
@@ -358,11 +416,12 @@ class OntologyMLWorkflowAnalyzer:
             "decisions_made": len(workflow.decisions),
             "duration_seconds": (
                 (workflow.end_time - workflow.start_time).total_seconds()
-                if workflow.end_time else None
-            )
+                if workflow.end_time
+                else None
+            ),
         }
 
-        with open(workflow_file, 'w') as f:
+        with open(workflow_file, "w") as f:
             json.dump(workflow_data, f, indent=2)
 
     def generate_learning_report(self) -> str:
@@ -380,56 +439,71 @@ class OntologyMLWorkflowAnalyzer:
 Generated: {datetime.now().isoformat()}
 
 ## Overall Performance Metrics
-- Total Decisions Tracked: {performance_data.get('total_decisions', 0)}
-- Average Confidence Score: {performance_data.get('average_confidence', 0):.3f}
-- Success Rate: {performance_data.get('success_rate', 0):.1%}
-- Average Execution Time: {performance_data.get('average_execution_time', 'N/A')}
+- Total Decisions Tracked: {performance_data.get("total_decisions", 0)}
+- Average Confidence Score: {performance_data.get("average_confidence", 0):.3f}
+- Success Rate: {performance_data.get("success_rate", 0):.1%}
+- Average Execution Time: {performance_data.get("average_execution_time", "N/A")}
 
 ## Task Performance Breakdown
 """
 
-        for task, metrics in performance_data.get('task_performance', {}).items():
+        for task, metrics in performance_data.get("task_performance", {}).items():
             report_content += f"### {task}\n"
             report_content += f"- Decisions: {metrics['count']}\n"
-            report_content += f"- Average Confidence: {metrics['avg_confidence']:.3f}\n\n"
+            report_content += (
+                f"- Average Confidence: {metrics['avg_confidence']:.3f}\n\n"
+            )
 
-        trends = performance_data.get('recent_trends', {})
-        if not trends.get('insufficient_data'):
+        trends = performance_data.get("recent_trends", {})
+        if not trends.get("insufficient_data"):
             report_content += f"""## Performance Trends
-- Recent Average Confidence: {trends.get('recent_avg_confidence', 0):.3f}
-- Older Average Confidence: {trends.get('older_avg_confidence', 0):.3f}
-- Trend: {trends.get('trend_direction', 'unknown').title()}
+- Recent Average Confidence: {trends.get("recent_avg_confidence", 0):.3f}
+- Older Average Confidence: {trends.get("older_avg_confidence", 0):.3f}
+- Trend: {trends.get("trend_direction", "unknown").title()}
 
 ## Recommendations
 """
 
-            if trends.get('confidence_trend', 0) > 0.1:
+            if trends.get("confidence_trend", 0) > 0.1:
                 report_content += "- Agent performance is improving - continue current learning patterns\n"
-            elif trends.get('confidence_trend', 0) < -0.1:
-                report_content += "- Agent performance is declining - review recent changes\n"
+            elif trends.get("confidence_trend", 0) < -0.1:
+                report_content += (
+                    "- Agent performance is declining - review recent changes\n"
+                )
             else:
                 report_content += "- Agent performance is stable - consider introducing new challenges\n"
 
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             f.write(report_content)
 
         return str(report_path)
 
 
 # Convenience functions for easy access
-def create_workflow_analyzer(ontology_path: str = "assets/ontologies/core.ttl") -> OntologyMLWorkflowAnalyzer:
+def create_workflow_analyzer(
+    ontology_path: str = "assets/ontologies/core.ttl",
+    data_dir: str | Path = "outputs/workflow_data",
+) -> OntologyMLWorkflowAnalyzer:
     """Create a new workflow analyzer instance."""
-    return OntologyMLWorkflowAnalyzer(ontology_path)
+    return OntologyMLWorkflowAnalyzer(ontology_path, data_dir)
 
 
-def start_tracking_workflow(analyzer: OntologyMLWorkflowAnalyzer, workflow_id: str, task: str) -> WorkflowExecution:
+def start_tracking_workflow(
+    analyzer: OntologyMLWorkflowAnalyzer, workflow_id: str, task: str
+) -> WorkflowExecution:
     """Start tracking a new workflow."""
     return analyzer.start_workflow_tracking(workflow_id, task)
 
 
-def record_agent_decision(analyzer: OntologyMLWorkflowAnalyzer, workflow_id: str,
-                         agent_name: str, task_context: str, ontology_query: str,
-                         decision: str, confidence: float) -> None:
+def record_agent_decision(
+    analyzer: OntologyMLWorkflowAnalyzer,
+    workflow_id: str,
+    agent_name: str,
+    task_context: str,
+    ontology_query: str,
+    decision: str,
+    confidence: float,
+) -> None:
     """Record an agent decision."""
     decision_obj = AgentDecision(
         timestamp=datetime.now(),
@@ -437,7 +511,7 @@ def record_agent_decision(analyzer: OntologyMLWorkflowAnalyzer, workflow_id: str
         task_context=task_context,
         ontology_query=ontology_query,
         decision_made=decision,
-        confidence_score=confidence
+        confidence_score=confidence,
     )
     analyzer.record_decision(workflow_id, decision_obj)
 

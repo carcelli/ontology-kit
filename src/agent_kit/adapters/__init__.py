@@ -1,14 +1,50 @@
 """
-SDK adapters for ontology-driven agents.
+Adapter layer for integrating ADK and OpenAI Agents SDK with ontology-kit.
 
-Adapters wrap external agent SDKs (OpenAI, LangChain, AutoGen) to integrate
-with our ontology-first architecture. This enables:
-- Testing multiple orchestration frameworks
-- Swapping SDKs without changing core logic
-- Gradual migration to new frameworks
+From first principles: Adapters bridge external SDKs to our ontology-first
+architecture. They enrich SDK components with ontology context without
+modifying SDK code directly.
+
+Design pattern: Adapter (GoF) - wraps external interfaces to match our domain.
+
+Key adapters:
+- OntologyAgentAdapter: Wraps OpenAI SDK agents with ontology context
+- OntologyOutputGuardrail: Validates outputs against domain schemas
+- OntologyInputGuardrail: Validates inputs against domain constraints
+- OntologyToolFilter: Filters tools by domain allowlist
+- OpenAISDKAdapter: Legacy adapter for simple ontology-enriched execution
+
+Usage:
+    >>> from agent_kit.adapters import OntologyAgentAdapter, OntologyOutputGuardrail
+    >>> from agents import Agent
+    >>>
+    >>> agent = Agent(name="ForecastAgent", instructions="...")
+    >>> adapter = OntologyAgentAdapter(agent, ontology, "business")
+    >>> adapter.agent.output_guardrails = [OntologyOutputGuardrail("business")]
 """
 
+from .handoff_manager import (
+    HandoffContext,
+    OntologyHandoffManager,
+    create_handoff_pipeline,
+)
+from .ontology_agent_adapter import OntologyAgentAdapter
+from .ontology_guardrail import OntologyInputGuardrail, OntologyOutputGuardrail
+from .ontology_tool_filter import OntologyToolFilter
 from .openai_sdk import OpenAISDKAdapter
 
-__all__ = ['OpenAISDKAdapter']
-
+__all__ = [
+    # Primary adapter for OpenAI SDK integration
+    "OntologyAgentAdapter",
+    # Guardrails for input/output validation
+    "OntologyOutputGuardrail",
+    "OntologyInputGuardrail",
+    # Tool filtering by domain
+    "OntologyToolFilter",
+    # Handoff management
+    "OntologyHandoffManager",
+    "HandoffContext",
+    "create_handoff_pipeline",
+    # Legacy adapter (simpler interface)
+    "OpenAISDKAdapter",
+]

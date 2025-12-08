@@ -10,6 +10,7 @@ TOOL_REGISTRY = {
     "GitHub Tool": write_to_github,
 }
 
+
 class GitHubAgent(SDKAgent):
     """SDK Agent for interacting with GitHub."""
 

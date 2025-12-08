@@ -14,9 +14,10 @@ import sys
 from pathlib import Path
 
 # Add src to path (for development)
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agents import Runner
+
 from agent_kit.agents.orchestrator import OntologyOrchestratorAgent
 
 
@@ -27,7 +28,7 @@ async def main() -> None:
     print()
 
     # Path to ontology file
-    ontology_path = Path(__file__).parent.parent / 'assets' / 'ontologies' / 'core.ttl'
+    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "core.ttl"
 
     if not ontology_path.exists():
         print(f"❌ Ontology file not found: {ontology_path}")
@@ -95,5 +96,5 @@ async def main() -> None:
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

@@ -15,7 +15,8 @@ def predict() -> dict:
         dict: Forecast data containing predicted values and confidence intervals
     """
     print("Forecasting...")
-    return {'forecast': [100, 200], 'confidence': 0.85}
+    return {"forecast": [100, 200], "confidence": 0.85}
+
 
 @function_tool
 def optimize() -> dict:
@@ -29,4 +30,4 @@ def optimize() -> dict:
         dict: Optimization recommendations with expected impact metrics
     """
     print("Optimizing...")
-    return {'action': 'Increase outreach', 'expected_impact': 0.15}
+    return {"action": "Increase outreach", "expected_impact": 0.15}

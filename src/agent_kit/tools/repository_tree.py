@@ -12,9 +12,9 @@ from typing import Any
 class RepoNodeType(str, Enum):
     """Node categories represented inside a repository tree."""
 
-    REPOSITORY = 'repository'
-    DIRECTORY = 'directory'
-    FILE = 'file'
+    REPOSITORY = "repository"
+    DIRECTORY = "directory"
+    FILE = "file"
 
 
 @dataclass(slots=True)
@@ -44,11 +44,11 @@ class RepoTreeNode:
     def to_dict(self) -> dict[str, Any]:
         """Convert the node (and children) into a serializable dictionary."""
         return {
-            'name': self.name,
-            'path': str(self.path),
-            'type': self.node_type.value,
-            'metadata': self.metadata,
-            'children': [child.to_dict() for child in self.children],
+            "name": self.name,
+            "path": str(self.path),
+            "type": self.node_type.value,
+            "metadata": self.metadata,
+            "children": [child.to_dict() for child in self.children],
         }
 
 
@@ -57,19 +57,19 @@ class RepositoryTreeBuilder:
 
     DEFAULT_EXCLUDE_DIRS: set[str] = frozenset(
         {
-            '.git',
-            '.venv',
-            '__pycache__',
-            '.pytest_cache',
-            '.mypy_cache',
-            '.ruff_cache',
-            'htmlcov',
-            'dist',
-            'build',
+            ".git",
+            ".venv",
+            "__pycache__",
+            ".pytest_cache",
+            ".mypy_cache",
+            ".ruff_cache",
+            "htmlcov",
+            "dist",
+            "build",
         }
     )
 
-    DEFAULT_EXCLUDE_EXTS: set[str] = frozenset({'.pyc', '.pyo', '.pyd'})
+    DEFAULT_EXCLUDE_EXTS: set[str] = frozenset({".pyc", ".pyo", ".pyd"})
 
     def __init__(
         self,
@@ -82,7 +82,7 @@ class RepositoryTreeBuilder:
     ) -> None:
         self.root_dir = Path(root_dir).resolve()
         if not self.root_dir.exists():
-            raise FileNotFoundError(f'Repository root not found: {self.root_dir}')
+            raise FileNotFoundError(f"Repository root not found: {self.root_dir}")
 
         self.exclude_dirs = set(self.DEFAULT_EXCLUDE_DIRS)
         if exclude_dirs:
@@ -90,7 +90,9 @@ class RepositoryTreeBuilder:
 
         self.exclude_exts = set(self.DEFAULT_EXCLUDE_EXTS)
         if exclude_exts:
-            normalized = [ext if ext.startswith('.') else f'.{ext}' for ext in exclude_exts]
+            normalized = [
+                ext if ext.startswith(".") else f".{ext}" for ext in exclude_exts
+            ]
             self.exclude_exts.update(normalized)
 
         self.max_depth = max_depth
@@ -116,14 +118,16 @@ class RepositoryTreeBuilder:
 
         metadata: dict[str, Any] = {}
         if path.is_file():
-            metadata['extension'] = path.suffix
+            metadata["extension"] = path.suffix
             try:
-                metadata['size_bytes'] = path.stat().st_size
+                metadata["size_bytes"] = path.stat().st_size
             except OSError:
-                metadata['size_bytes'] = None
+                metadata["size_bytes"] = None
 
         name = path.name or str(path)
-        node = RepoTreeNode(name=name, path=path, node_type=node_type, metadata=metadata)
+        node = RepoTreeNode(
+            name=name, path=path, node_type=node_type, metadata=metadata
+        )
 
         if node.is_directory():
             if self.max_depth is None or depth < self.max_depth:
@@ -159,18 +163,18 @@ def render_tree(node: RepoTreeNode) -> str:
     """Return a human-readable ASCII tree."""
 
     lines: list[str] = []
-    root_suffix = '/' if node.is_directory() else ''
-    lines.append(f'{node.name}{root_suffix}')
+    root_suffix = "/" if node.is_directory() else ""
+    lines.append(f"{node.name}{root_suffix}")
 
     def _render(children: list[RepoTreeNode], prefix: str) -> None:
         for index, child in enumerate(children):
-            connector = '└── ' if index == len(children) - 1 else '├── '
-            suffix = '/' if child.is_directory() else ''
-            lines.append(f'{prefix}{connector}{child.name}{suffix}')
+            connector = "└── " if index == len(children) - 1 else "├── "
+            suffix = "/" if child.is_directory() else ""
+            lines.append(f"{prefix}{connector}{child.name}{suffix}")
 
             if child.children:
-                extension = '    ' if index == len(children) - 1 else '│   '
+                extension = "    " if index == len(children) - 1 else "│   "
                 _render(child.children, prefix + extension)
 
-    _render(node.children, '')
-    return '\n'.join(lines)
+    _render(node.children, "")
+    return "\n".join(lines)

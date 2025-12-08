@@ -1,0 +1,42 @@
+id: betting
+description: "Sports betting edge detection and bankroll management"
+ontology_iri: "http://agent_kit.io/betting#"
+
+# Agents specialized for this domain
+default_agents:
+  - PropBettingAgent
+
+# Tools allowed in this domain
+allowed_tools:
+  - tools.betting_tools.fetch_odds
+  - tools.betting_tools.fetch_player_props
+  - tools.betting_tools.detect_arbitrage
+  - tools.betting_tools.calculate_implied_probability
+  - tools.betting_tools.fetch_historical_betting_data
+  - tools.ml_training.train_model
+  - tools.ontology.query_ontology
+  - tools.vector_space.embed
+
+# Domain-specific risk policies (bankroll management)
+risk_policies:
+  max_stake_fraction: 0.05  # Max 5% of bankroll per bet
+  max_kelly_multiplier: 0.5  # Half Kelly for safety
+  min_edge_threshold: 0.03   # Minimum 3% edge to bet
+  max_correlated_exposure: 0.15  # Max 15% on correlated bets
+  min_odds_threshold: 1.5    # Avoid heavy favorites
+  max_odds_threshold: 10.0   # Avoid long shots
+  require_line_shopping: true  # Must check multiple books
+  min_books_to_compare: 3
+
+# Pydantic schema for structured output
+output_schema: "BettingRecommendation"
+
+# Default parameters
+defaults:
+  default_bankroll: 10000.0
+  odds_format: "decimal"
+  sports:
+    - basketball_nba
+    - americanfootball_nfl
+    - soccer_epl
+

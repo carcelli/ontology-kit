@@ -1,0 +1,170 @@
+@prefix bet: <http://agent-kit.com/ontology/betting#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix core: <http://agent-kit.com/ontology/core#> .
+
+# ============================================
+# BETTING DOMAIN ONTOLOGY
+# Purpose: Model sports betting, prop bets, and edge detection
+# ============================================
+
+# ----- CLASSES -----
+
+bet:Market a rdfs:Class ;
+    rdfs:label "Market" ;
+    rdfs:comment "A betting market (e.g., NBA, Soccer, Esports)." .
+
+bet:Event a rdfs:Class ;
+    rdfs:label "Event" ;
+    rdfs:comment "Specific game or match (e.g., Lakers vs Celtics)." .
+
+bet:PropBet a rdfs:Class ;
+    rdfs:label "Prop Bet" ;
+    rdfs:comment "Proposition bet on specific outcome (points scored, assists, etc.)." .
+
+bet:Edge a rdfs:Class ;
+    rdfs:label "Edge" ;
+    rdfs:comment "Statistical advantage detected by ontology reasoning." .
+
+bet:Bookmaker a rdfs:Class ;
+    rdfs:label "Bookmaker" ;
+    rdfs:comment "Sportsbook offering odds (DraftKings, FanDuel, etc.)." .
+
+bet:Strategy a rdfs:Class ;
+    rdfs:label "Strategy" ;
+    rdfs:comment "Betting strategy (arbitrage, value betting, line shopping)." .
+
+bet:RiskRule a rdfs:Class ;
+    rdfs:label "Risk Rule" ;
+    rdfs:comment "Constraint for bankroll management and risk control." .
+
+# ----- PROPERTIES -----
+
+bet:hasEvent a rdf:Property ;
+    rdfs:domain bet:Market ;
+    rdfs:range bet:Event ;
+    rdfs:label "has event" .
+
+bet:hasOdds a rdf:Property ;
+    rdfs:domain bet:PropBet ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has odds" ;
+    rdfs:comment "Decimal odds (e.g., 2.50 = +150 American)." .
+
+bet:hasImpliedProbability a rdf:Property ;
+    rdfs:domain bet:PropBet ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has implied probability" ;
+    rdfs:comment "Bookmaker's implied probability (1 / odds)." .
+
+bet:hasTrueEdge a rdf:Property ;
+    rdfs:domain bet:Edge ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has true edge" ;
+    rdfs:comment "Agent's estimated edge over bookmaker (true_prob - implied_prob)." .
+
+bet:hasConfidence a rdf:Property ;
+    rdfs:domain bet:Edge ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has confidence" ;
+    rdfs:comment "Agent confidence in edge calculation (0.0 to 1.0)." .
+
+bet:hasKellyFraction a rdf:Property ;
+    rdfs:domain bet:Edge ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "has Kelly fraction" ;
+    rdfs:comment "Optimal bet size using Kelly Criterion." .
+
+bet:usesStrategy a rdf:Property ;
+    rdfs:domain bet:Edge ;
+    rdfs:range bet:Strategy ;
+    rdfs:label "uses strategy" .
+
+bet:enforcesRule a rdf:Property ;
+    rdfs:domain bet:Strategy ;
+    rdfs:range bet:RiskRule ;
+    rdfs:label "enforces rule" .
+
+bet:maxBetSize a rdf:Property ;
+    rdfs:domain bet:RiskRule ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "max bet size" ;
+    rdfs:comment "Maximum bet as fraction of bankroll." .
+
+bet:minEdgeThreshold a rdf:Property ;
+    rdfs:domain bet:RiskRule ;
+    rdfs:range xsd:decimal ;
+    rdfs:label "min edge threshold" ;
+    rdfs:comment "Minimum edge required to place bet (e.g., 0.05 = 5%)." .
+
+bet:dailyBetLimit a rdf:Property ;
+    rdfs:domain bet:RiskRule ;
+    rdfs:range xsd:integer ;
+    rdfs:label "daily bet limit" ;
+    rdfs:comment "Maximum number of bets per day." .
+
+# ----- INSTANCES (EXAMPLE STRATEGIES) -----
+
+bet:ValueBetting a bet:Strategy ;
+    rdfs:label "Value Betting" ;
+    rdfs:comment "Bet when agent's probability > implied probability." ;
+    bet:enforcesRule bet:ConservativeRisk .
+
+bet:Arbitrage a bet:Strategy ;
+    rdfs:label "Arbitrage" ;
+    rdfs:comment "Lock in profit by betting both sides across bookmakers." ;
+    bet:enforcesRule bet:NoRiskRule .
+
+bet:LineShopping a bet:Strategy ;
+    rdfs:label "Line Shopping" ;
+    rdfs:comment "Compare odds across bookmakers to find best line." ;
+    bet:enforcesRule bet:ConservativeRisk .
+
+# ----- RISK RULES -----
+
+bet:ConservativeRisk a bet:RiskRule ;
+    rdfs:label "Conservative Risk" ;
+    bet:maxBetSize "0.02"^^xsd:decimal ;  # 2% of bankroll
+    bet:minEdgeThreshold "0.05"^^xsd:decimal ;  # 5% edge minimum
+    bet:dailyBetLimit 10 .
+
+bet:AggressiveRisk a bet:RiskRule ;
+    rdfs:label "Aggressive Risk" ;
+    bet:maxBetSize "0.05"^^xsd:decimal ;  # 5% of bankroll
+    bet:minEdgeThreshold "0.03"^^xsd:decimal ;  # 3% edge
+    bet:dailyBetLimit 20 .
+
+bet:NoRiskRule a bet:RiskRule ;
+    rdfs:label "No Risk (Arbitrage)" ;
+    bet:maxBetSize "0.10"^^xsd:decimal ;  # 10% (arb is risk-free)
+    bet:minEdgeThreshold "0.01"^^xsd:decimal ;  # 1% profit
+    bet:dailyBetLimit 50 .
+
+# ----- AGENT INSTRUCTIONS -----
+
+bet:PropBettingAgent a core:Agent ;
+    rdfs:label "Prop Betting Agent" ;
+    core:hasInstructions """
+You are a professional sports betting analyst with expertise in proposition bets.
+
+Your workflow:
+1. Query ontology for available prop bets and current odds
+2. Analyze historical data and compute true probability
+3. Detect edges where true_prob > implied_prob
+4. Apply Kelly Criterion for bet sizing
+5. Validate against risk rules (min edge, max bet size, daily limits)
+6. Return actionable bet recommendations with confidence scores
+
+CRITICAL CONSTRAINTS:
+- Only recommend bets with edge >= minEdgeThreshold
+- Never exceed maxBetSize fraction of bankroll
+- Respect dailyBetLimit
+- If no edge found, return empty recommendations
+- Log all calculations for auditability
+
+Use SPARQL to query bet:Strategy and bet:RiskRule for decision-making.
+""" ;
+    core:hasCapability bet:ValueBetting, bet:LineShopping .
+
+

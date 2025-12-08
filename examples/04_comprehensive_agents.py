@@ -15,12 +15,12 @@ import sys
 from pathlib import Path
 
 # Add src to path (for development)
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agents import Runner
+
 from agent_kit.agents.orchestrator import OntologyOrchestratorAgent
 from agent_kit.ontology_extensions import OntologyMemorySession
-from agents.memory import SessionInputCallback
 
 
 async def main() -> None:
@@ -30,7 +30,7 @@ async def main() -> None:
     print()
 
     # Path to ontology file
-    ontology_path = Path(__file__).parent.parent / 'assets' / 'ontologies' / 'core.ttl'
+    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "core.ttl"
 
     if not ontology_path.exists():
         print(f"❌ Ontology file not found: {ontology_path}")
@@ -90,16 +90,12 @@ async def main() -> None:
     if has_orchestrator:
         try:
             # Configure run config based on available components
-            run_config = {'workflow_name': 'Ontology Business Analysis'}
+            run_config = {"workflow_name": "Ontology Business Analysis"}
             if has_memory and memory_session:
-                run_config['session'] = memory_session
+                run_config["session"] = memory_session
 
             # Run with ontology-driven orchestration
-            result = await Runner.run(
-                orchestrator,
-                complex_goal,
-                run_config=run_config
-            )
+            result = await Runner.run(orchestrator, complex_goal, run_config=run_config)
 
             print("✅ Analysis Complete!")
             print(f"📊 Final Result: {result.final_output[:200]}...")
@@ -109,7 +105,9 @@ async def main() -> None:
                 # Show session memory capabilities
                 print("💾 Session Memory Analysis:")
                 history_items = await memory_session.get_items(limit=5)
-                print(f"   📝 Conversation history: {len(history_items)} items preserved")
+                print(
+                    f"   📝 Conversation history: {len(history_items)} items preserved"
+                )
                 print("   🧬 Ontology context: Integrated with agent reasoning")
                 print()
 
@@ -149,7 +147,7 @@ async def main() -> None:
         "🔍 SPARQL-based reasoning and validation",
         "📚 Knowledge graph integration for contextual understanding",
         "💡 Semantic tool discovery from ontology relationships",
-        "🔧 Extensible architecture for domain-specific agents"
+        "🔧 Extensible architecture for domain-specific agents",
     ]
 
     for capability in capabilities:
@@ -167,5 +165,5 @@ async def main() -> None:
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

@@ -1,7 +1,11 @@
 import os
+
 from treelib import Tree
 
-def create_directory_tree(root_dir, max_depth=None, exclude_dirs=None, exclude_exts=None):
+
+def create_directory_tree(
+    root_dir, max_depth=None, exclude_dirs=None, exclude_exts=None
+):
     """
     Creates a tree visualization of a directory.
     """
@@ -17,7 +21,7 @@ def create_directory_tree(root_dir, max_depth=None, exclude_dirs=None, exclude_e
         # Exclude directories
         dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
 
-        depth = dirpath.replace(root_dir, '').count(os.sep)
+        depth = dirpath.replace(root_dir, "").count(os.sep)
         if max_depth is not None and depth >= max_depth:
             continue
 
@@ -38,15 +42,39 @@ def create_directory_tree(root_dir, max_depth=None, exclude_dirs=None, exclude_e
 
     return tree
 
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Generate a tree visualization of a directory.")
+    parser = argparse.ArgumentParser(
+        description="Generate a tree visualization of a directory."
+    )
     parser.add_argument("root_dir", type=str, help="The root directory to visualize.")
     parser.add_argument("--max-depth", type=int, help="The maximum depth of the tree.")
-    parser.add_argument("--exclude-dirs", type=str, nargs='*', default=['.venv', '.git', '__pycache__', '.pytest_cache', 'htmlcov', 'agent_kit.egg-info'], help="Directories to exclude.")
-    parser.add_argument("--exclude-exts", type=str, nargs='*', default=['.pyc', '.pyo', '.pyd'], help="File extensions to exclude.")
+    parser.add_argument(
+        "--exclude-dirs",
+        type=str,
+        nargs="*",
+        default=[
+            ".venv",
+            ".git",
+            "__pycache__",
+            ".pytest_cache",
+            "htmlcov",
+            "agent_kit.egg-info",
+        ],
+        help="Directories to exclude.",
+    )
+    parser.add_argument(
+        "--exclude-exts",
+        type=str,
+        nargs="*",
+        default=[".pyc", ".pyo", ".pyd"],
+        help="File extensions to exclude.",
+    )
     args = parser.parse_args()
 
-    tree = create_directory_tree(args.root_dir, args.max_depth, args.exclude_dirs, args.exclude_exts)
+    tree = create_directory_tree(
+        args.root_dir, args.max_depth, args.exclude_dirs, args.exclude_exts
+    )
     tree.show()

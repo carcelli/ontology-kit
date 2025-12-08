@@ -7,9 +7,8 @@ from agent_kit.agents.base import (
     AgentResult,
     AgentTask,
     BaseAgent,
-    GrokAgent,
-    GrokConfig,
 )
+from agent_kit.agents.grok_agent import GrokAgent, GrokConfig
 
 __all__ = [
     "AgentTask",

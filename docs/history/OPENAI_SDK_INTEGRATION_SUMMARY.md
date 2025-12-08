@@ -300,50 +300,13 @@ pytest tests/benchmark/test_orchestration_latency.py
 
 ---
 
-## Questions & Answers
-
-### Q: Why not just use OpenAI SDK everywhere?
-
-**A**: 
-- It's beta (may change)
-- Doesn't support all use cases (e.g., LangChain's RAG, AutoGen's crews)
-- Ontology-driven reasoning is our core value — SDK is just one tool
-
-### Q: Is the adapter approach slower?
-
-**A**: 
-- Slightly (<10% overhead expected)
-- Worth it for flexibility and risk mitigation
-- Use SDK directly for latency-critical paths if needed
-
-### Q: Can I use multiple SDKs simultaneously?
-
-**A**: 
-- Yes! That's the point of adapters
-- Example: OpenAI for structured outputs + LangChain for RAG
-- Orchestrator coordinates both via ontology
-
-### Q: When should I use custom vs. SDK agents?
-
-**A**:
-- **Custom**: Complex reasoning, SPARQL routing, multi-step workflows
-- **SDK**: Structured outputs, deterministic pipelines, rapid prototyping
-- **Hybrid**: Use both for their strengths
-
----
-
 ## References
 
 - **[docs/guides/ARCHITECTURE_DECISION.md](docs/guides/ARCHITECTURE_DECISION.md)**: Full strategic analysis
 - **[examples/ontology_ml/README.md](examples/ontology_ml/README.md)**: OpenAI SDK integration guide
 - **[OpenAI Agents SDK Docs](https://openai.github.io/openai-agents-python/)**: Official SDK reference
-- **[Design Patterns (Gamma)](https://en.wikipedia.org/wiki/Design_Patterns)**: Adapter pattern
 
 ---
 
-**Status**: ✅ **Modular Architecture Implemented**
-
-**Next Action**: Benchmark performance + add LangChain adapter PoC
-
-**Ship it!** 🚀 Ontology as backbone, SDKs as tools.
+**Status**: ✅ **Modular Architecture Implemented** — See `examples/ontology_ml/README.md` for detailed pipeline example.
 

@@ -1,0 +1,48 @@
+id: trading
+description: "Algorithmic trading with technical analysis and risk management"
+ontology_iri: "http://agent_kit.io/trading#"
+
+# Agents specialized for this domain
+default_agents:
+  - AlgoTradingAgent
+
+# Tools allowed in this domain
+allowed_tools:
+  - tools.trading_tools.fetch_market_data
+  - tools.trading_tools.calculate_rsi
+  - tools.trading_tools.calculate_macd
+  - tools.trading_tools.calculate_bollinger_bands
+  - tools.trading_tools.calculate_indicators
+  - tools.trading_tools.calculate_volatility
+  - tools.trading_tools.execute_trade
+  - tools.trading_tools.calculate_sharpe_ratio
+  - tools.ml_training.train_model
+  - tools.ontology.query_ontology
+  - tools.vector_space.embed
+
+# Domain-specific risk policies (portfolio risk management)
+risk_policies:
+  max_position_size: 0.02      # Max 2% per position
+  max_portfolio_exposure: 0.20  # Max 20% total exposure
+  max_drawdown_threshold: 0.15  # Circuit breaker at 15% drawdown
+  min_sharpe_ratio: 1.0        # Target Sharpe > 1.0
+  max_var_95: 0.05             # Max 5% VaR at 95% confidence
+  max_correlation: 0.7         # Avoid correlated positions
+  require_stop_loss: true      # All positions must have stops
+  max_leverage: 1.0            # No leverage allowed
+
+# Pydantic schema for structured output
+output_schema: "TradingRecommendation"
+
+# Default parameters
+defaults:
+  default_portfolio_value: 100000.0
+  default_strategy: "MeanReversion"
+  timeframe: "1day"
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  bollinger_period: 20
+  bollinger_std: 2.0
+

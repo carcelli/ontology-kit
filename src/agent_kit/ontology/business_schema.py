@@ -20,11 +20,11 @@ class Business(BaseModel):
     employee_count: int = Field(..., ge=0)
     description: str | None = None
 
-    @field_validator('location')
+    @field_validator("location")
     @classmethod
     def validate_location(cls, v: str) -> str:
         """Ensure location contains city and state."""
-        if ', ' not in v:
+        if ", " not in v:
             raise ValueError("Location must be 'City, State' format")
         return v
 
@@ -62,7 +62,7 @@ class TimeSeries(BaseModel):
     business_id: str | None = None
     description: str | None = None
 
-    @field_validator('data_points')
+    @field_validator("data_points")
     @classmethod
     def validate_data_points(cls, v: list[float]) -> list[float]:
         """Ensure at least 2 data points."""
@@ -130,7 +130,7 @@ class Insight(BaseModel):
 
 
 # Example usage and validation
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create business
     bakery = Business(
         id="biz_001",
@@ -139,7 +139,7 @@ if __name__ == '__main__':
         location="Milwaukee, WI",
         annual_revenue=485000.0,
         employee_count=8,
-        description="Family-owned artisan bakery"
+        description="Family-owned artisan bakery",
     )
     print(f"✅ Created: {bakery.name} (Revenue: ${bakery.annual_revenue:,.0f})")
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         name="Restaurant Partner A",
         lifetime_value=125000.0,
         acquisition_date=date(2024, 3, 15),
-        segment="wholesale"
+        segment="wholesale",
     )
     print(f"✅ Created: {client.name} (CLV: ${client.lifetime_value:,.0f})")
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
         cost=500.0,
         priority=1,
         affects_business_id="biz_001",
-        description="Optimize send times for 25% lift"
+        description="Optimize send times for 25% lift",
     )
     print(f"✅ Created: {lever.name} (ROI: {lever.roi:.2f}x)")
 
@@ -170,7 +170,6 @@ if __name__ == '__main__':
         id="insight_001",
         text="Restaurants with >$100K annual spend respond 3x better to morning emails",
         confidence=0.91,
-        generated_at=date(2025, 11, 9)
+        generated_at=date(2025, 11, 9),
     )
     print(f"✅ Created: {insight.to_natural_language()}")
-

@@ -17,18 +17,19 @@ Key Features:
 - Export to HTML (interactive) or PNG (static via Kaleido)
 - Handles 2D and 3D projections seamlessly
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 from typing import Annotated, Any
 
-from agents import function_tool
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+from agents import function_tool
 from sklearn.manifold import TSNE
 
 from agent_kit.vectorspace.embedder import Embedder
@@ -41,16 +42,16 @@ def generate_interactive_leverage_viz(
     terms: Annotated[list[str], "Business terms/entities to visualize"],
     kpi_term: Annotated[str, "Key Performance Indicator for sensitivity calculation"],
     actionable_terms: Annotated[list[str], "Terms that can be directly intervened"],
-    model_name: Annotated[str, "SentenceTransformer model"] = 'all-MiniLM-L6-v2',
+    model_name: Annotated[str, "SentenceTransformer model"] = "all-MiniLM-L6-v2",
     n_components: Annotated[int, "2 or 3 for visualization dimensions"] = 3,
     perplexity: Annotated[int | None, "t-SNE perplexity (auto if None)"] = None,
     output_file: Annotated[
         str, "Path to save (*.html for interactive, *.png for static)"
-    ] = 'outputs/interactive_leverage.html',
-    color_scale: Annotated[str, "Plotly colorscale name"] = 'Viridis',
+    ] = "outputs/interactive_leverage.html",
+    color_scale: Annotated[str, "Plotly colorscale name"] = "Viridis",
     leverage_formula: Annotated[
         str, "Leverage computation method"
-    ] = 'inverse_distance',  # 'inverse_distance' or 'multi_factor'
+    ] = "inverse_distance",  # 'inverse_distance' or 'multi_factor'
 ) -> dict[str, Any]:
     """
     Generate interactive 3D leverage visualization using Plotly.
@@ -112,7 +113,7 @@ def generate_interactive_leverage_viz(
         )
 
     logger.info(
-        'Generating interactive leverage viz: %d terms, KPI=%s, dims=%d',
+        "Generating interactive leverage viz: %d terms, KPI=%s, dims=%d",
         len(terms),
         kpi_term,
         n_components,
@@ -128,7 +129,10 @@ def generate_interactive_leverage_viz(
         perplexity_val = max(1, len(terms) - 1)
 
     tsne = TSNE(
-        n_components=n_components, perplexity=perplexity_val, random_state=42, init='random'
+        n_components=n_components,
+        perplexity=perplexity_val,
+        random_state=42,
+        init="random",
     )
     reduced = tsne.fit_transform(embeddings)
 
@@ -140,17 +144,19 @@ def generate_interactive_leverage_viz(
     # Step 4: Prepare DataFrame for Plotly
     df = pd.DataFrame(
         {
-            'x': reduced[:, 0],
-            'y': reduced[:, 1],
-            'term': terms,
-            'leverage': leverage_scores,
-            'actionable': [t in actionable_terms for t in terms],
-            'actionable_label': ['✓ Actionable' if t in actionable_terms else '✗ Fixed' for t in terms],
+            "x": reduced[:, 0],
+            "y": reduced[:, 1],
+            "term": terms,
+            "leverage": leverage_scores,
+            "actionable": [t in actionable_terms for t in terms],
+            "actionable_label": [
+                "✓ Actionable" if t in actionable_terms else "✗ Fixed" for t in terms
+            ],
         }
     )
 
     if n_components == 3:
-        df['z'] = reduced[:, 2]
+        df["z"] = reduced[:, 2]
 
     # Step 5: Create interactive Plotly figure
     fig = _create_plotly_figure(df, n_components, kpi_term, color_scale)
@@ -160,30 +166,32 @@ def generate_interactive_leverage_viz(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        if output_file.endswith('.html'):
+        if output_file.endswith(".html"):
             fig.write_html(str(output_path))
-            logger.info('Saved interactive HTML: %s', output_path)
+            logger.info("Saved interactive HTML: %s", output_path)
         else:
             # Static export requires Kaleido
             pio.write_image(fig, str(output_path), width=1200, height=900)
-            logger.info('Saved static image: %s', output_path)
+            logger.info("Saved static image: %s", output_path)
     except Exception as e:
-        logger.error('Failed to save visualization: %s', e)
+        logger.error("Failed to save visualization: %s", e)
         raise ValueError(f"Failed to save to {output_file}: {e}") from e
 
     return {
-        'viz_path': str(output_path.resolve()),
-        'n_terms': len(terms),
-        'n_components': n_components,
-        'leverage_scores': dict(zip(terms, leverage_scores.tolist(), strict=False)),
-        'top_levers': [
-            {'term': t, 'leverage': float(s)}
-            for t, s in sorted(zip(terms, leverage_scores, strict=False), key=lambda x: x[1], reverse=True)[
-                :5
-            ]
+        "viz_path": str(output_path.resolve()),
+        "n_terms": len(terms),
+        "n_components": n_components,
+        "leverage_scores": dict(zip(terms, leverage_scores.tolist(), strict=False)),
+        "top_levers": [
+            {"term": t, "leverage": float(s)}
+            for t, s in sorted(
+                zip(terms, leverage_scores, strict=False),
+                key=lambda x: x[1],
+                reverse=True,
+            )[:5]
         ],
-        'actionable_count': sum(df['actionable']),
-        'kpi_term': kpi_term,
+        "actionable_count": sum(df["actionable"]),
+        "kpi_term": kpi_term,
     }
 
 
@@ -192,7 +200,7 @@ def _compute_leverage_scores(
     terms: list[str],
     kpi_term: str,
     actionable_terms: list[str],
-    formula: str = 'inverse_distance',
+    formula: str = "inverse_distance",
 ) -> np.ndarray:
     """
     Compute leverage scores for each term.
@@ -210,20 +218,24 @@ def _compute_leverage_scores(
     kpi_idx = terms.index(kpi_term)
     distances = np.linalg.norm(reduced - reduced[kpi_idx], axis=1)
 
-    if formula == 'inverse_distance':
+    if formula == "inverse_distance":
         # Simple: Leverage = 1 / (distance + epsilon)
         # Closer to KPI = higher leverage
         leverages = 1.0 / (distances + 1e-6)
         # Normalize to [0, 1]
-        leverages = (leverages - leverages.min()) / (leverages.max() - leverages.min() + 1e-9)
+        leverages = (leverages - leverages.min()) / (
+            leverages.max() - leverages.min() + 1e-9
+        )
 
-    elif formula == 'multi_factor':
+    elif formula == "multi_factor":
         # Advanced: A × (S + U + C)
         # S: Sensitivity (inverse normalized distance)
         sensitivity = 1.0 - (distances / (distances.max() + 1e-9))
 
         # U: Uncertainty (variance around each point - proxy via local density)
-        uncertainty = np.ones(len(terms)) * 0.5  # Placeholder; would compute cluster variance
+        uncertainty = (
+            np.ones(len(terms)) * 0.5
+        )  # Placeholder; would compute cluster variance
 
         # C: Centrality (betweenness - placeholder without full graph)
         centrality = np.ones(len(terms)) * 0.5
@@ -260,35 +272,37 @@ def _create_plotly_figure(
         # 3D scatter plot
         fig = px.scatter_3d(
             df,
-            x='x',
-            y='y',
-            z='z',
-            color='leverage',
-            symbol='actionable_label',
-            hover_name='term',
+            x="x",
+            y="y",
+            z="z",
+            color="leverage",
+            symbol="actionable_label",
+            hover_name="term",
             hover_data={
-                'leverage': ':.3f',
-                'actionable_label': True,
-                'x': False,
-                'y': False,
-                'z': False,
+                "leverage": ":.3f",
+                "actionable_label": True,
+                "x": False,
+                "y": False,
+                "z": False,
             },
             color_continuous_scale=color_scale,
-            title=f'Interactive 3D Hyperdimensional Leverage Map (KPI: {kpi_term})',
-            labels={'leverage': 'Leverage Score', 'actionable_label': 'Status'},
+            title=f"Interactive 3D Hyperdimensional Leverage Map (KPI: {kpi_term})",
+            labels={"leverage": "Leverage Score", "actionable_label": "Status"},
         )
 
         # Update 3D scene
         fig.update_layout(
             scene={
-                "xaxis_title": 't-SNE Dimension 1',
-                "yaxis_title": 't-SNE Dimension 2',
-                "zaxis_title": 't-SNE Dimension 3',
-                "aspectmode": 'cube',
-                "camera": {"eye": {"x": 1.5, "y": 1.5, "z": 1.3}},  # Better default angle
+                "xaxis_title": "t-SNE Dimension 1",
+                "yaxis_title": "t-SNE Dimension 2",
+                "zaxis_title": "t-SNE Dimension 3",
+                "aspectmode": "cube",
+                "camera": {
+                    "eye": {"x": 1.5, "y": 1.5, "z": 1.3}
+                },  # Better default angle
             },
-            font={"size": 12, "family": 'Arial'},
-            hovermode='closest',
+            font={"size": 12, "family": "Arial"},
+            hovermode="closest",
             height=800,
         )
 
@@ -296,64 +310,69 @@ def _create_plotly_figure(
         # 2D scatter plot
         fig = px.scatter(
             df,
-            x='x',
-            y='y',
-            color='leverage',
-            symbol='actionable_label',
-            hover_name='term',
+            x="x",
+            y="y",
+            color="leverage",
+            symbol="actionable_label",
+            hover_name="term",
             hover_data={
-                'leverage': ':.3f',
-                'actionable_label': True,
-                'x': False,
-                'y': False,
+                "leverage": ":.3f",
+                "actionable_label": True,
+                "x": False,
+                "y": False,
             },
             color_continuous_scale=color_scale,
-            title=f'Interactive 2D Hyperdimensional Leverage Map (KPI: {kpi_term})',
-            labels={'leverage': 'Leverage Score', 'actionable_label': 'Status'},
+            title=f"Interactive 2D Hyperdimensional Leverage Map (KPI: {kpi_term})",
+            labels={"leverage": "Leverage Score", "actionable_label": "Status"},
         )
 
         # Update 2D layout
         fig.update_layout(
-            xaxis_title='t-SNE Dimension 1',
-            yaxis_title='t-SNE Dimension 2',
-            font={"size": 12, "family": 'Arial'},
-            hovermode='closest',
+            xaxis_title="t-SNE Dimension 1",
+            yaxis_title="t-SNE Dimension 2",
+            font={"size": 12, "family": "Arial"},
+            hovermode="closest",
             height=700,
             width=900,
         )
 
     # Common styling
-    fig.update_traces(marker={"size": 12, "line": {"width": 1, "color": 'DarkSlateGray'}})
+    fig.update_traces(
+        marker={"size": 12, "line": {"width": 1, "color": "DarkSlateGray"}}
+    )
 
     return fig
 
 
 # Tool specification for ontology registry
 INTERACTIVE_VIZ_TOOL_SPEC = {
-    'name': 'generate_interactive_leverage_viz',
-    'description': (
-        'Generate interactive 3D/2D leverage visualization with Plotly. '
-        'Outputs zoomable, rotatable HTML or static PNG with hover details.'
+    "name": "generate_interactive_leverage_viz",
+    "description": (
+        "Generate interactive 3D/2D leverage visualization with Plotly. "
+        "Outputs zoomable, rotatable HTML or static PNG with hover details."
     ),
-    'parameters': {
-        'terms': {'type': 'array', 'items': {'type': 'string'}, 'description': 'Business terms'},
-        'kpi_term': {'type': 'string', 'description': 'Target KPI'},
-        'actionable_terms': {
-            'type': 'array',
-            'items': {'type': 'string'},
-            'description': 'Actionable terms',
+    "parameters": {
+        "terms": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Business terms",
         },
-        'n_components': {
-            'type': 'integer',
-            'enum': [2, 3],
-            'default': 3,
-            'description': 'Dimensions',
+        "kpi_term": {"type": "string", "description": "Target KPI"},
+        "actionable_terms": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Actionable terms",
         },
-        'output_file': {
-            'type': 'string',
-            'default': 'outputs/interactive_leverage.html',
-            'description': 'Output path (.html or .png)',
+        "n_components": {
+            "type": "integer",
+            "enum": [2, 3],
+            "default": 3,
+            "description": "Dimensions",
+        },
+        "output_file": {
+            "type": "string",
+            "default": "outputs/interactive_leverage.html",
+            "description": "Output path (.html or .png)",
         },
     },
 }
-

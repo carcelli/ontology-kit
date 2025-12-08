@@ -23,24 +23,30 @@ def temp_ontology_file(tmp_path):
     file.write_text(initial_content)
     return str(file)
 
+
 @pytest.fixture
 def temp_ontology_loader(temp_ontology_file):
     loader = OntologyLoader(temp_ontology_file)
     loader.load()
     return loader
 
+
 def test_query_ontology(temp_ontology_loader):
     """Test querying the ontology."""
-    results = query_ontology("""
+    results = query_ontology(
+        """
         PREFIX : <http://agent_kit.io/business#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         SELECT ?name WHERE {
             ?s a :Business ;
                rdfs:label ?name .
         }
-    """, ontology_loader=temp_ontology_loader)
+    """,
+        ontology_loader=temp_ontology_loader,
+    )
     assert len(results) == 1
-    assert str(results[0]['name']) == "Test Business 1"
+    assert str(results[0]["name"]) == "Test Business 1"
+
 
 def test_add_ontology_statement(temp_ontology_file):
     """Test adding a new statement to the ontology and persisting it."""
@@ -53,7 +59,9 @@ def test_add_ontology_statement(temp_ontology_file):
     predicate = "hasText"
     object_value = "This is a new insight."
 
-    result = add_ontology_statement(subject, predicate, object_value, ontology_loader=loader, object_type="literal")
+    result = add_ontology_statement(
+        subject, predicate, object_value, ontology_loader=loader, object_type="literal"
+    )
     assert "Added triple" in result
 
     # Reload the ontology to ensure persistence
@@ -67,13 +75,23 @@ def test_add_ontology_statement(temp_ontology_file):
     expected_subject = URIRef(NS[subject])
     expected_predicate = URIRef(NS[predicate])
     expected_object = Literal(object_value)
-    assert (expected_subject, expected_predicate, expected_object) in reloaded_loader.graph
+    assert (
+        expected_subject,
+        expected_predicate,
+        expected_object,
+    ) in reloaded_loader.graph
 
     # Test with object_type="uri"
     subject_uri = "campaign_001"
     predicate_uri = "informsProcess"
     object_value_uri = "process_001"
-    result_uri = add_ontology_statement(subject_uri, predicate_uri, object_value_uri, ontology_loader=loader, object_type="uri")
+    result_uri = add_ontology_statement(
+        subject_uri,
+        predicate_uri,
+        object_value_uri,
+        ontology_loader=loader,
+        object_type="uri",
+    )
     assert "Added triple" in result_uri
 
     reloaded_loader_uri = OntologyLoader(temp_ontology_file)
@@ -81,7 +99,11 @@ def test_add_ontology_statement(temp_ontology_file):
     expected_subject_uri = URIRef(NS[subject_uri])
     expected_predicate_uri = URIRef(NS[predicate_uri])
     expected_object_uri = URIRef(NS[object_value_uri])
-    assert (expected_subject_uri, expected_predicate_uri, expected_object_uri) in reloaded_loader_uri.graph
+    assert (
+        expected_subject_uri,
+        expected_predicate_uri,
+        expected_object_uri,
+    ) in reloaded_loader_uri.graph
 
 
 def test_add_ontology_statement_invalid_object_type(temp_ontology_file):
@@ -89,4 +111,6 @@ def test_add_ontology_statement_invalid_object_type(temp_ontology_file):
     loader = OntologyLoader(temp_ontology_file)
     loader.load()
     with pytest.raises(ValueError, match="Invalid object_type"):
-        add_ontology_statement("s", "p", "o", ontology_loader=loader, object_type="invalid")
+        add_ontology_statement(
+            "s", "p", "o", ontology_loader=loader, object_type="invalid"
+        )

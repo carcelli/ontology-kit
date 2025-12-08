@@ -99,7 +99,9 @@ def main() -> None:
         for i, handoff in enumerate(handoffs, 1):
             print(f"{i}. {handoff.from_agent} → {handoff.to_agent}")
             print(f"   Reason: {handoff.reason}")
-            print(f"   Intermediate: {handoff.intermediate_result.get('summary', 'N/A')}")
+            print(
+                f"   Intermediate: {handoff.intermediate_result.get('summary', 'N/A')}"
+            )
             print()
     else:
         print("(No handoffs occurred)")
@@ -147,21 +149,21 @@ def main() -> None:
 def demo_grok_integration():
     """
     Optional: Demonstrate Grok-powered agents in orchestration.
-    
+
     This is an advanced example showing how to replace traditional agents
     with GrokAgent for LLM-powered reasoning. Requires XAI_API_KEY.
-    
+
     Run this with: python examples/04_orchestrated_agents.py --grok
     """
     import os
-    
+
     # Check if Grok is available
     if not os.getenv("XAI_API_KEY"):
         print("\n⚠️  XAI_API_KEY not set. Skipping Grok integration demo.")
         print("   To enable: export XAI_API_KEY='your-key'")
         print("   Get key from: https://x.ai/api")
         return
-    
+
     try:
         from agent_kit.agents import GrokAgent, GrokConfig
         from agent_kit.tools.ml_training import ML_TOOL_REGISTRY
@@ -169,41 +171,42 @@ def demo_grok_integration():
         print(f"\n⚠️  Grok dependencies not installed: {e}")
         print("   Install with: pip install openai>=1.0.0 tenacity>=8.2.0")
         return
-    
+
     print("\n" + "=" * 70)
     print("  🚀 Grok-Powered Agent Orchestration")
     print("=" * 70)
     print()
-    
+
     # Load ontology
-    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     from agent_kit.ontology.loader import OntologyLoader
+
     loader = OntologyLoader(str(ontology_path))
     ontology_graph = loader.load()
-    
+
     # Wrap for agent compatibility
     class OntologyWrapper:
         def __init__(self, graph):
             self.g = graph
+
         def query(self, sparql):
             return self.g.query(sparql)
-    
+
     ontology = OntologyWrapper(ontology_graph)
-    
+
     # Configure Grok
     config = GrokConfig(
-        api_key=os.getenv("XAI_API_KEY"),
-        model="grok-beta",
-        temperature=0.5,
-        seed=42
+        api_key=os.getenv("XAI_API_KEY"), model="grok-beta", temperature=0.5, seed=42
     )
-    
+
     # Create tool registry
     tool_registry = {
-        tool_name: tool_entry['function']
+        tool_name: tool_entry["function"]
         for tool_name, tool_entry in ML_TOOL_REGISTRY.items()
     }
-    
+
     # Create Grok-powered forecaster
     grok_forecaster = GrokAgent(
         config=config,
@@ -213,22 +216,22 @@ def demo_grok_integration():
             "You are a revenue forecasting specialist for small businesses. "
             "Use ontology data to ground predictions in real business metrics. "
             "When appropriate, invoke ML tools like train_model or analyze_leverage."
-        )
+        ),
     )
-    
+
     print("✓ Grok-powered ForecastAgent initialized")
     print(f"  Model: {config.model}")
     print(f"  Tools: {len(tool_registry)} available")
     print()
-    
+
     # Run a forecast task
     print("Running Grok-powered forecast task...")
     task = AgentTask(
         prompt="Forecast Q1-Q3 revenue for Sunshine Bakery and identify optimization opportunities"
     )
-    
+
     result = grok_forecaster.run(task)
-    
+
     print("Grok Agent Result:")
     print("-" * 70)
     print(result.result[:500] + "..." if len(result.result) > 500 else result.result)
@@ -246,11 +249,10 @@ def demo_grok_integration():
 
 if __name__ == "__main__":
     import sys
-    
+
     # Run main demo
     main()
-    
+
     # Optionally run Grok integration demo
     if "--grok" in sys.argv:
         demo_grok_integration()
-

@@ -13,6 +13,11 @@ jobs:
       matrix:
         python-version: ['3.12']
     
+    env:
+      EMBEDDER_OFFLINE: "1"
+      OPENAI_API_KEY: "dummy_ci_key"
+      XAI_API_KEY: "dummy_ci_key"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,17 +44,13 @@ jobs:
         run: |
           python -m ruff check src tests
       
-      - name: Run formatter check (black)
+      - name: Run formatter check (ruff)
         run: |
-          python -m black --check src tests
-      
-      - name: Run type checker (mypy)
-        run: |
-          python -m mypy src || true  # Don't fail on type errors yet
+          python -m ruff format --check src tests
       
       - name: Run tests with coverage
         run: |
-          pytest tests/unit -v --cov=agent_kit --cov-report=xml --cov-report=term-missing
+          pytest tests/unit tests/integration -v --cov=agent_kit --cov-report=xml --cov-report=term-missing
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -58,4 +59,3 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
-
