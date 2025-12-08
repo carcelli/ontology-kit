@@ -42,7 +42,8 @@ def demo_factory_basics():
     for domain in domains:
         cfg = registry.get(domain)
         print(
-            f"   • {domain}: {len(cfg.default_agents)} agents, {len(cfg.allowed_tools)} tools")
+            f"   • {domain}: {len(cfg.default_agents)} agents, {len(cfg.allowed_tools)} tools"
+        )
     print()
 
     # Create orchestrator
@@ -56,6 +57,7 @@ def demo_factory_basics():
     except Exception as e:
         print(f"   ❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
     print()
 
@@ -143,7 +145,8 @@ def demo_ontology_loading():
     ontology = factory._load_ontology(cfg.ontology_iri)
     print(f"   ✅ Ontology loaded: {ontology.path}")
     print(
-        f"   ✅ Graph size: {len(ontology.graph) if hasattr(ontology, 'graph') else 'N/A'} triples")
+        f"   ✅ Graph size: {len(ontology.graph) if hasattr(ontology, 'graph') else 'N/A'} triples"
+    )
     print()
 
 
@@ -170,9 +173,11 @@ def main():
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     import os
+
     main()

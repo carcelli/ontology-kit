@@ -269,9 +269,9 @@ class CircuitBreaker:
             "sharpe_ratio": self.current_sharpe_ratio,
             "recent_errors": len(self.errors),
             "recent_successes": len(self.successes),
-            "last_state_change": self.last_state_change.isoformat()
-            if self.last_state_change
-            else None,
+            "last_state_change": (
+                self.last_state_change.isoformat() if self.last_state_change else None
+            ),
             "recent_events": [
                 {
                     "timestamp": e.timestamp.isoformat(),

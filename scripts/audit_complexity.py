@@ -39,27 +39,33 @@ class AgentCreationAuditor(ast.NodeVisitor):
         if isinstance(node.func, ast.Name):
             func_name = node.func.id
             if "Agent" in func_name and func_name != "AgentFactory":
-                self.creations.append((
-                    getattr(node, "file", "unknown"),
-                    node.lineno,
-                    f"Direct: {func_name}()"
-                ))
+                self.creations.append(
+                    (
+                        getattr(node, "file", "unknown"),
+                        node.lineno,
+                        f"Direct: {func_name}()",
+                    )
+                )
         elif isinstance(node.func, ast.Attribute):
             if isinstance(node.func.value, ast.Name):
                 obj_name = node.func.value.id
                 if obj_name == "factory":
                     if node.func.attr in ["create_agent", "create_orchestrator"]:
-                        self.creations.append((
+                        self.creations.append(
+                            (
+                                getattr(node, "file", "unknown"),
+                                node.lineno,
+                                f"Factory: {node.func.attr}()",
+                            )
+                        )
+                elif "Builder" in obj_name:
+                    self.creations.append(
+                        (
                             getattr(node, "file", "unknown"),
                             node.lineno,
-                            f"Factory: {node.func.attr}()"
-                        ))
-                elif "Builder" in obj_name:
-                    self.creations.append((
-                        getattr(node, "file", "unknown"),
-                        node.lineno,
-                        f"Builder: {obj_name}.build_agent()"
-                    ))
+                            f"Builder: {obj_name}.build_agent()",
+                        )
+                    )
 
 
 def audit_file(file_path: Path) -> dict:
@@ -77,7 +83,7 @@ def audit_file(file_path: Path) -> dict:
         auditor.visit(tree)
         return {
             "creations": auditor.creations,
-            "imports": auditor.imports.get(str(file_path), [])
+            "imports": auditor.imports.get(str(file_path), []),
         }
     except Exception as e:
         return {"error": str(e)}
@@ -155,7 +161,9 @@ def main():
         print("ℹ️  No agent creations found (may need manual inspection)")
     else:
         factory_ratio = factory_count / total if total > 0 else 0
-        complexity_score = 10 - (factory_ratio * 5) - (direct_count * 2) - (builder_count * 1)
+        complexity_score = (
+            10 - (factory_ratio * 5) - (direct_count * 2) - (builder_count * 1)
+        )
         complexity_score = max(0, min(10, complexity_score))
 
         print("=" * 70)

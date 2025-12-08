@@ -267,16 +267,20 @@ class OntologyEvaluator:
 
         metrics = EvalMetrics(
             accuracy=passed / total if total > 0 else 0,
-            avg_latency_ms=sum(r.latency_ms for r in case_results) / total
-            if total > 0
-            else 0,
+            avg_latency_ms=(
+                sum(r.latency_ms for r in case_results) / total if total > 0 else 0
+            ),
             ontology_compliance=compliant_count / total if total > 0 else 0,
-            entity_recall=total_entities_found / total_entities_expected
-            if total_entities_expected > 0
-            else 1.0,
-            tool_accuracy=total_tools_correct / total_tools_expected
-            if total_tools_expected > 0
-            else 1.0,
+            entity_recall=(
+                total_entities_found / total_entities_expected
+                if total_entities_expected > 0
+                else 1.0
+            ),
+            tool_accuracy=(
+                total_tools_correct / total_tools_expected
+                if total_tools_expected > 0
+                else 1.0
+            ),
             total_cases=total,
             passed_cases=passed,
             failed_cases=total - passed,

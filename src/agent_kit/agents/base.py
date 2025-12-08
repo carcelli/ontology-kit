@@ -124,16 +124,25 @@ class BaseAgent:
 
         return AgentResult(result=result_text)
 
-    def observe(self, task: Any, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - to be overridden
+    def observe(
+        self, task: Any, *args: Any, **kwargs: Any
+    ) -> Any:  # pragma: no cover - to be overridden
         """Gather context and data relevant to the task."""
         raise NotImplementedError
 
-    def plan(self, task: Any, observation: Any | None = None, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover
+    def plan(
+        self, task: Any, observation: Any | None = None, *args: Any, **kwargs: Any
+    ) -> Any:  # pragma: no cover
         """Decide on a course of action based on observations."""
         raise NotImplementedError
 
     def act(
-        self, task: Any, plan: Any | None = None, observation: Any | None = None, *args: Any, **kwargs: Any
+        self,
+        task: Any,
+        plan: Any | None = None,
+        observation: Any | None = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:  # pragma: no cover
         """Execute the plan."""
         raise NotImplementedError
@@ -152,7 +161,9 @@ class BaseAgent:
     # ------------------------------------------------------------------
     # RL-style helpers used in unit tests
     # ------------------------------------------------------------------
-    def run_episode(self, initial_state: Any, max_steps: int = 10) -> list[dict[str, Any]]:
+    def run_episode(
+        self, initial_state: Any, max_steps: int = 10
+    ) -> list[dict[str, Any]]:
         """
         Run observe-plan-act-reflect loop for a fixed number of steps.
         """
@@ -178,7 +189,9 @@ class BaseAgent:
             if isinstance(result, dict) and result.get("terminal"):
                 break
 
-            state = result.get("next_state", state) if isinstance(result, dict) else state
+            state = (
+                result.get("next_state", state) if isinstance(result, dict) else state
+            )
 
         return trajectory
 

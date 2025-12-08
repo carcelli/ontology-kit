@@ -56,9 +56,7 @@ class CrossValidationInput(BaseModel):
 
 # -------------- Tool Implementations --------------
 @function_tool
-def train_model(
-    dataset_uri: str, hyperparameters: str = "{}"
-) -> dict[str, Any]:
+def train_model(dataset_uri: str, hyperparameters: str = "{}") -> dict[str, Any]:
     """
     ASYNC: schedule training, return job_id immediately.
 

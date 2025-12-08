@@ -97,7 +97,9 @@ class GrokAgent(BaseAgent):
                 "Grok API key is required. Set XAI_API_KEY env var or pass api_key to GrokConfig."
             )
 
-        self.client = base_module.OpenAI(api_key=config.api_key, base_url=config.base_url)
+        self.client = base_module.OpenAI(
+            api_key=config.api_key, base_url=config.base_url
+        )
 
         self.system_prompt = system_prompt or (
             "You are an ontology-driven AI agent for small business optimization. "
@@ -200,7 +202,10 @@ Specify which tools to invoke and why.
         return AgentPlan(thought=plan_text, action=action)
 
     def act(
-        self, plan: AgentPlan, observation: AgentObservation | None = None, task: AgentTask | None = None
+        self,
+        plan: AgentPlan,
+        observation: AgentObservation | None = None,
+        task: AgentTask | None = None,
     ) -> AgentActionResult:
         """
         Execute plan by invoking tools from registry.
@@ -284,10 +289,10 @@ Provide 2-3 concise insights for learning.
                         {"role": "system", "content": self.system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-                seed=self.config.seed,
-            )
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens,
+                    seed=self.config.seed,
+                )
 
             return _call()
         else:

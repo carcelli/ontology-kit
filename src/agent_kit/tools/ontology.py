@@ -9,6 +9,7 @@ from agent_kit.ontology.loader import OntologyLoader
 def function_tool(func):  # type: ignore
     return func
 
+
 # Define namespace for your ontology (best practice: avoid string URIs)
 NS = Namespace("http://agent_kit.io/business#")
 
@@ -18,7 +19,9 @@ global_ontology_loader.load()
 
 
 @function_tool
-def query_ontology(sparql_query: str, ontology_loader: OntologyLoader | None = None) -> list[dict]:
+def query_ontology(
+    sparql_query: str, ontology_loader: OntologyLoader | None = None
+) -> list[dict]:
     """Execute a SPARQL query against the ontology."""
     loader = ontology_loader or global_ontology_loader
     results = loader.query(sparql_query)

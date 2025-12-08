@@ -28,6 +28,7 @@ except ImportError:
         """Minimal TypedDict stub when upstream agents SDK is unavailable."""
 
         pass
+
     AGENTS_AVAILABLE = False
 
 if TYPE_CHECKING:

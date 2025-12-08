@@ -43,10 +43,13 @@ from agent_kit.tools.ontology import query_ontology
 # Configuration
 # =============================================================================
 
+
 class ProductionConfig:
     """Production configuration."""
 
-    ONTOLOGY_PATH = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ONTOLOGY_PATH = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     SESSION_DB = Path(__file__).parent.parent / "data" / "sessions.db"
     DOMAIN = "business"
 
@@ -60,6 +63,7 @@ class ProductionConfig:
 # =============================================================================
 # Setup Functions
 # =============================================================================
+
 
 def setup_ontology() -> OntologyLoader:
     """Load and configure ontology."""
@@ -108,6 +112,7 @@ def setup_event_logger(ontology: OntologyLoader) -> OntologyEventLogger:
 # =============================================================================
 # Agent Factory
 # =============================================================================
+
 
 def create_forecast_agent(ontology: OntologyLoader) -> OntologyAgentAdapter:
     """Create revenue forecasting specialist."""
@@ -186,6 +191,7 @@ Output format:
 # Demo Functions
 # =============================================================================
 
+
 async def demo_basic_execution(
     runner: OntologyRunner,
     forecast_agent: OntologyAgentAdapter,
@@ -207,7 +213,11 @@ async def demo_basic_execution(
     )
 
     print("\n📊 Result:")
-    print(f"   Output: {result.output[:200]}..." if len(result.output) > 200 else f"   Output: {result.output}")
+    print(
+        f"   Output: {result.output[:200]}..."
+        if len(result.output) > 200
+        else f"   Output: {result.output}"
+    )
     print(f"   Session: {result.session_id}")
     print(f"   Duration: {result.duration_seconds:.2f}s")
     print(f"   Events: {len(result.events)}")
@@ -382,7 +392,11 @@ async def demo_unified_orchestrator(
     )
 
     print("\n📊 Result:")
-    print(f"   Output: {result.output[:200]}..." if len(result.output) > 200 else f"   Output: {result.output}")
+    print(
+        f"   Output: {result.output[:200]}..."
+        if len(result.output) > 200
+        else f"   Output: {result.output}"
+    )
     print(f"   Agents used: {result.agents_used}")
     print(f"   Duration: {result.duration_seconds:.2f}s")
 
@@ -390,6 +404,7 @@ async def demo_unified_orchestrator(
 # =============================================================================
 # Main
 # =============================================================================
+
 
 async def main() -> None:
     """Run production integration demo."""
@@ -454,6 +469,7 @@ async def main() -> None:
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
 
     # Summary
@@ -478,4 +494,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-

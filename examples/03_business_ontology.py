@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 # Add src to path (for development)
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agent_kit.ontology import OntologyLoader
 
@@ -25,7 +25,9 @@ def main() -> None:
     print()
 
     # Load business ontology
-    ontology_path = Path(__file__).parent.parent / 'assets' / 'ontologies' / 'business.ttl'
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     print(f"📚 Loading business ontology from: {ontology_path}")
 
     loader = OntologyLoader(str(ontology_path))
@@ -50,10 +52,10 @@ def main() -> None:
     results = loader.query(sparql)
 
     for res in results:
-        name = res.get('name', 'Unknown')
-        revenue = res.get('revenue', 'N/A')
-        location = res.get('location', 'N/A')
-        if revenue != 'N/A':
+        name = res.get("name", "Unknown")
+        revenue = res.get("revenue", "N/A")
+        location = res.get("location", "N/A")
+        if revenue != "N/A":
             print(f"   - {name}: ${float(revenue):,.0f}/year in {location}")
         else:
             print(f"   - {name} in {location}")
@@ -78,9 +80,9 @@ def main() -> None:
 
     if results:
         for res in results:
-            client = res['client']
-            revenue = res['revenue']
-            amount = float(res['amount'])
+            client = res["client"]
+            revenue = res["revenue"]
+            amount = float(res["amount"])
             print(f"   - {client} → {revenue}: ${amount:,.0f}")
     else:
         print("   (No client-revenue mappings found)")
@@ -104,11 +106,11 @@ def main() -> None:
     results = loader.query(sparql)
 
     for res in results:
-        model = res['model']
-        model_type = res.get('modelType', 'Unknown')
-        accuracy = res.get('accuracy', 'N/A')
-        if accuracy != 'N/A':
-            print(f"   - {model} ({model_type}): {float(accuracy)*100:.1f}% accuracy")
+        model = res["model"]
+        model_type = res.get("modelType", "Unknown")
+        accuracy = res.get("accuracy", "N/A")
+        if accuracy != "N/A":
+            print(f"   - {model} ({model_type}): {float(accuracy) * 100:.1f}% accuracy")
         else:
             print(f"   - {model} ({model_type})")
     print()
@@ -133,16 +135,18 @@ def main() -> None:
     results = loader.query(sparql)
 
     for i, res in enumerate(results, 1):
-        lever = res['lever']
-        impact = res.get('impact', 1.0)
-        cost = res.get('cost', 0)
-        priority = res.get('priority', '?')
-        description = res.get('description', '')
+        lever = res["lever"]
+        impact = res.get("impact", 1.0)
+        cost = res.get("cost", 0)
+        priority = res.get("priority", "?")
+        description = res.get("description", "")
 
         if cost:
             roi = float(impact) / (float(cost) + 1e-6)
             print(f"   {i}. {lever} (Priority {priority})")
-            print(f"      ROI: {roi:.2f}x | Impact: {float(impact):.2f} | Cost: ${float(cost):,.0f}")
+            print(
+                f"      ROI: {roi:.2f}x | Impact: {float(impact):.2f} | Cost: ${float(cost):,.0f}"
+            )
         else:
             print(f"   {i}. {lever} (Priority {priority})")
             print(f"      Impact: {float(impact):.2f}")
@@ -185,7 +189,9 @@ def main() -> None:
     print()
 
     # Find all businesses
-    biz_query = "PREFIX : <http://agent_kit.io/business#> SELECT ?b WHERE { ?b a :Business }"
+    biz_query = (
+        "PREFIX : <http://agent_kit.io/business#> SELECT ?b WHERE { ?b a :Business }"
+    )
     businesses = loader.query(biz_query)
 
     # Find all leverage points affecting those businesses
@@ -201,28 +207,34 @@ def main() -> None:
     levers = loader.query(lever_query)
 
     if levers:
-        print(f"📊 Found {len(businesses)} business(es) and {len(levers)} leverage point(s)")
+        print(
+            f"📊 Found {len(businesses)} business(es) and {len(levers)} leverage point(s)"
+        )
         print()
         print("✨ Recommended actions (sorted by ROI):")
 
         # Calculate ROI and sort
         lever_data = []
         for lev in levers:
-            impact = float(lev['impact'])
-            cost = float(lev['cost'])
+            impact = float(lev["impact"])
+            cost = float(lev["cost"])
             roi = impact / (cost + 1e-6)
-            lever_data.append({
-                'name': str(lev['lever']).split('#')[-1],
-                'roi': roi,
-                'impact': impact,
-                'cost': cost
-            })
+            lever_data.append(
+                {
+                    "name": str(lev["lever"]).split("#")[-1],
+                    "roi": roi,
+                    "impact": impact,
+                    "cost": cost,
+                }
+            )
 
-        lever_data.sort(key=lambda x: x['roi'], reverse=True)
+        lever_data.sort(key=lambda x: x["roi"], reverse=True)
 
         for i, lev in enumerate(lever_data, 1):
             print(f"{i}. {lev['name']}")
-            print(f"   → ROI: {lev['roi']:.2f}x | Impact: ${lev['impact']*1000:,.0f} | Cost: ${lev['cost']:,.0f}")
+            print(
+                f"   → ROI: {lev['roi']:.2f}x | Impact: ${lev['impact'] * 1000:,.0f} | Cost: ${lev['cost']:,.0f}"
+            )
     else:
         print("No leverage points found - ontology needs more example data")
 
@@ -238,6 +250,5 @@ def main() -> None:
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

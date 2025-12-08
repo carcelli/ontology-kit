@@ -113,7 +113,8 @@ class SqliteSessionBackend:
     def _init_db(self) -> None:
         """Initialize database schema."""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS sessions (
                     session_id TEXT PRIMARY KEY,
                     user_id TEXT,
@@ -121,11 +122,14 @@ class SqliteSessionBackend:
                     created_at REAL NOT NULL,
                     updated_at REAL NOT NULL
                 )
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_sessions_user
                 ON sessions(user_id)
-            """)
+            """
+            )
             conn.commit()
 
     async def get_session(self, session_id: str) -> dict[str, Any]:

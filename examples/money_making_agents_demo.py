@@ -10,6 +10,7 @@ Demonstrates:
 
 Run: uv run python examples/money_making_agents_demo.py
 """
+
 import os
 from datetime import datetime
 
@@ -37,8 +38,10 @@ def demo_tool_organization():
     print("\n📦 ALL REGISTERED TOOLS:")
     all_tools = registry.list_all_tools()
     for name, metadata in all_tools.items():
-        print(f"  • {name:30} [{metadata['category']:15}] "
-              f"${metadata['cost']:.4f}, {metadata['latency_ms']:4}ms")
+        print(
+            f"  • {name:30} [{metadata['category']:15}] "
+            f"${metadata['cost']:.4f}, {metadata['latency_ms']:4}ms"
+        )
 
     # Get betting tools
     print("\n🎲 BETTING TOOLS:")
@@ -78,15 +81,11 @@ def demo_prop_betting_agent():
     print("=" * 70)
 
     # Load ontology
-    loader = OntologyLoader('assets/ontologies/betting.ttl')
+    loader = OntologyLoader("assets/ontologies/betting.ttl")
     loader.load()
 
     # Create agent
-    agent = PropBettingAgent(
-        ontology=loader,
-        bankroll=10000.0,
-        strategy="ValueBetting"
-    )
+    agent = PropBettingAgent(ontology=loader, bankroll=10000.0, strategy="ValueBetting")
 
     print(f"\n✅ Created {agent.name}")
     print(f"  Bankroll: ${agent.bankroll:,.2f}")
@@ -103,44 +102,52 @@ def demo_prop_betting_agent():
             event_id="lebron_points",
             description="LeBron James Over 25.5 Points",
             bookmaker="DraftKings",
-            odds=1.91
+            odds=1.91,
         ),
         PropBet(
             event_id="curry_threes",
             description="Steph Curry Over 4.5 Three-Pointers",
             bookmaker="FanDuel",
-            odds=2.10
-        )
+            odds=2.10,
+        ),
     ]
 
     # Agent's probability estimates (in production, from ML models)
     true_probabilities = {
         "lebron_points": 0.60,  # Agent thinks 60% chance
-        "curry_threes": 0.55
+        "curry_threes": 0.55,
     }
 
     confidence_scores = {
         "lebron_points": 0.85,  # 85% confidence
-        "curry_threes": 0.75
+        "curry_threes": 0.75,
     }
 
     # Analyze
-    recommendations = agent.analyze_props(prop_bets, true_probabilities, confidence_scores)
+    recommendations = agent.analyze_props(
+        prop_bets, true_probabilities, confidence_scores
+    )
 
     print(f"\n  Found {len(recommendations.edges)} edges:")
     for edge in recommendations.edges:
         print(f"    • {edge.prop_bet.description}")
-        print(f"      Bookmaker odds: {edge.prop_bet.odds:.2f} "
-              f"(implied prob: {edge.prop_bet.implied_probability:.2%})")
+        print(
+            f"      Bookmaker odds: {edge.prop_bet.odds:.2f} "
+            f"(implied prob: {edge.prop_bet.implied_probability:.2%})"
+        )
         print(f"      Agent probability: {edge.true_probability:.2%}")
         print(f"      Edge: {edge.edge:.2%}")
-        print(f"      Kelly bet size: {edge.kelly_fraction:.2%} of bankroll "
-              f"(${edge.kelly_fraction * agent.bankroll:.2f})")
+        print(
+            f"      Kelly bet size: {edge.kelly_fraction:.2%} of bankroll "
+            f"(${edge.kelly_fraction * agent.bankroll:.2f})"
+        )
         print(f"      Confidence: {edge.confidence:.1%}")
 
     print(f"\n  Total exposure: {recommendations.total_exposure:.2%} of bankroll")
     print(f"  Expected ROI: ${recommendations.expected_roi:.2f}")
-    print(f"  Risk checks: {'✅ PASSED' if recommendations.passed_risk_checks else '❌ FAILED'}")
+    print(
+        f"  Risk checks: {'✅ PASSED' if recommendations.passed_risk_checks else '❌ FAILED'}"
+    )
 
     if not recommendations.passed_risk_checks:
         print("  Violations:")
@@ -155,14 +162,12 @@ def demo_algo_trading_agent():
     print("=" * 70)
 
     # Load ontology
-    loader = OntologyLoader('assets/ontologies/trading.ttl')
+    loader = OntologyLoader("assets/ontologies/trading.ttl")
     loader.load()
 
     # Create agent
     agent = AlgoTradingAgent(
-        ontology=loader,
-        portfolio_value=100000.0,
-        strategy="MeanReversion"
+        ontology=loader, portfolio_value=100000.0, strategy="MeanReversion"
     )
 
     print(f"\n✅ Created {agent.name}")
@@ -184,7 +189,7 @@ def demo_algo_trading_agent():
     # Mock market data with indicators
     market_data = {
         "AAPL": {"indicators": {"RSI": 28, "MACD": -0.5}},  # Oversold
-        "MSFT": {"indicators": {"RSI": 45, "MACD": 0.2}}   # Neutral
+        "MSFT": {"indicators": {"RSI": 45, "MACD": 0.2}},  # Neutral
     }
 
     # Generate signals
@@ -196,15 +201,23 @@ def demo_algo_trading_agent():
         print(f"      Entry: ${signal.asset.current_price:.2f}")
         print(f"      Stop loss: ${signal.stop_loss:.2f}")
         print(f"      Take profit: ${signal.take_profit:.2f}")
-        print(f"      Position size: {signal.position_size:.2%} "
-              f"(${signal.position_size * agent.portfolio_value:.2f})")
+        print(
+            f"      Position size: {signal.position_size:.2%} "
+            f"(${signal.position_size * agent.portfolio_value:.2f})"
+        )
         print(f"      Signal strength: {signal.signal_strength:.1%}")
         print(f"      Expected return: {signal.expected_return:+.2%}")
 
     print("\n  Portfolio Metrics:")
-    print(f"    - Current drawdown: {recommendations.portfolio_metrics.current_drawdown:.2%}")
-    print(f"    - Total exposure: {recommendations.portfolio_metrics.total_exposure:.2%}")
-    print(f"    - Risk checks: {'✅ PASSED' if recommendations.passed_risk_checks else '❌ FAILED'}")
+    print(
+        f"    - Current drawdown: {recommendations.portfolio_metrics.current_drawdown:.2%}"
+    )
+    print(
+        f"    - Total exposure: {recommendations.portfolio_metrics.total_exposure:.2%}"
+    )
+    print(
+        f"    - Risk checks: {'✅ PASSED' if recommendations.passed_risk_checks else '❌ FAILED'}"
+    )
 
     if recommendations.circuit_breaker_triggered:
         print("    - ⚠️  CIRCUIT BREAKER TRIGGERED - TRADING HALTED")
@@ -222,39 +235,38 @@ def demo_backtesting():
         commission_rate=0.001,
         data_cost_per_month=50,
         compute_cost_per_month=100,
-        api_cost_per_call=0.001
+        api_cost_per_call=0.001,
     )
 
     print("\n✅ Created BacktestEngine")
     print(f"  Initial capital: ${engine.initial_capital:,.2f}")
     print(f"  Commission rate: {engine.commission_rate:.2%}")
-    print(f"  Monthly overhead: ${engine.data_cost_per_month + engine.compute_cost_per_month:.2f}")
+    print(
+        f"  Monthly overhead: ${engine.data_cost_per_month + engine.compute_cost_per_month:.2f}"
+    )
 
     # Mock strategy
     def mock_strategy(data):
         return [
             {"ticker": "AAPL", "signal_type": "BUY", "position_size": 0.1},
-            {"ticker": "MSFT", "signal_type": "BUY", "position_size": 0.1}
+            {"ticker": "MSFT", "signal_type": "BUY", "position_size": 0.1},
         ]
 
     # Mock historical data
     mock_data = {
         "AAPL": [
             {"timestamp": "2024-01-01", "close": 150},
-            {"timestamp": "2024-01-31", "close": 165}  # 10% gain
+            {"timestamp": "2024-01-31", "close": 165},  # 10% gain
         ],
         "MSFT": [
             {"timestamp": "2024-01-01", "close": 300},
-            {"timestamp": "2024-01-31", "close": 315}  # 5% gain
-        ]
+            {"timestamp": "2024-01-31", "close": 315},  # 5% gain
+        ],
     }
 
     # Run backtest
     metrics = engine.run_backtest(
-        mock_strategy,
-        mock_data,
-        datetime(2024, 1, 1),
-        datetime(2024, 1, 31)
+        mock_strategy, mock_data, datetime(2024, 1, 1), datetime(2024, 1, 31)
     )
 
     # Print results
@@ -279,7 +291,7 @@ def demo_agent_factory():
     print("=" * 70)
 
     # Load betting ontology
-    loader = OntologyLoader('assets/ontologies/betting.ttl')
+    loader = OntologyLoader("assets/ontologies/betting.ttl")
     loader.load()
 
     factory = AgentFactory(loader)
@@ -293,9 +305,7 @@ def demo_agent_factory():
     # Create agent from factory
     print("\n✨ CREATING AGENT FROM FACTORY:")
     agent = factory.create_agent(
-        "bet:PropBettingAgent",
-        bankroll=25000,
-        strategy="LineShopping"
+        "bet:PropBettingAgent", bankroll=25000, strategy="LineShopping"
     )
     print(f"  Created: {agent.name}")
     print(f"  Bankroll: ${agent.bankroll:,.2f}")
@@ -335,4 +345,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

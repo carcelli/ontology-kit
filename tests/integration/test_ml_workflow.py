@@ -67,7 +67,8 @@ async def test_end_to_end_training_then_cv(orchestrator):
 
     # Schedule training
     train = await orchestrator.call(
-        ML_TRAIN, {"dataset_uri": "demo://clients", "hyperparameters": json.dumps({"lr": 0.001})}
+        ML_TRAIN,
+        {"dataset_uri": "demo://clients", "hyperparameters": json.dumps({"lr": 0.001})},
     )
     if isinstance(train, str):
         train = json.loads(train)
@@ -127,6 +128,7 @@ async def test_end_to_end_training_then_cv(orchestrator):
 async def test_call_by_python_id(orchestrator):
     """Test calling tools directly by Python identifier."""
     import json
+
     result = await orchestrator.call_by_python_id(
         "train_model", {"dataset_uri": "demo://test", "hyperparameters": "{}"}
     )

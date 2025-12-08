@@ -19,7 +19,7 @@ def validate_vercel_config(config_path: Path = Path("vercel.json")) -> bool:
         return False
 
     try:
-        with open(config_path, encoding='utf-8') as f:
+        with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
     except json.JSONDecodeError as e:
         print(f"❌ Invalid JSON in {config_path}: {e}")

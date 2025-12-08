@@ -42,9 +42,11 @@ class Embedder:
             offline: Force lightweight offline embedding (no model download)
         """
         self.model_name = model_name
-        self._use_fallback = offline if offline is not None else os.getenv(
-            "EMBEDDER_OFFLINE", "0"
-        ) == "1"
+        self._use_fallback = (
+            offline
+            if offline is not None
+            else os.getenv("EMBEDDER_OFFLINE", "0") == "1"
+        )
 
         if not self._use_fallback:
             try:
@@ -134,9 +136,7 @@ class Embedder:
             for n in (2, 3):
                 for i in range(len(token) - n + 1):
                     ngram = token[i : i + n]
-                    ngram_hash = int(
-                        hashlib.sha256(ngram.encode()).hexdigest(), 16
-                    )
+                    ngram_hash = int(hashlib.sha256(ngram.encode()).hexdigest(), 16)
                     vec[ngram_hash % self.dimension] += 0.5
 
         norm = np.linalg.norm(vec)

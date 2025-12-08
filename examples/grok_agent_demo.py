@@ -67,17 +67,22 @@ def main() -> None:
     # ========================================================================
     print_section("Step 2: Load Business Ontology")
 
-    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
 
     if ontology_path.exists():
         loader = OntologyLoader(str(ontology_path))
         ontology = loader.load()
+
         # Wrap in object with query method for agent compatibility
         class OntologyWrapper:
             def __init__(self, graph):
                 self.g = graph
+
             def query(self, sparql):
                 return self.g.query(sparql)
+
         ontology = OntologyWrapper(ontology)
         print(f"✓ Loaded ontology: {ontology_path}")
         print(f"  Triples: {len(ontology.g)}")
@@ -86,7 +91,8 @@ def main() -> None:
         print("  Creating stub ontology for demo...")
         # Create minimal stub for demo
         from rdflib import RDF, RDFS, Graph, Literal, Namespace
-        ontology = type('Ontology', (), {})()  # Mock object
+
+        ontology = type("Ontology", (), {})()  # Mock object
         ontology.g = Graph()
         ns = Namespace("http://agent_kit.io/business#")
         ontology.g.bind("", ns)
@@ -102,9 +108,10 @@ def main() -> None:
         def mock_query(sparql: str):
             """Mock SPARQL query for demo."""
             return [
-                {'entity': bakery, 'property': ns.revenue, 'value': Literal(140)},
-                {'entity': bakery, 'property': ns.budget, 'value': Literal(5.0)},
+                {"entity": bakery, "property": ns.revenue, "value": Literal(140)},
+                {"entity": bakery, "property": ns.budget, "value": Literal(5.0)},
             ]
+
         ontology.query = mock_query
         print("✓ Stub ontology created")
 
@@ -119,13 +126,13 @@ def main() -> None:
             model="grok-beta",
             temperature=0.7,
             max_tokens=2048,
-            seed=42  # For reproducibility
+            seed=42,  # For reproducibility
         )
 
         # Register tools from ML_TOOL_REGISTRY
         tool_registry = {}
         for tool_name, tool_entry in ML_TOOL_REGISTRY.items():
-            tool_registry[tool_name] = tool_entry['function']
+            tool_registry[tool_name] = tool_entry["function"]
 
         agent = GrokAgent(
             config=config,
@@ -135,7 +142,7 @@ def main() -> None:
                 "You are an expert business analyst for small businesses. "
                 "Use ontology data to ground your recommendations in real business metrics. "
                 "Prioritize high-ROI, actionable insights."
-            )
+            ),
         )
 
         print("✓ GrokAgent initialized successfully")
@@ -143,7 +150,9 @@ def main() -> None:
         print(f"  Temperature: {config.temperature}")
         print(f"  Max tokens: {config.max_tokens}")
         print(f"  Tools available: {len(tool_registry)}")
-        print(f"    - {', '.join(list(tool_registry.keys())[:5])}{'...' if len(tool_registry) > 5 else ''}")
+        print(
+            f"    - {', '.join(list(tool_registry.keys())[:5])}{'...' if len(tool_registry) > 5 else ''}"
+        )
     except ImportError as e:
         print(f"❌ Failed to initialize GrokAgent: {e}")
         print()
@@ -163,7 +172,8 @@ def main() -> None:
         print()
         print("Simulated Grok Output:")
         print("-" * 70)
-        print("""
+        print(
+            """
 Observation: Retrieved ontology data showing current revenue of $140K 
              and budget of $5K.
 
@@ -187,7 +197,8 @@ Result: Based on semantic analysis of the business ontology, the top
 Reflection: The ontology provided clear budget constraints, enabling
            targeted recommendations. Future iterations should incorporate
            seasonality data for more precise timing analysis.
-""")
+"""
+        )
     else:
         task1 = AgentTask(
             prompt="Analyze revenue optimization opportunities for Sunshine Bakery based on ontology data"
@@ -211,6 +222,7 @@ Reflection: The ontology provided clear budget constraints, enabling
         except Exception as e:
             print(f"❌ Task failed: {e}")
             import traceback
+
             traceback.print_exc()
 
     # ========================================================================
@@ -319,7 +331,9 @@ Reflection: The ontology provided clear budget constraints, enabling
     print("  2. Expand tool registry with domain-specific tools")
     print("  3. Enhance SPARQL queries with NER for dynamic entity extraction")
     print("  4. Add SHACL validation for ontology consistency checks")
-    print("  5. Integrate with examples/04_orchestrated_agents.py for multi-agent workflows")
+    print(
+        "  5. Integrate with examples/04_orchestrated_agents.py for multi-agent workflows"
+    )
     print()
     print("Cost Estimation (with live API):")
     print("  - ~1K tokens/task × $0.002/1K tokens = $0.002/task")
@@ -334,4 +348,3 @@ Reflection: The ontology provided clear budget constraints, enabling
 
 if __name__ == "__main__":
     main()
-

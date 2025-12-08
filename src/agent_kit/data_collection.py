@@ -455,9 +455,11 @@ class AgentDataCollector:
             "timestamp": record.timestamp.isoformat(),
             "execution": {
                 "start_time": record.execution.start_time.isoformat(),
-                "end_time": record.execution.end_time.isoformat()
-                if record.execution.end_time
-                else None,
+                "end_time": (
+                    record.execution.end_time.isoformat()
+                    if record.execution.end_time
+                    else None
+                ),
                 "duration_seconds": record.execution.duration_seconds,
                 "cpu_usage_percent": record.execution.cpu_usage_percent,
                 "memory_usage_mb": record.execution.memory_usage_mb,

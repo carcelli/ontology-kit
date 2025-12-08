@@ -147,9 +147,11 @@ class OptimizerAgent(BaseAgent):
 
         notes = [
             "Retrieved current business metrics",
-            f"Forecast received: {previous_forecast}"
-            if previous_forecast
-            else "Using default forecast",
+            (
+                f"Forecast received: {previous_forecast}"
+                if previous_forecast
+                else "Using default forecast"
+            ),
         ]
 
         return AgentObservation(data=observations, notes=notes)

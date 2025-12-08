@@ -205,9 +205,11 @@ Always consider the semantic relationships and business rules defined in the ont
             return {
                 "ontology_path": self.ontology_path,
                 "agent_name": self.name,
-                "available_triples": len(list(self.ontology))
-                if hasattr(self.ontology, "__iter__")
-                else 0,
+                "available_triples": (
+                    len(list(self.ontology))
+                    if hasattr(self.ontology, "__iter__")
+                    else 0
+                ),
                 "query": query,
             }
         except Exception:

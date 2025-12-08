@@ -51,8 +51,9 @@ async def main() -> None:
 
     # Setup ontology
     print("📚 Loading ontology...")
-    ontology_path = Path(__file__).parent.parent / \
-        "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     if not ontology_path.exists():
         print(f"⚠️  Warning: Ontology file not found: {ontology_path}")
         print("   Creating minimal ontology loader...")
@@ -95,9 +96,7 @@ async def main() -> None:
 
     # Add guardrails
     print("🛡️  Adding output guardrails...")
-    adapter.agent.output_guardrails = [
-        OntologyOutputGuardrail("business")
-    ]
+    adapter.agent.output_guardrails = [OntologyOutputGuardrail("business")]
     print("✅ Guardrails added")
     print()
 
@@ -129,6 +128,7 @@ async def main() -> None:
     except Exception as e:
         print(f"❌ Error during execution: {e}")
         import traceback
+
         traceback.print_exc()
         return
 

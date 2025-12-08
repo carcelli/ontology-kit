@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 # Add src to path (for development)
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agent_kit.vectorspace import Embedder, VectorIndex
 
@@ -40,7 +40,7 @@ def main() -> None:
     print(f"📝 Embedding {len(tasks)} task descriptions...")
 
     # 1. Initialize embedder
-    embedder = Embedder(model_name='all-MiniLM-L6-v2')
+    embedder = Embedder(model_name="all-MiniLM-L6-v2")
     print(f"   Model: {embedder.model_name}")
     print(f"   Dimension: {embedder.dimension}")
     print()
@@ -52,7 +52,7 @@ def main() -> None:
 
     # 3. Build vector index
     print("🔧 Building FAISS index...")
-    index = VectorIndex(dim=embedder.dimension, metric='cosine')
+    index = VectorIndex(dim=embedder.dimension, metric="cosine")
     index.add(embeddings, ids=list(range(len(tasks))), metadata=tasks)
     print(f"   Index: {index}")
     print()
@@ -74,8 +74,8 @@ def main() -> None:
 
         print("Top 3 results:")
         for i, res in enumerate(results, 1):
-            task_desc = res['metadata']
-            similarity = 1 - res['distance']  # Convert distance back to similarity
+            task_desc = res["metadata"]
+            similarity = 1 - res["distance"]  # Convert distance back to similarity
             print(f"  {i}. {task_desc}")
             print(f"     (similarity: {similarity:.3f})")
         print()
@@ -89,6 +89,5 @@ def main() -> None:
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

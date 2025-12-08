@@ -99,7 +99,9 @@ def main() -> None:
         for i, handoff in enumerate(handoffs, 1):
             print(f"{i}. {handoff.from_agent} → {handoff.to_agent}")
             print(f"   Reason: {handoff.reason}")
-            print(f"   Intermediate: {handoff.intermediate_result.get('summary', 'N/A')}")
+            print(
+                f"   Intermediate: {handoff.intermediate_result.get('summary', 'N/A')}"
+            )
             print()
     else:
         print("(No handoffs occurred)")
@@ -147,10 +149,10 @@ def main() -> None:
 def demo_grok_integration():
     """
     Optional: Demonstrate Grok-powered agents in orchestration.
-    
+
     This is an advanced example showing how to replace traditional agents
     with GrokAgent for LLM-powered reasoning. Requires XAI_API_KEY.
-    
+
     Run this with: python examples/04_orchestrated_agents.py --grok
     """
     import os
@@ -176,8 +178,11 @@ def demo_grok_integration():
     print()
 
     # Load ontology
-    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     from agent_kit.ontology.loader import OntologyLoader
+
     loader = OntologyLoader(str(ontology_path))
     ontology_graph = loader.load()
 
@@ -185,6 +190,7 @@ def demo_grok_integration():
     class OntologyWrapper:
         def __init__(self, graph):
             self.g = graph
+
         def query(self, sparql):
             return self.g.query(sparql)
 
@@ -192,15 +198,12 @@ def demo_grok_integration():
 
     # Configure Grok
     config = GrokConfig(
-        api_key=os.getenv("XAI_API_KEY"),
-        model="grok-beta",
-        temperature=0.5,
-        seed=42
+        api_key=os.getenv("XAI_API_KEY"), model="grok-beta", temperature=0.5, seed=42
     )
 
     # Create tool registry
     tool_registry = {
-        tool_name: tool_entry['function']
+        tool_name: tool_entry["function"]
         for tool_name, tool_entry in ML_TOOL_REGISTRY.items()
     }
 
@@ -213,7 +216,7 @@ def demo_grok_integration():
             "You are a revenue forecasting specialist for small businesses. "
             "Use ontology data to ground predictions in real business metrics. "
             "When appropriate, invoke ML tools like train_model or analyze_leverage."
-        )
+        ),
     )
 
     print("✓ Grok-powered ForecastAgent initialized")
@@ -253,4 +256,3 @@ if __name__ == "__main__":
     # Optionally run Grok integration demo
     if "--grok" in sys.argv:
         demo_grok_integration()
-

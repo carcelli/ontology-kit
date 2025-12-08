@@ -35,7 +35,12 @@ class RepositoryAnalysisAgent(BaseAgent):
     - Identify coverage gaps
     """
 
-    def __init__(self, repo_path: str | Path | None = None, max_depth: int | None = None, **_: Any):
+    def __init__(
+        self,
+        repo_path: str | Path | None = None,
+        max_depth: int | None = None,
+        **_: Any,
+    ):
         """
         Initialize repository agent.
 
@@ -66,7 +71,7 @@ class RepositoryAnalysisAgent(BaseAgent):
         ontology_output = {
             "stats": {
                 "files": len(tree_lines),
-                "directories": len({p.parent for p in self.repo_path.rglob('*')}),
+                "directories": len({p.parent for p in self.repo_path.rglob("*")}),
             }
         }
 
@@ -167,9 +172,11 @@ class RepositoryAnalysisAgent(BaseAgent):
                 "total": len(test_files),
                 "files": [f.name for f in test_files],
             },
-            "coverage_estimate": len(test_files) / (len(agent_files) + len(tool_files))
-            if (len(agent_files) + len(tool_files)) > 0
-            else 0.0,
+            "coverage_estimate": (
+                len(test_files) / (len(agent_files) + len(tool_files))
+                if (len(agent_files) + len(tool_files)) > 0
+                else 0.0
+            ),
             "summary": f"Found {len(agent_files)} agents, {len(tool_files)} tools, {len(test_files)} test files",
         }
 

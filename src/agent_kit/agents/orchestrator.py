@@ -443,7 +443,10 @@ class BusinessOrchestrator:
             self.agents[name] = agent_cls(name=name, **params)
 
     async def run(
-        self, goal: str, runner: Any | None = None, context: dict[str, Any] | None = None
+        self,
+        goal: str,
+        runner: Any | None = None,
+        context: dict[str, Any] | None = None,
     ) -> BusinessOrchestratorResult | str:
         runner_obj = runner or SDKRunner
         if isinstance(runner_obj, type):
@@ -491,7 +494,10 @@ class BusinessOrchestrator:
                 )
 
         result_obj = BusinessOrchestratorResult(
-            route=route, agent_outputs=agent_outputs, handoffs=handoffs, final_output=final_output
+            route=route,
+            agent_outputs=agent_outputs,
+            handoffs=handoffs,
+            final_output=final_output,
         )
 
         # Preserve historical behavior where callers compared directly to string

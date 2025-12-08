@@ -100,7 +100,9 @@ async def main() -> None:
     # Setup Ontology Layer
     # ==========================================================================
     print("1️⃣  Setting up Ontology Layer...")
-    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     ontology = OntologyLoader(str(ontology_path))
 
     if ontology_path.exists():
@@ -159,9 +161,7 @@ Always explain your reasoning and provide confidence levels.
     print(f"   ✅ Wrapped with ontology adapter (domain: {adapter.domain})")
 
     # Add guardrails
-    adapter.agent.output_guardrails = [
-        OntologyOutputGuardrail("business")
-    ]
+    adapter.agent.output_guardrails = [OntologyOutputGuardrail("business")]
     print("   ✅ Added output guardrails")
     print()
 
@@ -194,7 +194,11 @@ Always explain your reasoning and provide confidence levels.
             # Execute via OpenAI SDK
             result = await Runner.run(adapter.agent, input=task)
             output = result.final_output
-            print(f"   ✅ Result: {output[:200]}..." if len(output) > 200 else f"   ✅ Result: {output}")
+            print(
+                f"   ✅ Result: {output[:200]}..."
+                if len(output) > 200
+                else f"   ✅ Result: {output}"
+            )
 
             # Log event with ontology context
             event = event_logger.create_event(
@@ -278,4 +282,3 @@ Always explain your reasoning and provide confidence levels.
 
 if __name__ == "__main__":
     asyncio.run(main())
-

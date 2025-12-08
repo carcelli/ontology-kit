@@ -387,15 +387,19 @@ class InteractiveDashboard:
 
         # Calculate averages
         avg_durations = [
-            sum(stage_durations[name]) / len(stage_durations[name])
-            if stage_durations[name]
-            else stage.duration_estimate
+            (
+                sum(stage_durations[name]) / len(stage_durations[name])
+                if stage_durations[name]
+                else stage.duration_estimate
+            )
             for name, stage in zip(stage_names, stages, strict=False)
         ]
         avg_success_rates = [
-            sum(stage_successes[name]) / len(stage_successes[name])
-            if stage_successes[name]
-            else 0.0
+            (
+                sum(stage_successes[name]) / len(stage_successes[name])
+                if stage_successes[name]
+                else 0.0
+            )
             for name in stage_names
         ]
 
@@ -499,9 +503,12 @@ class InteractiveDashboard:
             for d in top_decision_names
         ]
         success_rates = [
-            sum(decision_stats[d]["successes"]) / len(decision_stats[d]["successes"])
-            if decision_stats[d]["successes"]
-            else 0.0
+            (
+                sum(decision_stats[d]["successes"])
+                / len(decision_stats[d]["successes"])
+                if decision_stats[d]["successes"]
+                else 0.0
+            )
             for d in top_decision_names
         ]
 

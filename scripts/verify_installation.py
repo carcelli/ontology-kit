@@ -24,6 +24,7 @@ print()
 # Track results
 checks = []
 
+
 def check(name: str, fn: callable, required: bool = True) -> bool:
     """Run a check and record result."""
     try:
@@ -37,23 +38,31 @@ def check(name: str, fn: callable, required: bool = True) -> bool:
         checks.append((name, False, str(e)))
         return not required
 
+
 # ===============================================================
 # Check 1: Core Dependencies
 # ===============================================================
 print("1️⃣  Core Dependencies")
 print("-" * 60)
 
+
 def check_rdflib():
     import rdflib
+
     assert rdflib.__version__ >= "7.0.0"
+
 
 def check_pydantic():
     import pydantic
+
     assert pydantic.__version__ >= "2.0.0"
+
 
 def check_numpy():
     import numpy
+
     assert numpy.__version__ >= "1.24.0"
+
 
 check("rdflib", check_rdflib)
 check("pydantic", check_pydantic)
@@ -66,14 +75,19 @@ print()
 print("2️⃣  SDK Availability")
 print("-" * 60)
 
+
 def check_openai_sdk():
     import agents
+
     assert hasattr(agents, "Agent")
     assert hasattr(agents, "Runner")
 
+
 def check_adk():
     import google.adk
+
     assert hasattr(google.adk, "runners")
+
 
 check("OpenAI Agents SDK", check_openai_sdk, required=False)
 check("Google ADK", check_adk, required=False)
@@ -85,26 +99,34 @@ print()
 print("3️⃣  Agent Kit Modules")
 print("-" * 60)
 
+
 def check_core():
     pass
+
 
 def check_adapters():
     pass
 
+
 def check_events():
     pass
+
 
 def check_sessions():
     pass
 
+
 def check_memory():
     pass
+
 
 def check_runners():
     pass
 
+
 def check_orchestrator():
     pass
+
 
 check("Core (Ontology, Embedder, VectorIndex)", check_core)
 check("Adapters", check_adapters)
@@ -121,17 +143,21 @@ print()
 print("4️⃣  Configuration")
 print("-" * 60)
 
+
 def check_api_key():
     import os
+
     key = os.getenv("OPENAI_API_KEY")
     if not key:
         raise ValueError("OPENAI_API_KEY not set")
     print(f"   API key: {key[:10]}...")
 
+
 def check_assets():
     ontology_path = Path("assets/ontologies/business.ttl")
     if not ontology_path.exists():
         raise FileNotFoundError(f"Ontology not found: {ontology_path}")
+
 
 check("OpenAI API Key", check_api_key, required=False)
 check("Ontology Assets", check_assets, required=False)
@@ -143,10 +169,13 @@ print()
 print("5️⃣  Basic Functionality")
 print("-" * 60)
 
+
 def check_ontology_load():
     from agent_kit import OntologyLoader
+
     ontology = OntologyLoader("assets/ontologies/business.ttl")
     ontology.load()
+
 
 def check_session_create():
     import asyncio
@@ -161,6 +190,7 @@ def check_session_create():
         assert session["id"] == "test_001"
 
     asyncio.run(test())
+
 
 def check_memory_store():
     import asyncio
@@ -178,13 +208,16 @@ def check_memory_store():
 
     asyncio.run(test())
 
+
 def check_event_create():
     from agent_kit import OntologyEvent, OntologyEventContent
+
     event = OntologyEvent(
         author="TestAgent",
         content=OntologyEventContent(text="Test event"),
     )
     assert event.author == "TestAgent"
+
 
 check("Ontology Loading", check_ontology_load, required=False)
 check("Session Creation", check_session_create)
@@ -223,8 +256,12 @@ if failed == 0:
     sys.exit(0)
 else:
     required_failed = sum(
-        1 for name, status, _ in checks
-        if not status and "SDK" not in name and "API Key" not in name and "Assets" not in name
+        1
+        for name, status, _ in checks
+        if not status
+        and "SDK" not in name
+        and "API Key" not in name
+        and "Assets" not in name
     )
 
     if required_failed == 0:
@@ -241,4 +278,3 @@ else:
         print("  2. Check Python version: python --version (>= 3.10)")
         print("  3. See SETUP_AND_VERIFY.md for detailed instructions")
         sys.exit(1)
-

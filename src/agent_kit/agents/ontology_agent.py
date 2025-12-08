@@ -36,7 +36,9 @@ class OntologyAgent(Agent):
         super().__init__(name=name, instructions=instructions, tools=tools, **kwargs)
         # Wrap underlying SDK agent for tests
         try:
-            self.sdk_agent = agent_cls(name=name, instructions=instructions, tools=tools, **kwargs)
+            self.sdk_agent = agent_cls(
+                name=name, instructions=instructions, tools=tools, **kwargs
+            )
         except Exception:
             self.sdk_agent = agent_cls()
 

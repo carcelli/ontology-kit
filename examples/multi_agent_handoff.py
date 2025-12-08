@@ -138,6 +138,7 @@ async def run_single_task(
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return ""
 
@@ -161,7 +162,9 @@ async def main() -> None:
 
     # Setup ontology
     print("📚 Loading ontology...")
-    ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    ontology_path = (
+        Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
+    )
     ontology = OntologyLoader(str(ontology_path))
 
     if ontology_path.exists():
@@ -188,9 +191,7 @@ async def main() -> None:
 
     # Add guardrails
     print("🛡️  Adding output guardrails...")
-    orchestrator.agent.output_guardrails = [
-        OntologyOutputGuardrail("business")
-    ]
+    orchestrator.agent.output_guardrails = [OntologyOutputGuardrail("business")]
     print("✅ Guardrails added")
     print()
 
@@ -202,10 +203,8 @@ async def main() -> None:
     tasks = [
         # Forecasting task - should route to ForecastAgent
         "What's the revenue forecast for the next 30 days?",
-
         # Optimization task - should route to OptimizerAgent
         "How can we improve our revenue by 10%?",
-
         # Combined task - may need coordination
         "Forecast revenue for Q1 and suggest optimizations to reach our target.",
     ]
@@ -227,4 +226,3 @@ async def main() -> None:
 
 if __name__ == "__main__":
     asyncio.run(main())
-
