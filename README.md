@@ -50,7 +50,6 @@
 📖 QUALITY_CHECKLIST.md
 📖 QUICKSTART.md - Quick start guide
 📖 README.md - This file
-📖 VERCEL_DEPLOYMENT.md
 🎨 assets
 └── 📁 ontologies
     ├── 📄 business.ttl
@@ -157,8 +156,7 @@
 ⚙️ scripts
 ├── 🐍 code_quality_checker.py
 ├── 🐍 create_tree_visualization.py
-├── 🐍 sync_openai_agents.py
-└── 🐍 validate_vercel_config.py
+└── 🐍 sync_openai_agents.py
 🐚 setup_github_auth.sh
 📁 src
 └── 📁 agent_kit

@@ -38,7 +38,7 @@ except ImportError:
 
 
 @dataclass
-class HandoffContext:
+class HandoffContext: 
     """Context passed during agent handoffs."""
 
     original_input: str = ""
@@ -247,7 +247,8 @@ Always transfer complex analysis tasks to specialists.
             output = result.final_output
 
             # Update context
-            self._context.summary = output[:500] if len(output) > 500 else output
+            self._context.summary = output[:500] if len(
+                output) > 500 else output
             self._context.handoff_chain.append(agent.name)
 
             # Log event
