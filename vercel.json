@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "functions": {
-    "web_app.py": {
-      "runtime": "python3",
-      "maxDuration": 30
+  "builds": [
+    {
+      "src": "web_app.py",
+      "use": "@vercel/python"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
