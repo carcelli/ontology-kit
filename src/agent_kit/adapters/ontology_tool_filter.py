@@ -8,11 +8,9 @@ cross-domain contamination.
 
 from __future__ import annotations
 
-from typing import Any
+from agents import Tool
 
-from agents import Tool, RunContextWrapper
-
-from agent_kit.domains.registry import DomainRegistry, get_global_registry
+from agent_kit.domains.registry import get_global_registry
 
 
 class OntologyToolFilter:
@@ -100,4 +98,3 @@ class OntologyToolFilter:
             return True
 
         return False
-

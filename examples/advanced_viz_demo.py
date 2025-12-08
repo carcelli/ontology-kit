@@ -133,19 +133,19 @@ def main() -> None:
             leverage_formula='inverse_distance',
         )
 
-        print(f'✓ Status: Success')
+        print('✓ Status: Success')
         print(f'✓ Visualization: {viz_result["viz_path"]}')
         print(f'  • Terms: {viz_result["n_terms"]}')
         print(f'  • Dimensions: {viz_result["n_components"]}D')
         print(f'  • Actionable: {viz_result["actionable_count"]}')
 
-        print(f'\n🎯 Top 5 Leverage Points:')
+        print('\n🎯 Top 5 Leverage Points:')
         for i, lever in enumerate(viz_result['top_levers'], 1):
             is_actionable = lever['term'] in actionable_entities
             flag = '✓' if is_actionable else '✗'
             print(f'  {i}. {lever["term"]}: {lever["leverage"]:.4f} {flag}')
 
-        print(f'\n💡 Open in browser:')
+        print('\n💡 Open in browser:')
         print(f'  file://{viz_result["viz_path"]}')
 
     except ImportError as e:
@@ -179,9 +179,9 @@ def main() -> None:
 
     try:
         # Get t-SNE reduced coordinates (simplified; would normally extract from viz)
-        from agent_kit.vectorspace.embedder import Embedder
         from sklearn.manifold import TSNE
-        import numpy as np
+
+        from agent_kit.vectorspace.embedder import Embedder
 
         embedder = Embedder()
         embeddings = embedder.embed_batch(business_entities)

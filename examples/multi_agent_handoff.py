@@ -32,9 +32,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agents import Agent, Runner
+
 from agent_kit.adapters import OntologyAgentAdapter, OntologyOutputGuardrail
 from agent_kit.ontology.loader import OntologyLoader
-from agent_kit.tools.business import predict, optimize
+from agent_kit.tools.business import optimize, predict
 from agent_kit.tools.ontology import query_ontology
 
 

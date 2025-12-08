@@ -29,15 +29,14 @@ from pathlib import Path
 from typing import Any
 
 import click
-from rich import print as rprint
 from rich.console import Console
-from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
-from rich.tree import Tree
 
 from agent_kit.agents.base import AgentTask
-from agent_kit.data_collection import AgentDataCollector, MonitoringConfig, PerformanceAnalytics
+from agent_kit.data_collection import (
+    AgentDataCollector,
+)
 from agent_kit.domains.registry import get_global_registry
 from agent_kit.factories.agent_factory import AgentFactory
 from agent_kit.interactive_dashboard import InteractiveDashboard
@@ -71,12 +70,13 @@ def cli(ctx):
     through semantic understanding and agent coordination.
     """
     ctx.ensure_object(dict)
-    ctx.obj['app'] = AppContext()
+    ctx.obj["app"] = AppContext()
 
 
 # ============================================================================
 # ORCHESTRATION COMMANDS
 # ============================================================================
+
 
 @cli.group(name="orchestrate")
 def orchestrate_group():
@@ -127,19 +127,27 @@ def orchestrate_group():
     help="Custom workflow ID (auto-generated if not provided)",
 )
 @click.pass_context
-def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bool,
-                    interactive: bool, track: bool, workflow_id: str | None):
+def orchestrate_run(
+    ctx,
+    domain: str,
+    goal: str,
+    output: str | None,
+    verbose: bool,
+    interactive: bool,
+    track: bool,
+    workflow_id: str | None,
+):
     """
     Run orchestration for a domain.
 
     Example:
         ontology-kit orchestrate run --domain business --goal "Forecast revenue for next 30 days"
     """
-    console.print(f"\n[bold cyan]🚀 Ontology-Kit Orchestration[/bold cyan]")
+    console.print("\n[bold cyan]🚀 Ontology-Kit Orchestration[/bold cyan]")
     console.print(f"[dim]Domain:[/dim] {domain}")
     console.print(f"[dim]Goal:[/dim] {goal}\n")
 
-    app = ctx.obj['app']
+    app = ctx.obj["app"]
 
     # Generate workflow ID if not provided
     if not workflow_id:
@@ -151,8 +159,7 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
             orchestrator = app.factory.create_orchestrator(domain)
 
         if interactive:
-            console.print(
-                "\n[bold yellow]Orchestrator Configuration:[/bold yellow]")
+            console.print("\n[bold yellow]Orchestrator Configuration:[/bold yellow]")
             _display_orchestrator_config(orchestrator, verbose)
             if not Confirm.ask("\n[bold]Proceed with execution?[/bold]"):
                 console.print("[yellow]Cancelled.[/yellow]")
@@ -160,8 +167,7 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
 
         # Start tracking if enabled
         if track:
-            workflow = app.workflow_analyzer.start_workflow_tracking(
-                workflow_id, goal)
+            workflow = app.workflow_analyzer.start_workflow_tracking(workflow_id, goal)
             collector = app.collector
         else:
             collector = None
@@ -169,7 +175,9 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
 
         # Execute with tracking
         if track and collector:
-            with collector.track_execution("orchestrator", domain, goal, session_id=workflow_id):
+            with collector.track_execution(
+                "orchestrator", domain, goal, session_id=workflow_id
+            ):
                 with console.status("[bold green]Executing..."):
                     task = AgentTask(prompt=goal)
                     result = orchestrator.run(task)
@@ -178,10 +186,11 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
                 if workflow:
                     app.workflow_analyzer.complete_workflow(
                         workflow_id,
-                        "success" if hasattr(
-                            result, "result") else "completed",
-                        metrics={"duration": collector._record_var.get(
-                        ).execution.duration_seconds or 0.0}
+                        "success" if hasattr(result, "result") else "completed",
+                        metrics={
+                            "duration": collector._record_var.get().execution.duration_seconds
+                            or 0.0
+                        },
                     )
         else:
             # Execute without tracking
@@ -205,8 +214,11 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
                     with open(output, "w", encoding="utf-8") as f:
                         json.dump(result_data, f, indent=2, default=str)
                     console.print(f"\n[dim]Results saved to {output}[/dim]")
-                except (IOError, OSError) as e:
-                    console.print(f"\n[bold red]✗ Failed to save results:[/bold red] {e}", style="red")
+                except OSError as e:
+                    console.print(
+                        f"\n[bold red]✗ Failed to save results:[/bold red] {e}",
+                        style="red",
+                    )
                     sys.exit(1)
         else:
             # Plain text result
@@ -216,16 +228,15 @@ def orchestrate_run(ctx, domain: str, goal: str, output: str | None, verbose: bo
         # Record failure if tracking
         if track and workflow:
             app.workflow_analyzer.complete_workflow(
-                workflow_id,
-                "failed",
-                metrics={"error": str(e)}
+                workflow_id, "failed", metrics={"error": str(e)}
             )
 
         console.print(f"\n[bold red]✗ Error:[/bold red] {e}", style="red")
         if verbose:
             import traceback
+
             console.print(f"\n[dim]{traceback.format_exc()}[/dim]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @orchestrate_group.command(name="workflow")
@@ -269,7 +280,7 @@ def orchestrate_workflow(ctx, workflow_file: str | None, save: str | None, track
                 {"domain": "business", "goal": "Forecast revenue for next 30 days"},
                 {"domain": "business", "goal": "Find top 3 leverage points"},
             ],
-            "output": "workflow_results.json"
+            "output": "workflow_results.json",
         }
         with open(save, "w") as f:
             json.dump(template, f, indent=2)
@@ -277,27 +288,25 @@ def orchestrate_workflow(ctx, workflow_file: str | None, save: str | None, track
         return
 
     if not workflow_file:
-        console.print(
-            "[red]Error: Must provide --workflow-file or --save[/red]")
+        console.print("[red]Error: Must provide --workflow-file or --save[/red]")
         sys.exit(1)
 
     # Load and execute workflow
-    with open(workflow_file, "r") as f:
+    with open(workflow_file) as f:
         workflow_config = json.load(f)
 
     console.print(
-        f"\n[bold cyan]Executing Workflow: {workflow_config.get('name', 'Unnamed')}[/bold cyan]\n")
+        f"\n[bold cyan]Executing Workflow: {workflow_config.get('name', 'Unnamed')}[/bold cyan]\n"
+    )
 
-    app = ctx.obj['app']
+    app = ctx.obj["app"]
     collector = app.collector if track else None
 
     # Start workflow tracking
-    workflow_id = workflow_config.get(
-        "workflow_id", f"workflow_{int(time.time())}")
+    workflow_id = workflow_config.get("workflow_id", f"workflow_{int(time.time())}")
     if track:
-        workflow = app.workflow_analyzer.start_workflow_tracking(
-            workflow_id,
-            workflow_config.get('name', 'Unnamed workflow')
+        app.workflow_analyzer.start_workflow_tracking(
+            workflow_id, workflow_config.get("name", "Unnamed workflow")
         )
 
     results = []
@@ -306,56 +315,52 @@ def orchestrate_workflow(ctx, workflow_file: str | None, save: str | None, track
         domain = step.get("domain")
         goal = step.get("goal")
 
-        console.print(
-            f"[bold]Step {i}/{len(workflow_config['steps'])}:[/bold] {goal}")
+        console.print(f"[bold]Step {i}/{len(workflow_config['steps'])}:[/bold] {goal}")
 
         try:
             orchestrator = app.factory.create_orchestrator(domain)
             task = AgentTask(prompt=goal)
 
             if track and collector:
-                with collector.track_execution(f"workflow_step_{i}", domain, goal, session_id=workflow_id):
+                with collector.track_execution(
+                    f"workflow_step_{i}", domain, goal, session_id=workflow_id
+                ):
                     result = orchestrator.run(task)
             else:
                 result = orchestrator.run(task)
 
-            results.append({
-                "step": i,
-                "domain": domain,
-                "goal": goal,
-                "result": result.result if hasattr(result, "result") else result
-            })
+            results.append(
+                {
+                    "step": i,
+                    "domain": domain,
+                    "goal": goal,
+                    "result": result.result if hasattr(result, "result") else result,
+                }
+            )
             console.print(f"[green]✓ Step {i} complete[/green]\n")
         except Exception as e:
             console.print(f"[red]✗ Step {i} failed: {e}[/red]")
-            results.append({
-                "step": i,
-                "domain": domain,
-                "goal": goal,
-                "error": str(e)
-            })
+            results.append({"step": i, "domain": domain, "goal": goal, "error": str(e)})
 
     # Complete workflow tracking
     if track:
         app.workflow_analyzer.complete_workflow(
             workflow_id,
-            "success" if all(
-                "error" not in r for r in results) else "partial_failure",
-            metrics={"steps_completed": len(
-                [r for r in results if "error" not in r])}
+            "success" if all("error" not in r for r in results) else "partial_failure",
+            metrics={"steps_completed": len([r for r in results if "error" not in r])},
         )
 
     # Save results
     output_file = workflow_config.get("output", "workflow_results.json")
     with open(output_file, "w") as f:
         json.dump(results, f, indent=2, default=str)
-    console.print(
-        f"[green]✓ Workflow complete. Results saved to {output_file}[/green]")
+    console.print(f"[green]✓ Workflow complete. Results saved to {output_file}[/green]")
 
 
 # ============================================================================
 # ONTOLOGY COMMANDS
 # ============================================================================
+
 
 @cli.group(name="ontology")
 def ontology_group():
@@ -455,8 +460,7 @@ def ontology_explore(ontology: str, entity: str | None):
 
         if entity:
             # Explore specific entity
-            console.print(
-                f"\n[bold cyan]Exploring Entity: {entity}[/bold cyan]\n")
+            console.print(f"\n[bold cyan]Exploring Entity: {entity}[/bold cyan]\n")
 
             # Query for entity properties
             query = f"""
@@ -486,11 +490,11 @@ def ontology_explore(ontology: str, entity: str | None):
                 console.print(table)
             else:
                 console.print(
-                    f"[yellow]No properties found for entity: {entity}[/yellow]")
+                    f"[yellow]No properties found for entity: {entity}[/yellow]"
+                )
         else:
             # Show ontology overview
-            console.print(
-                f"\n[bold cyan]Ontology Overview: {ontology}[/bold cyan]\n")
+            console.print(f"\n[bold cyan]Ontology Overview: {ontology}[/bold cyan]\n")
 
             # Count classes
             classes_query = """
@@ -541,11 +545,14 @@ def ontology_explore(ontology: str, entity: str | None):
                 for row in classes:
                     # Use bracket notation because 'class' is a reserved keyword in Python
                     # rdflib ResultRow supports bracket access
-                    class_iri = row['class']
+                    class_iri = row["class"]
                     # Handle optional label field (OPTIONAL fields return None when not bound)
                     # Check if 'label' exists in row keys and is not None
-                    label = row['label'] if 'label' in row.keys(
-                    ) and row['label'] is not None else None
+                    label = (
+                        row["label"]
+                        if "label" in row.keys() and row["label"] is not None
+                        else None
+                    )
                     table.add_row(str(class_iri), str(label) if label else "")
                 console.print(table)
 
@@ -557,6 +564,7 @@ def ontology_explore(ontology: str, entity: str | None):
 # ============================================================================
 # ML WORKFLOW COMMANDS
 # ============================================================================
+
 
 @cli.group(name="ml")
 def ml_group():
@@ -590,7 +598,9 @@ def ml_group():
     type=click.Path(),
     help="Output file for results",
 )
-def ml_leverage(terms: tuple[str, ...], kpi: str, actionable: tuple[str, ...], output: str | None):
+def ml_leverage(
+    terms: tuple[str, ...], kpi: str, actionable: tuple[str, ...], output: str | None
+):
     """
     Analyze leverage points for business optimization.
 
@@ -602,14 +612,16 @@ def ml_leverage(terms: tuple[str, ...], kpi: str, actionable: tuple[str, ...], o
     try:
         from agent_kit.tools.ml_training import analyze_leverage
 
-        result = analyze_leverage({
-            "terms": list(terms),
-            "kpi_term": kpi,
-            "actionable_terms": list(actionable) if actionable else list(terms)
-        })
+        result = analyze_leverage(
+            {
+                "terms": list(terms),
+                "kpi_term": kpi,
+                "actionable_terms": list(actionable) if actionable else list(terms),
+            }
+        )
 
         # Display results
-        console.print(f"[bold]Top Leverage Points:[/bold]\n")
+        console.print("[bold]Top Leverage Points:[/bold]\n")
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Term", style="cyan")
         table.add_column("Leverage Score", style="green")
@@ -619,7 +631,7 @@ def ml_leverage(terms: tuple[str, ...], kpi: str, actionable: tuple[str, ...], o
             table.add_row(
                 lever.get("term", ""),
                 f"{lever.get('leverage', 0):.3f}",
-                "✓" if lever.get("term") in actionable else ""
+                "✓" if lever.get("term") in actionable else "",
             )
         console.print(table)
 
@@ -666,17 +678,19 @@ def ml_graph(terms: tuple[str, ...], threshold: float, output: str):
     try:
         from agent_kit.tools.semantic_graph import build_semantic_graph
 
-        result = build_semantic_graph({
-            "terms": list(terms),
-            "similarity_threshold": threshold,
-            "output_path": output
-        })
+        result = build_semantic_graph(
+            {
+                "terms": list(terms),
+                "similarity_threshold": threshold,
+                "output_path": output,
+            }
+        )
 
         graph_data = result.get("graph", {})
         nodes = graph_data.get("nodes", [])
         edges = graph_data.get("edges", [])
 
-        console.print(f"[green]✓ Graph built successfully[/green]")
+        console.print("[green]✓ Graph built successfully[/green]")
         console.print(f"  Nodes: {len(nodes)}")
         console.print(f"  Edges: {len(edges)}")
         console.print(f"  Saved to: {output}\n")
@@ -693,16 +707,17 @@ def ml_graph(terms: tuple[str, ...], threshold: float, output: str):
             sorted_nodes = sorted(
                 centrality.items(),
                 key=lambda x: x[1].get("betweenness", 0),
-                reverse=True
+                reverse=True,
             )[:10]
 
             for node_id, metrics in sorted_nodes:
                 node_name = next(
-                    (n["id"] for n in nodes if n["id"] == node_id), node_id)
+                    (n["id"] for n in nodes if n["id"] == node_id), node_id
+                )
                 table.add_row(
                     node_name,
                     f"{metrics.get('betweenness', 0):.3f}",
-                    f"{metrics.get('closeness', 0):.3f}"
+                    f"{metrics.get('closeness', 0):.3f}",
                 )
             console.print(table)
 
@@ -743,17 +758,16 @@ def ml_target_leverage(graph: str, target: str, top_k: int):
     try:
         from agent_kit.tools.semantic_graph import compute_target_leverage
 
-        result = compute_target_leverage({
-            "graph_path": graph,
-            "target": target,
-            "top_k": top_k
-        })
+        result = compute_target_leverage(
+            {"graph_path": graph, "target": target, "top_k": top_k}
+        )
 
         levers = result.get("levers", [])
 
         if levers:
             console.print(
-                f"[bold]Top {len(levers)} Leverage Points for {target}:[/bold]\n")
+                f"[bold]Top {len(levers)} Leverage Points for {target}:[/bold]\n"
+            )
             table = Table(show_header=True, header_style="bold magenta")
             table.add_column("Lever", style="cyan")
             table.add_column("Score", style="green")
@@ -765,7 +779,7 @@ def ml_target_leverage(graph: str, target: str, top_k: int):
                     lever.get("lever", ""),
                     f"{lever.get('leverage_score', 0):.3f}",
                     f"{lever.get('betweenness', 0):.3f}",
-                    f"{lever.get('path_strength', 0):.3f}"
+                    f"{lever.get('path_strength', 0):.3f}",
                 )
             console.print(table)
 
@@ -775,7 +789,8 @@ def ml_target_leverage(graph: str, target: str, top_k: int):
                 for i, path in enumerate(result["strongest_paths"][:3], 1):
                     path_str = " → ".join(path.get("nodes", []))
                     console.print(
-                        f"  {i}. {path_str} (strength: {path.get('strength', 0):.3f})")
+                        f"  {i}. {path_str} (strength: {path.get('strength', 0):.3f})"
+                    )
 
         else:
             console.print("[yellow]No leverage points found.[/yellow]")
@@ -817,25 +832,23 @@ def ml_interventions(graph: str, node: str, target: str):
     try:
         from agent_kit.tools.semantic_graph import recommend_interventions
 
-        result = recommend_interventions({
-            "graph_path": graph,
-            "node": node,
-            "target": target
-        })
+        result = recommend_interventions(
+            {"graph_path": graph, "node": node, "target": target}
+        )
 
         experiments = result.get("experiments", [])
 
         if experiments:
             for i, exp in enumerate(experiments, 1):
                 console.print(
-                    f"[bold]Experiment {i}:[/bold] {exp.get('name', 'Unnamed')}")
+                    f"[bold]Experiment {i}:[/bold] {exp.get('name', 'Unnamed')}"
+                )
                 console.print(f"  Action: {exp.get('action', 'N/A')}")
+                console.print(f"  Expected Lift: {exp.get('expected_lift', 0):.1f}%")
                 console.print(
-                    f"  Expected Lift: {exp.get('expected_lift', 0):.1f}%")
-                console.print(
-                    f"  Sample Size: {exp.get('sample_size', {}).get('per_group', 'N/A')}/group")
-                console.print(
-                    f"  Duration: {exp.get('duration_weeks', 'N/A')} weeks")
+                    f"  Sample Size: {exp.get('sample_size', {}).get('per_group', 'N/A')}/group"
+                )
+                console.print(f"  Duration: {exp.get('duration_weeks', 'N/A')} weeks")
                 console.print()
         else:
             console.print("[yellow]No experiments generated.[/yellow]")
@@ -848,6 +861,7 @@ def ml_interventions(graph: str, node: str, target: str):
 # ============================================================================
 # AGENT COMMANDS
 # ============================================================================
+
 
 @cli.group(name="agent")
 def agent_group():
@@ -930,6 +944,7 @@ def agent_run(name: str, domain: str | None, goal: str, output: str | None):
 # TOOL COMMANDS
 # ============================================================================
 
+
 @cli.group(name="tool")
 def tool_group():
     """Discover and execute tools via ontology."""
@@ -964,6 +979,7 @@ def tool_discover(ontology: str, algorithm: str | None):
         graph = loader.load()
 
         from agent_kit.tools.ml_training import ML_TOOL_REGISTRY
+
         orchestrator = OntologyOrchestrator(loader, ML_TOOL_REGISTRY)
 
         if algorithm:
@@ -1007,6 +1023,7 @@ def tool_discover(ontology: str, algorithm: str | None):
 # DOMAIN COMMANDS (Existing)
 # ============================================================================
 
+
 @cli.command(name="list-domains")
 @click.pass_context
 def list_domains(ctx):
@@ -1018,12 +1035,13 @@ def list_domains(ctx):
     """
     console.print("\n[bold cyan]Available Domains[/bold cyan]\n")
 
-    app = ctx.obj['app']
+    app = ctx.obj["app"]
     domains = app.registry.list_domains()
 
     if not domains:
         console.print(
-            "[yellow]No domains found. Create YAML configs in src/agent_kit/domains/[/yellow]")
+            "[yellow]No domains found. Create YAML configs in src/agent_kit/domains/[/yellow]"
+        )
         return
 
     table = Table(show_header=True, header_style="bold magenta")
@@ -1061,7 +1079,7 @@ def validate_config(ctx, domain: str | None):
     """
     console.print("\n[bold cyan]Validating Domain Configs[/bold cyan]\n")
 
-    app = ctx.obj['app']
+    app = ctx.obj["app"]
     domains = [domain] if domain else app.registry.list_domains()
 
     all_valid = True
@@ -1072,11 +1090,12 @@ def validate_config(ctx, domain: str | None):
 
             # Check required fields (DomainConfig is dict subclass, so .get() works)
             required = ["id", "description", "default_agents", "allowed_tools"]
-            missing = [field for field in required if field not in cfg or not cfg.get(field)]
+            missing = [
+                field for field in required if field not in cfg or not cfg.get(field)
+            ]
 
             if missing:
-                console.print(
-                    f"[red]✗ {domain_id}: Missing fields {missing}[/red]")
+                console.print(f"[red]✗ {domain_id}: Missing fields {missing}[/red]")
                 all_valid = False
             else:
                 console.print(f"[green]✓ {domain_id}: Valid[/green]")
@@ -1144,6 +1163,7 @@ def status():
 # INTERACTIVE MODE
 # ============================================================================
 
+
 @cli.group(name="dashboard")
 def dashboard_group():
     """Generate and view dashboards."""
@@ -1174,12 +1194,13 @@ def dashboard_full(days: int, open: bool):
 
         if open:
             import webbrowser
+
             webbrowser.open(f"file://{Path(path).absolute()}")
             console.print("[dim]Opened in browser[/dim]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @dashboard_group.command(name="performance")
@@ -1195,24 +1216,23 @@ def dashboard_full(days: int, open: bool):
 )
 def dashboard_performance(agent: str | None, open: bool):
     """Generate performance-focused dashboard."""
-    console.print(
-        "\n[bold cyan]📈 Generating Performance Dashboard[/bold cyan]\n")
+    console.print("\n[bold cyan]📈 Generating Performance Dashboard[/bold cyan]\n")
 
     try:
         dashboard = InteractiveDashboard()
-        path = dashboard.generate_performance_focused_dashboard(
-            agent_name=agent)
+        path = dashboard.generate_performance_focused_dashboard(agent_name=agent)
 
         console.print(f"[green]✓ Dashboard generated:[/green] {path}")
 
         if open:
             import webbrowser
+
             webbrowser.open(f"file://{Path(path).absolute()}")
             console.print("[dim]Opened in browser[/dim]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @cli.command(name="interactive")
@@ -1227,12 +1247,11 @@ def interactive(ctx):
     console.print("\n[bold cyan]🧠 Ontology-Kit Interactive Mode[/bold cyan]")
     console.print("[dim]Type 'help' for commands, 'exit' to quit[/dim]\n")
 
-    app = ctx.obj['app']
+    app = ctx.obj["app"]
 
     while True:
         try:
-            command = Prompt.ask(
-                "[bold cyan]ontology-kit>[/bold cyan]").strip()
+            command = Prompt.ask("[bold cyan]ontology-kit>[/bold cyan]").strip()
 
             if not command:
                 continue
@@ -1252,12 +1271,12 @@ def interactive(ctx):
             if cmd == "domains":
                 domains = app.registry.list_domains()
                 console.print(
-                    f"\n[bold]Available domains:[/bold] {', '.join(domains)}\n")
+                    f"\n[bold]Available domains:[/bold] {', '.join(domains)}\n"
+                )
 
             elif cmd == "agents":
                 agents = list(app.factory.AGENT_REGISTRY.keys())
-                console.print(
-                    f"\n[bold]Available agents:[/bold] {', '.join(agents)}\n")
+                console.print(f"\n[bold]Available agents:[/bold] {', '.join(agents)}\n")
 
             elif cmd == "run":
                 if len(parts) < 3:
@@ -1273,16 +1292,15 @@ def interactive(ctx):
             elif cmd == "dashboard":
                 dashboard = InteractiveDashboard()
                 path = dashboard.generate_full_dashboard(days=7)
-                console.print(
-                    f"\n[green]Dashboard generated:[/green] {path}\n")
+                console.print(f"\n[green]Dashboard generated:[/green] {path}\n")
 
             else:
                 console.print(
-                    f"[yellow]Unknown command: {cmd}. Type 'help' for available commands.[/yellow]")
+                    f"[yellow]Unknown command: {cmd}. Type 'help' for available commands.[/yellow]"
+                )
 
         except KeyboardInterrupt:
-            console.print(
-                "\n[yellow]Interrupted. Type 'exit' to quit.[/yellow]")
+            console.print("\n[yellow]Interrupted. Type 'exit' to quit.[/yellow]")
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
 
@@ -1312,6 +1330,7 @@ def _show_interactive_help():
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def _display_orchestrator_config(orchestrator, verbose: bool):
     """Display orchestrator configuration."""
@@ -1355,12 +1374,10 @@ def _display_structured_result(result: dict[str, Any], verbose: bool = False):
 
     # Display signals/edges if present
     if "signals" in result and result["signals"]:
-        console.print(
-            f"[bold]Signals:[/bold] {len(result['signals'])} generated\n")
+        console.print(f"[bold]Signals:[/bold] {len(result['signals'])} generated\n")
 
     if "edges" in result and result["edges"]:
-        console.print(
-            f"[bold]Betting Edges:[/bold] {len(result['edges'])} detected\n")
+        console.print(f"[bold]Betting Edges:[/bold] {len(result['edges'])} detected\n")
 
     # Display risk checks
     if "passed_risk_checks" in result:
@@ -1378,7 +1395,8 @@ def _display_structured_result(result: dict[str, Any], verbose: bool = False):
         console.print("[bold]Specialist Results:[/bold]")
         for spec_result in result["specialist_results"]:
             console.print(
-                f"  • {spec_result.get('specialist')}: {spec_result.get('result')}")
+                f"  • {spec_result.get('specialist')}: {spec_result.get('result')}"
+            )
         console.print()
 
 

@@ -39,24 +39,31 @@ from rdflib import Graph
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 
-logger = logging.getLogger(__name__)
-
 from agent_kit.vectorspace.embedder import Embedder
+
+logger = logging.getLogger(__name__)
 
 
 @function_tool
 def generate_hyperdim_leverage_viz(
     ontology_path: Annotated[str | None, "Path to RDF/OWL ontology file"] = None,
-    terms: Annotated[list[str] | None, "Custom terms to analyze (overrides ontology)"] = None,
-    kpi_term: Annotated[str, "Key Performance Indicator term for sensitivity calculation"] = 'Revenue',
-    actionable_terms: Annotated[
-        list[str] | None, "Terms that can be intervened upon (default: all terms actionable)"
+    terms: Annotated[
+        list[str] | None, "Custom terms to analyze (overrides ontology)"
     ] = None,
-    model_name: Annotated[str, "SentenceTransformer model name"] = 'all-MiniLM-L6-v2',
+    kpi_term: Annotated[
+        str, "Key Performance Indicator term for sensitivity calculation"
+    ] = "Revenue",
+    actionable_terms: Annotated[
+        list[str] | None,
+        "Terms that can be intervened upon (default: all terms actionable)",
+    ] = None,
+    model_name: Annotated[str, "SentenceTransformer model name"] = "all-MiniLM-L6-v2",
     n_components: Annotated[int, "Output dimensions (2 or 3)"] = 2,
     perplexity: Annotated[int | None, "t-SNE perplexity (auto if None)"] = None,
     max_terms: Annotated[int, "Maximum terms to extract from ontology"] = 50,
-    output_file: Annotated[str, "Path to save leverage visualization PNG"] = 'hyperdim_leverage_viz.png',
+    output_file: Annotated[
+        str, "Path to save leverage visualization PNG"
+    ] = "hyperdim_leverage_viz.png",
 ) -> dict[str, Any]:
     """
     Generate hyperdimensional semantic visualization with multi-factor leverage scoring.
@@ -138,12 +145,14 @@ def generate_hyperdim_leverage_viz(
     # Aggregate: L = A × (S + U + C)
     leverage_scores = {}
     for term in final_terms:
-        leverage_scores[term] = actionability[term] * (sensitivity[term] + uncertainty[term] + centrality[term])
+        leverage_scores[term] = actionability[term] * (
+            sensitivity[term] + uncertainty[term] + centrality[term]
+        )
 
     # Top levers
     top_levers = sorted(
-        [{'term': t, 'leverage': leverage_scores[t]} for t in final_terms],
-        key=lambda x: x['leverage'],
+        [{"term": t, "leverage": leverage_scores[t]} for t in final_terms],
+        key=lambda x: x["leverage"],
         reverse=True,
     )[:10]
 
@@ -152,31 +161,47 @@ def generate_hyperdim_leverage_viz(
         print(f"  {i}. {lever['term']}: {lever['leverage']:.3f}")
 
     # Step 4: Reduce dimensions with t-SNE
-    perplexity_val = perplexity if perplexity is not None else min(30, len(final_terms) - 1)
+    perplexity_val = (
+        perplexity if perplexity is not None else min(30, len(final_terms) - 1)
+    )
     if perplexity_val >= len(final_terms):
         perplexity_val = max(1, len(final_terms) - 1)
 
-    tsne = TSNE(n_components=n_components, random_state=42, perplexity=perplexity_val, init='random')
+    tsne = TSNE(
+        n_components=n_components,
+        random_state=42,
+        perplexity=perplexity_val,
+        init="random",
+    )
     embed_low_d = tsne.fit_transform(embeddings)
 
     # Step 5: Visualize with leverage coloring
     output_path = _plot_leverage(
-        embed_low_d, final_terms, leverage_scores, actionability, n_components, output_file
+        embed_low_d,
+        final_terms,
+        leverage_scores,
+        actionability,
+        n_components,
+        output_file,
     )
 
     # Step 6: Return structured results
     scores_breakdown = {
         term: {
-            'leverage': leverage_scores[term],
-            'actionability': actionability[term],
-            'sensitivity': sensitivity[term],
-            'uncertainty': uncertainty[term],
-            'centrality': centrality[term],
+            "leverage": leverage_scores[term],
+            "actionability": actionability[term],
+            "sensitivity": sensitivity[term],
+            "uncertainty": uncertainty[term],
+            "centrality": centrality[term],
         }
         for term in final_terms
     }
 
-    return {'viz_path': output_path, 'top_levers': top_levers, 'scores': scores_breakdown}
+    return {
+        "viz_path": output_path,
+        "top_levers": top_levers,
+        "scores": scores_breakdown,
+    }
 
 
 def _extract_terms_and_graph(
@@ -199,7 +224,7 @@ def _extract_terms_and_graph(
     # Parse ontology and build graph
     graph_rdf = Graph()
     try:
-        graph_rdf.parse(str(ontology_file), format='turtle')
+        graph_rdf.parse(str(ontology_file), format="turtle")
     except Exception as e:
         raise ValueError(f"Failed to parse ontology {ontology_path}: {e}") from e
 
@@ -208,8 +233,8 @@ def _extract_terms_and_graph(
 
     for subj, _pred, obj in graph_rdf:
         # Extract local names
-        subj_name = str(subj).split('#')[-1].split('/')[-1]
-        obj_name = str(obj).split('#')[-1].split('/')[-1]
+        subj_name = str(subj).split("#")[-1].split("/")[-1]
+        obj_name = str(obj).split("#")[-1].split("/")[-1]
 
         # Filter valid SEMANTIC terms (not literals, numbers, dates)
         if subj_name and _is_semantic_term(subj_name):
@@ -221,7 +246,12 @@ def _extract_terms_and_graph(
             nx_graph.add_node(obj_name)
 
         # Add edge for graph structure
-        if subj_name and obj_name and _is_semantic_term(subj_name) and _is_semantic_term(obj_name):
+        if (
+            subj_name
+            and obj_name
+            and _is_semantic_term(subj_name)
+            and _is_semantic_term(obj_name)
+        ):
             nx_graph.add_edge(subj_name, obj_name)
 
     terms_list = sorted(terms_set)[:max_terms]
@@ -247,7 +277,7 @@ def _is_semantic_term(term: str) -> bool:
         return False
 
     # Filter out blank nodes
-    if term.startswith('_:'):
+    if term.startswith("_:"):
         return False
 
     # Filter out pure numbers
@@ -258,14 +288,16 @@ def _is_semantic_term(term: str) -> bool:
         pass
 
     # Filter out date-like patterns (YYYY-MM-DD, etc.)
-    if any(char.isdigit() for char in term) and any(sep in term for sep in ['-', '/', ':']):
+    if any(char.isdigit() for char in term) and any(
+        sep in term for sep in ["-", "/", ":"]
+    ):
         # Looks like a date or timestamp
         digit_ratio = sum(c.isdigit() for c in term) / len(term)
         if digit_ratio > 0.3:  # >30% digits = likely literal
             return False
 
     # Filter out URIs
-    if term.startswith('http') or '://' in term:
+    if term.startswith("http") or "://" in term:
         return False
 
     # Keep terms with mostly alphabetic characters
@@ -276,7 +308,9 @@ def _is_semantic_term(term: str) -> bool:
     return True
 
 
-def _compute_actionability(terms: list[str], actionable_terms: list[str] | None) -> dict[str, float]:
+def _compute_actionability(
+    terms: list[str], actionable_terms: list[str] | None
+) -> dict[str, float]:
     """
     Compute actionability (A): Binary flag for whether term can be intervened upon.
 
@@ -371,7 +405,9 @@ def _compute_uncertainty(embeddings: np.ndarray, terms: list[str]) -> dict[str, 
     return {t: uncertainty_scores.get(t, 0.0) / max_uncertainty for t in terms}
 
 
-def _compute_sensitivity(embeddings: np.ndarray, terms: list[str], kpi_term: str) -> dict[str, float]:
+def _compute_sensitivity(
+    embeddings: np.ndarray, terms: list[str], kpi_term: str
+) -> dict[str, float]:
     """
     Compute sensitivity (S): Inverse distance to KPI term.
 
@@ -418,10 +454,10 @@ def _plot_leverage(
     colors = plt.cm.RdYlBu_r((scores_array - min_score) / score_range)
 
     # Marker style: circles for actionable, squares for non-actionable
-    markers = ['o' if actionability[t] > 0.5 else 's' for t in terms]
+    markers = ["o" if actionability[t] > 0.5 else "s" for t in terms]
 
     if n_components == 3:
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         # Plot with different markers
         for i, term in enumerate(terms):
@@ -433,7 +469,7 @@ def _plot_leverage(
                 marker=markers[i],
                 s=200,
                 alpha=0.7,
-                edgecolors='black',
+                edgecolors="black",
                 linewidths=1.5,
             )
             # Annotate with term and score
@@ -447,13 +483,13 @@ def _plot_leverage(
             )
 
         ax.set_title(
-            'Hyperdimensional Leverage Analysis (3D)\nRed=High Leverage, Blue=Low | ○=Actionable, □=Fixed',
+            "Hyperdimensional Leverage Analysis (3D)\nRed=High Leverage, Blue=Low | ○=Actionable, □=Fixed",
             fontsize=14,
-            fontweight='bold',
+            fontweight="bold",
         )
-        ax.set_xlabel('t-SNE Dimension 1', fontsize=10)
-        ax.set_ylabel('t-SNE Dimension 2', fontsize=10)
-        ax.set_zlabel('t-SNE Dimension 3', fontsize=10)
+        ax.set_xlabel("t-SNE Dimension 1", fontsize=10)
+        ax.set_ylabel("t-SNE Dimension 2", fontsize=10)
+        ax.set_zlabel("t-SNE Dimension 3", fontsize=10)
         ax.grid(True, alpha=0.3)
 
     else:  # 2D
@@ -465,7 +501,7 @@ def _plot_leverage(
                 marker=markers[i],
                 s=200,
                 alpha=0.7,
-                edgecolors='black',
+                edgecolors="black",
                 linewidths=1.5,
             )
             plt.annotate(
@@ -474,16 +510,16 @@ def _plot_leverage(
                 fontsize=8,
                 alpha=0.9,
                 xytext=(5, 5),
-                textcoords='offset points',
+                textcoords="offset points",
             )
 
         plt.title(
-            'Hyperdimensional Leverage Analysis (2D)\nRed=High Leverage, Blue=Low | ○=Actionable, □=Fixed',
+            "Hyperdimensional Leverage Analysis (2D)\nRed=High Leverage, Blue=Low | ○=Actionable, □=Fixed",
             fontsize=14,
-            fontweight='bold',
+            fontweight="bold",
         )
-        plt.xlabel('t-SNE Dimension 1', fontsize=10)
-        plt.ylabel('t-SNE Dimension 2', fontsize=10)
+        plt.xlabel("t-SNE Dimension 1", fontsize=10)
+        plt.ylabel("t-SNE Dimension 2", fontsize=10)
         plt.grid(True, alpha=0.3)
 
     # Add colorbar legend
@@ -492,7 +528,7 @@ def _plot_leverage(
     )
     sm.set_array([])
     cbar = plt.colorbar(sm, ax=plt.gca() if n_components == 2 else ax, pad=0.1)
-    cbar.set_label('Leverage Score', fontsize=10)
+    cbar.set_label("Leverage Score", fontsize=10)
 
     plt.tight_layout()
 
@@ -501,11 +537,10 @@ def _plot_leverage(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        plt.savefig(str(output_path), dpi=150, bbox_inches='tight')
+        plt.savefig(str(output_path), dpi=150, bbox_inches="tight")
     except Exception as e:
         raise ValueError(f"Failed to save visualization to {output_file}: {e}") from e
     finally:
         plt.close(fig)
 
     return str(output_path.resolve())
-

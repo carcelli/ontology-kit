@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-
 from agents import Agent
+from pydantic import BaseModel
 
 
 class MappingItem(BaseModel):

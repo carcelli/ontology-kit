@@ -15,8 +15,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from pydantic import BaseModel, Field
-
 from agent_kit.ontology.loader import OntologyLoader
 
 logger = logging.getLogger(__name__)
@@ -188,7 +186,7 @@ class RubricEvaluator(BaseEvaluator):
         total_score = 0.0
         num_criteria = len(self.rubric)
 
-        for criteria, levels in self.rubric.items():
+        for _criteria, levels in self.rubric.items():
             # Check for keywords associated with higher levels
             for i, level in enumerate(levels):
                 level_words = level.lower().split()
@@ -339,5 +337,3 @@ class CompositeEvaluator(BaseEvaluator):
             score = await evaluator.evaluate(case, result)
             total += score * weight
         return total
-
-

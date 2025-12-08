@@ -16,6 +16,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Try to import from agents SDK, with fallbacks
 try:
     from agents.memory import SQLiteSession
+
     AGENTS_AVAILABLE = True
 except ImportError:
     # Fallback when SDK is not available
@@ -45,7 +46,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         session_id: str,
         ontology_path: str | None = None,
         db_path: str | None = ":memory:",
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize ontology-enhanced memory session.
@@ -65,6 +66,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         if ontology_path:
             try:
                 from ..ontology.loader import OntologyLoader
+
                 self.ontology_loader = OntologyLoader(ontology_path)
                 self.ontology = self.ontology_loader.load()
             except Exception:
@@ -79,7 +81,8 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         if self._embedder is None:
             try:
                 from ..vectorspace.embedder import Embedder
-                self._embedder = Embedder(model_name='all-MiniLM-L6-v2')
+
+                self._embedder = Embedder(model_name="all-MiniLM-L6-v2")
             except Exception:
                 return None
         return self._embedder
@@ -89,12 +92,12 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
         if isinstance(item, dict):
             # Try common fields
             text_parts = []
-            for field in ['content', 'text', 'message', 'role', 'name']:
+            for field in ["content", "text", "message", "role", "name"]:
                 if field in item:
                     value = item[field]
                     if isinstance(value, str):
                         text_parts.append(value)
-            return ' '.join(text_parts)
+            return " ".join(text_parts)
         elif isinstance(item, str):
             return item
         else:
@@ -134,7 +137,9 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
             classes = self.ontology_loader.get_classes()
             for cls_uri in classes:
                 # Extract local name
-                local_name = cls_uri.split('#')[-1] if '#' in cls_uri else cls_uri.split('/')[-1]
+                local_name = (
+                    cls_uri.split("#")[-1] if "#" in cls_uri else cls_uri.split("/")[-1]
+                )
                 if local_name.lower() in query_lower:
                     concepts.append(local_name)
 
@@ -184,7 +189,9 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                 continue
 
             # Calculate cosine similarity
-            similarity = float(cosine_similarity([query_embedding], [item_embedding])[0][0])
+            similarity = float(
+                cosine_similarity([query_embedding], [item_embedding])[0][0]
+            )
 
             # Boost score if ontology concepts match
             ontology_boost = 0.0
@@ -293,7 +300,7 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                         try:
                             results = self.ontology_loader.query(sparql)
                             for result in results:
-                                related = str(result.get('related', ''))
+                                related = str(result.get("related", ""))
                                 if related and related.lower() in item_text:
                                     relevance_score += 0.5
                         except Exception:
@@ -334,7 +341,9 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
             concepts = self._extract_ontology_concepts(query)
 
             # Extract concepts from context items
-            context_text = ' '.join([self._get_text_from_item(item) for item in context_items])
+            context_text = " ".join(
+                [self._get_text_from_item(item) for item in context_items]
+            )
             context_concepts = self._extract_ontology_concepts(context_text)
 
             # Combine and deduplicate
@@ -361,14 +370,24 @@ class OntologyMemorySession(SQLiteSession if AGENTS_AVAILABLE else object):
                         try:
                             results = self.ontology_loader.query(sparql)
                             for result in results:
-                                rel_type = str(result.get('relation', '')).split('#')[-1].split('/')[-1]
-                                related = str(result.get('related', '')).split('#')[-1].split('/')[-1]
+                                rel_type = (
+                                    str(result.get("relation", ""))
+                                    .split("#")[-1]
+                                    .split("/")[-1]
+                                )
+                                related = (
+                                    str(result.get("related", ""))
+                                    .split("#")[-1]
+                                    .split("/")[-1]
+                                )
                                 if rel_type and related:
-                                    relationships.append({
-                                        "concept": concept,
-                                        "relation": rel_type,
-                                        "related": related
-                                    })
+                                    relationships.append(
+                                        {
+                                            "concept": concept,
+                                            "relation": rel_type,
+                                            "related": related,
+                                        }
+                                    )
                         except Exception:
                             pass
                 except Exception:

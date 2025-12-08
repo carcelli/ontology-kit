@@ -2,8 +2,8 @@
 import asyncio
 import os
 from pathlib import Path
-from agent_kit.agents.ontology_agent import OntologyAgent
-from agent_kit.tools.ontology import query_ontology, add_ontology_statement
+
+from agent_kit.tools.ontology import add_ontology_statement, query_ontology
 
 # WARNING: This is a placeholder API key. Do not use this in production.
 os.environ["OPENAI_API_KEY"] = "YOUR_API_KEY"

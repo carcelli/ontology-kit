@@ -24,16 +24,18 @@ References:
 - Dependency Injection: Martin Fowler, Inversion of Control Containers
 - Factory Pattern: Gang of Four Design Patterns
 """
+
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from importlib import import_module
-from typing import Any, Callable, Type
+from typing import Any
 
 from agent_kit.agents.algo_trading_agent import AlgoTradingAgent
 from agent_kit.agents.base import BaseAgent
 from agent_kit.agents.business_agents import ForecastAgent, OptimizerAgent
-from agent_kit.agents.grok_agent import GrokConfig
+from agent_kit.agents.grok_agent import GrokAgent, GrokConfig
 from agent_kit.agents.ontology_agent import OntologyAgent
 from agent_kit.agents.prop_betting_agent import PropBettingAgent
 from agent_kit.domains.registry import DomainRegistry, get_global_registry
@@ -54,12 +56,13 @@ class AgentFactory:
     """
 
     # Registry of agent classes by name
-    AGENT_REGISTRY: dict[str, Type[BaseAgent]] = {
+    AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
         "ForecastAgent": ForecastAgent,
         "OptimizerAgent": OptimizerAgent,
         "AlgoTradingAgent": AlgoTradingAgent,
         "PropBettingAgent": PropBettingAgent,
         "OntologyAgent": OntologyAgent,
+        "GrokAgent": GrokAgent,
     }
 
     def __init__(
@@ -86,9 +89,11 @@ class AgentFactory:
         # Warn if no API key (allow for testing with mock agents)
         if not self.grok_api_key:
             import warnings
+
             warnings.warn(
                 "No XAI_API_KEY found. Grok-based agents will fail. "
-                "Set XAI_API_KEY env var or pass grok_api_key to factory."
+                "Set XAI_API_KEY env var or pass grok_api_key to factory.",
+                stacklevel=2,
             )
 
     def create_orchestrator(self, domain: str, **kwargs) -> BaseAgent:
@@ -145,9 +150,7 @@ class AgentFactory:
 
         return orchestrator
 
-    def _create_specialists(
-        self, domain: str, cfg, **kwargs
-    ) -> list[BaseAgent]:
+    def _create_specialists(self, domain: str, cfg, **kwargs) -> list[BaseAgent]:
         """
         Instantiate specialist agents from domain config.
 
@@ -163,9 +166,7 @@ class AgentFactory:
             ValueError: If agent class not in registry
         """
         specialists = []
-        grok_config = kwargs.get("grok_config") or GrokConfig(
-            api_key=self.grok_api_key
-        )
+        grok_config = kwargs.get("grok_config") or GrokConfig(api_key=self.grok_api_key)
 
         for agent_name in cfg.default_agents:
             if agent_name not in self.AGENT_REGISTRY:
@@ -184,9 +185,7 @@ class AgentFactory:
             if agent_class in [AlgoTradingAgent, PropBettingAgent]:
                 ontology = self._load_ontology(cfg.ontology_iri)
                 specialist = agent_class(
-                    ontology=ontology,
-                    grok_config=grok_config,
-                    **agent_kwargs
+                    ontology=ontology, grok_config=grok_config, **agent_kwargs
                 )
             # For simple BaseAgent subclasses (business agents)
             elif agent_class in [ForecastAgent, OptimizerAgent]:
@@ -227,7 +226,8 @@ class AgentFactory:
                 tools.append(func)
             except (ImportError, AttributeError) as e:
                 import warnings
-                warnings.warn(f"Failed to load tool '{tool_path}': {e}")
+
+                warnings.warn(f"Failed to load tool '{tool_path}': {e}", stacklevel=2)
 
         return tools
 
@@ -254,10 +254,13 @@ class AgentFactory:
 
         # Check if file exists; if not, warn and use core.ttl
         import pathlib
+
         if not pathlib.Path(ontology_path).exists():
             import warnings
+
             warnings.warn(
-                f"Ontology file not found: {ontology_path}. Falling back to core.ttl"
+                f"Ontology file not found: {ontology_path}. Falling back to core.ttl",
+                stacklevel=2,
             )
             ontology_path = "assets/ontologies/core.ttl"
 
@@ -266,10 +269,7 @@ class AgentFactory:
         return loader
 
     def create_agent(
-        self,
-        agent_name: str,
-        domain: str | None = None,
-        **kwargs
+        self, agent_name: str, domain: str | None = None, **kwargs
     ) -> BaseAgent:
         """
         Create individual agent (specialist) by name.
@@ -308,11 +308,7 @@ class AgentFactory:
             grok_config = kwargs.pop("grok_config", None) or GrokConfig(
                 api_key=self.grok_api_key
             )
-            return agent_class(
-                ontology=ontology,
-                grok_config=grok_config,
-                **kwargs
-            )
+            return agent_class(ontology=ontology, grok_config=grok_config, **kwargs)
         else:
             # Simple agents (ForecastAgent, OptimizerAgent)
             return agent_class(**kwargs)
@@ -328,13 +324,15 @@ class AgentFactory:
         """
         # Extract namespace prefix and local name
         if ":" not in agent_iri:
-            raise ValueError("Agent IRI must have namespace prefix (e.g., 'bet:PropBettingAgent')")
+            raise ValueError(
+                "Agent IRI must have namespace prefix (e.g., 'bet:PropBettingAgent')"
+            )
 
         prefix, local_name = agent_iri.split(":", 1)
 
         # Query for agent properties
         sparql = f"""
-            PREFIX {prefix}: <http://agent-kit.com/ontology/{prefix.replace('bet', 'betting').replace('trade', 'trading')}#>
+            PREFIX {prefix}: <http://agent-kit.com/ontology/{prefix.replace("bet", "betting").replace("trade", "trading")}#>
             PREFIX core: <http://agent-kit.com/ontology/core#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
@@ -347,11 +345,11 @@ class AgentFactory:
         """
 
         # Check if ontology has graph attribute and it's loaded
-        if not hasattr(self, 'ontology') or self.ontology is None:
+        if not hasattr(self, "ontology") or self.ontology is None:
             return {}
-        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+        if not hasattr(self.ontology, "graph") or self.ontology.graph is None:
             return {}
-        
+
         results = list(self.ontology.graph.query(sparql))
 
         config = {}
@@ -361,7 +359,9 @@ class AgentFactory:
             if capabilities:
                 config["capabilities"] = capabilities
 
-            instructions = [str(row.instructions) for row in results if row.instructions]
+            instructions = [
+                str(row.instructions) for row in results if row.instructions
+            ]
             if instructions:
                 config["instructions"] = instructions[0]
 
@@ -387,11 +387,11 @@ class AgentFactory:
         """
 
         # Check if ontology has graph attribute and it's loaded
-        if not hasattr(self, 'ontology') or self.ontology is None:
+        if not hasattr(self, "ontology") or self.ontology is None:
             return {}
-        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+        if not hasattr(self.ontology, "graph") or self.ontology.graph is None:
             return {}
-        
+
         results = list(self.ontology.graph.query(sparql))
 
         agents = {}
@@ -399,7 +399,7 @@ class AgentFactory:
             agent_iri = str(row.agent)
             agents[agent_iri] = {
                 "label": str(row.label) if row.label else None,
-                "instructions": str(row.instructions) if row.instructions else None
+                "instructions": str(row.instructions) if row.instructions else None,
             }
 
         return agents
@@ -435,7 +435,7 @@ class IndustryAgentBuilder:
         tools: list[Any],
         base_class: type[GrokAgent | OntologyAgent] = OntologyAgent,
         grok_config: GrokConfig | None = None,
-        **kwargs
+        **kwargs,
     ) -> GrokAgent | OntologyAgent:
         """
         Build custom agent for new industry.
@@ -457,21 +457,19 @@ class IndustryAgentBuilder:
         # Instantiate agent
         if base_class == OntologyAgent:
             # OntologyLoader uses .path attribute, not .ontology_path
-            ontology_path = str(self.ontology.path) if hasattr(self.ontology, 'path') else None
+            ontology_path = (
+                str(self.ontology.path) if hasattr(self.ontology, "path") else None
+            )
             if ontology_path is None:
                 raise ValueError("OntologyLoader must have a valid path")
-            return OntologyAgent(
-                name=name,
-                ontology_path=ontology_path,
-                **kwargs
-            )
+            return OntologyAgent(name=name, ontology_path=ontology_path, **kwargs)
         elif issubclass(base_class, GrokAgent):
             return base_class(
                 name=name,
                 ontology=self.ontology,
                 system_prompt=instructions,
                 grok_config=grok_config or GrokConfig(),
-                **kwargs
+                **kwargs,
             )
         else:
             raise ValueError(f"Unsupported base class: {base_class}")
@@ -487,9 +485,9 @@ class IndustryAgentBuilder:
             }}
         """
 
-        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+        if not hasattr(self.ontology, "graph") or self.ontology.graph is None:
             return f"You are the {agent_iri} agent with ontology-driven capabilities."
-        
+
         results = list(self.ontology.graph.query(sparql))
         if results and results[0].instructions is not None:
             return str(results[0].instructions)
@@ -501,18 +499,17 @@ class IndustryAgentBuilder:
 # USAGE EXAMPLES
 # ============================================
 
+
 def example_betting_agent():
     """Example: Create prop betting agent."""
-    loader = OntologyLoader('assets/ontologies/betting.ttl')
+    loader = OntologyLoader("assets/ontologies/betting.ttl")
     loader.load()
 
     factory = AgentFactory(loader)
 
     # Create betting agent with custom bankroll
     agent = factory.create_agent(
-        "bet:PropBettingAgent",
-        bankroll=10000.0,
-        strategy="ValueBetting"
+        "bet:PropBettingAgent", bankroll=10000.0, strategy="ValueBetting"
     )
 
     print(f"Created agent: {agent}")
@@ -521,16 +518,14 @@ def example_betting_agent():
 
 def example_trading_agent():
     """Example: Create algo trading agent."""
-    loader = OntologyLoader('assets/ontologies/trading.ttl')
+    loader = OntologyLoader("assets/ontologies/trading.ttl")
     loader.load()
 
     factory = AgentFactory(loader)
 
     # Create trading agent with custom portfolio
     agent = factory.create_agent(
-        "trade:AlgoTradingAgent",
-        portfolio_value=100000.0,
-        strategy="MeanReversion"
+        "trade:AlgoTradingAgent", portfolio_value=100000.0, strategy="MeanReversion"
     )
 
     print(f"Created agent: {agent}")
@@ -543,7 +538,7 @@ def example_custom_industry():
     # 2. Define agent, tools, risk rules in ontology
     # 3. Build agent with factory
 
-    loader = OntologyLoader('assets/ontologies/supply_chain.ttl')
+    loader = OntologyLoader("assets/ontologies/supply_chain.ttl")
     loader.load()
 
     builder = IndustryAgentBuilder(loader)
@@ -566,7 +561,7 @@ def example_custom_industry():
         name="SupplyChainAgent",
         agent_iri="supply:OptimizationAgent",
         tools=[optimize_route, predict_demand],
-        base_class=GrokAgent
+        base_class=GrokAgent,
     )
 
     print(f"Created custom agent: {agent}")
@@ -583,5 +578,3 @@ if __name__ == "__main__":
 
     print("\n=== Custom Industry Agent ===")
     # example_custom_industry()  # Uncomment when supply_chain.ttl exists
-
-

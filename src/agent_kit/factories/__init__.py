@@ -3,5 +3,3 @@
 from .agent_factory import AgentFactory, IndustryAgentBuilder
 
 __all__ = ["AgentFactory", "IndustryAgentBuilder"]
-
-

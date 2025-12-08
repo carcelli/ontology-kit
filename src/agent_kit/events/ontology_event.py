@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 try:
     # type: ignore[import-not-found]
     from google.adk.events.event import Event as ADKEvent
+
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
@@ -30,6 +31,7 @@ except ImportError:
 
 class OntologyEventContent(BaseModel):
     """Content for an ontology event."""
+
     model_config = {"extra": "forbid"}
 
     text: str = Field(default="", description="Text content of the event")
@@ -57,6 +59,7 @@ class OntologyEvent(BaseModel):
         ...     ontology_triples=[{"subject": "forecast_001", "predicate": "forecasts", "object": "revenue"}],
         ... )
     """
+
     model_config = {"extra": "forbid"}
 
     # Core event fields (ADK-compatible)
@@ -64,8 +67,7 @@ class OntologyEvent(BaseModel):
         default_factory=lambda: str(uuid.uuid4()),
         description="Unique event identifier",
     )
-    author: str = Field(...,
-                        description="Agent or user that created this event")
+    author: str = Field(..., description="Agent or user that created this event")
     content: OntologyEventContent = Field(
         default_factory=OntologyEventContent, description="Event content"
     )
@@ -96,9 +98,7 @@ class OntologyEvent(BaseModel):
         default_factory=list,
         description="Entities extracted from conversation using ontology",
     )
-    domain: str = Field(
-        default="", description="Domain this event belongs to"
-    )
+    domain: str = Field(default="", description="Domain this event belongs to")
 
     @classmethod
     def from_agent_result(
@@ -107,7 +107,7 @@ class OntologyEvent(BaseModel):
         result: dict[str, Any],
         ontology_context: dict[str, Any] | None = None,
         invocation_id: str = "",
-    ) -> "OntologyEvent":
+    ) -> OntologyEvent:
         """
         Create ontology event from agent result.
 
@@ -173,7 +173,7 @@ class OntologyEvent(BaseModel):
         cls,
         adk_event: Any,
         ontology_context: dict[str, Any] | None = None,
-    ) -> "OntologyEvent":
+    ) -> OntologyEvent:
         """
         Create OntologyEvent from an ADK Event.
 

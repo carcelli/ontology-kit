@@ -14,17 +14,20 @@ dummy_index = VectorIndex(dim=embedder.dimension)
 dummy_vectors = np.random.rand(10, embedder.dimension)
 dummy_index.add(dummy_vectors)
 
+
 @function_tool
 def embed(text: str) -> list[float]:
     """Embed a single text string."""
     embedding = embedder.embed(text)
     return embedding.tolist()
 
+
 @function_tool
 def embed_batch(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts efficiently."""
     embeddings = embedder.embed_batch(texts)
     return embeddings.tolist()
+
 
 @function_tool
 def query_vector_index(query_text: str, k: int = 5) -> list[dict]:

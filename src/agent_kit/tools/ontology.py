@@ -9,8 +9,9 @@ from agent_kit.ontology.loader import OntologyLoader
 NS = Namespace("http://agent_kit.io/business#")
 
 # In a real application, the path to the ontology would be configurable.
-global_ontology_loader = OntologyLoader('assets/ontologies/business.ttl')
+global_ontology_loader = OntologyLoader("assets/ontologies/business.ttl")
 global_ontology_loader.load()
+
 
 @function_tool
 def query_ontology(sparql_query: str) -> list[dict]:
@@ -18,12 +19,13 @@ def query_ontology(sparql_query: str) -> list[dict]:
     results = global_ontology_loader.query(sparql_query)
     return results
 
+
 @function_tool
 def add_ontology_statement(
     subject: str,
     predicate: str,
     object_value: str,
-    object_type: str | None = "literal"  # "uri" or "literal" for flexibility
+    object_type: str | None = "literal",  # "uri" or "literal" for flexibility
 ) -> str:
     """
     Adds a new RDF triple to the ontology graph and persists it.

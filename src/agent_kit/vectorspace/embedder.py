@@ -19,9 +19,9 @@ class Embedder:
 
     def __init__(
         self,
-        model_name: str = 'all-MiniLM-L6-v2',
+        model_name: str = "all-MiniLM-L6-v2",
         device: str | None = None,
-        cache_folder: str | None = None
+        cache_folder: str | None = None,
     ) -> None:
         """
         Initialize embedder with specified model.
@@ -33,9 +33,7 @@ class Embedder:
         """
         self.model_name = model_name
         self.model = SentenceTransformer(
-            model_name,
-            device=device,
-            cache_folder=cache_folder
+            model_name, device=device, cache_folder=cache_folder
         )
         self.dimension = self.model.get_sentence_embedding_dimension()
 
@@ -52,10 +50,7 @@ class Embedder:
         return self.model.encode(text, convert_to_numpy=True)
 
     def embed_batch(
-        self,
-        texts: list[str],
-        batch_size: int = 32,
-        show_progress: bool = True
+        self, texts: list[str], batch_size: int = 32, show_progress: bool = True
     ) -> np.ndarray:
         """
         Embed a batch of texts efficiently.
@@ -72,7 +67,7 @@ class Embedder:
             texts,
             batch_size=batch_size,
             show_progress_bar=show_progress,
-            convert_to_numpy=True
+            convert_to_numpy=True,
         )
 
     def save(self, path: str) -> None:
@@ -80,7 +75,7 @@ class Embedder:
         self.model.save(path)
 
     @classmethod
-    def load(cls, path: str, device: str | None = None) -> 'Embedder':
+    def load(cls, path: str, device: str | None = None) -> "Embedder":
         """Load model from disk."""
         embedder = cls.__new__(cls)
         embedder.model = SentenceTransformer(path, device=device)
@@ -90,4 +85,3 @@ class Embedder:
 
     def __repr__(self) -> str:
         return f"Embedder(model='{self.model_name}', dim={self.dimension})"
-

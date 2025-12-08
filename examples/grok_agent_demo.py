@@ -25,7 +25,7 @@ from pathlib import Path
 # Add src to path (for development)
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from agent_kit.agents import GrokAgent, GrokConfig, AgentTask
+from agent_kit.agents import AgentTask, GrokAgent, GrokConfig
 from agent_kit.ontology.loader import OntologyLoader
 from agent_kit.tools.ml_training import ML_TOOL_REGISTRY
 
@@ -44,7 +44,7 @@ def main() -> None:
     # Step 1: Environment Setup
     # ========================================================================
     print_section("Step 1: Environment Setup")
-    
+
     api_key = os.getenv("XAI_API_KEY")
     if not api_key:
         print("❌ XAI_API_KEY not found in environment.")
@@ -61,14 +61,14 @@ def main() -> None:
     else:
         print(f"✓ XAI_API_KEY found: {api_key[:8]}...{api_key[-4:]}")
         demo_mode = False
-    
+
     # ========================================================================
     # Step 2: Load Business Ontology
     # ========================================================================
     print_section("Step 2: Load Business Ontology")
-    
+
     ontology_path = Path(__file__).parent.parent / "assets" / "ontologies" / "business.ttl"
-    
+
     if ontology_path.exists():
         loader = OntologyLoader(str(ontology_path))
         ontology = loader.load()
@@ -85,19 +85,19 @@ def main() -> None:
         print(f"⚠️  Ontology not found: {ontology_path}")
         print("  Creating stub ontology for demo...")
         # Create minimal stub for demo
-        from rdflib import Graph, Namespace, RDF, RDFS, Literal
+        from rdflib import RDF, RDFS, Graph, Literal, Namespace
         ontology = type('Ontology', (), {})()  # Mock object
         ontology.g = Graph()
         ns = Namespace("http://agent_kit.io/business#")
         ontology.g.bind("", ns)
-        
+
         # Add sample triples
         bakery = ns.SunshineBakery
         ontology.g.add((bakery, RDF.type, ns.BusinessEntity))
         ontology.g.add((bakery, RDFS.label, Literal("Sunshine Bakery")))
         ontology.g.add((bakery, ns.revenue, Literal(140)))
         ontology.g.add((bakery, ns.budget, Literal(5.0)))
-        
+
         # Mock query method
         def mock_query(sparql: str):
             """Mock SPARQL query for demo."""
@@ -107,12 +107,12 @@ def main() -> None:
             ]
         ontology.query = mock_query
         print("✓ Stub ontology created")
-    
+
     # ========================================================================
     # Step 3: Initialize Grok Agent
     # ========================================================================
     print_section("Step 3: Initialize Grok Agent with Tool Registry")
-    
+
     try:
         config = GrokConfig(
             api_key=api_key,
@@ -121,12 +121,12 @@ def main() -> None:
             max_tokens=2048,
             seed=42  # For reproducibility
         )
-        
+
         # Register tools from ML_TOOL_REGISTRY
         tool_registry = {}
         for tool_name, tool_entry in ML_TOOL_REGISTRY.items():
             tool_registry[tool_name] = tool_entry['function']
-        
+
         agent = GrokAgent(
             config=config,
             ontology=ontology,
@@ -137,7 +137,7 @@ def main() -> None:
                 "Prioritize high-ROI, actionable insights."
             )
         )
-        
+
         print("✓ GrokAgent initialized successfully")
         print(f"  Model: {config.model}")
         print(f"  Temperature: {config.temperature}")
@@ -150,12 +150,12 @@ def main() -> None:
         print("Install required dependencies:")
         print("  pip install openai>=1.0.0 tenacity>=8.2.0")
         return
-    
+
     # ========================================================================
     # Step 4: Task 1 - Revenue Optimization (Simple Query)
     # ========================================================================
     print_section("Step 4: Task 1 - Revenue Optimization Analysis")
-    
+
     if demo_mode:
         print("⚠️  Demo mode: Simulating Grok response (no actual API call)")
         print()
@@ -192,7 +192,7 @@ Reflection: The ontology provided clear budget constraints, enabling
         task1 = AgentTask(
             prompt="Analyze revenue optimization opportunities for Sunshine Bakery based on ontology data"
         )
-        
+
         try:
             print(f"Running task: '{task1.prompt}'")
             print()
@@ -201,7 +201,7 @@ Reflection: The ontology provided clear budget constraints, enabling
             print("-" * 70)
             print(result1.result)
             print("-" * 70)
-            
+
             # Show memory
             if agent.memory:
                 print()
@@ -212,12 +212,12 @@ Reflection: The ontology provided clear budget constraints, enabling
             print(f"❌ Task failed: {e}")
             import traceback
             traceback.print_exc()
-    
+
     # ========================================================================
     # Step 5: Task 2 - Leverage Visualization (Tool Invocation)
     # ========================================================================
     print_section("Step 5: Task 2 - Generate Leverage Visualization")
-    
+
     if demo_mode:
         print("⚠️  Demo mode: Simulating tool invocation")
         print()
@@ -237,7 +237,7 @@ Reflection: The ontology provided clear budget constraints, enabling
         task2 = AgentTask(
             prompt="Generate an interactive 3D visualization showing leverage points for revenue optimization"
         )
-        
+
         try:
             print(f"Running task: '{task2.prompt}'")
             print()
@@ -248,12 +248,12 @@ Reflection: The ontology provided clear budget constraints, enabling
             print("-" * 70)
         except Exception as e:
             print(f"❌ Task failed: {e}")
-    
+
     # ========================================================================
     # Step 6: Task 3 - Multi-Turn Learning
     # ========================================================================
     print_section("Step 6: Task 3 - Multi-Turn Learning with Memory")
-    
+
     if demo_mode:
         print("⚠️  Demo mode: Simulating multi-turn interaction")
         print()
@@ -276,11 +276,11 @@ Reflection: The ontology provided clear budget constraints, enabling
         task3a = AgentTask(
             prompt="What were the key insights from the previous revenue analysis?"
         )
-        
+
         task3b = AgentTask(
             prompt="Based on those insights, how can we improve the analysis for next quarter?"
         )
-        
+
         try:
             print("Running multi-turn tasks...")
             print()
@@ -288,21 +288,21 @@ Reflection: The ontology provided clear budget constraints, enabling
             result3a = agent.run(task3a)
             print(result3a.result[:300] + "...")
             print()
-            
+
             print("[Task 3b]")
             result3b = agent.run(task3b)
             print(result3b.result[:300] + "...")
-            
+
             print()
             print(f"✓ Agent memory now contains {len(agent.memory)} reflections")
         except Exception as e:
             print(f"❌ Multi-turn task failed: {e}")
-    
+
     # ========================================================================
     # Summary and Next Steps
     # ========================================================================
     print_section("Summary: Grok Agent Integration Complete")
-    
+
     print("✓ GrokAgent successfully integrated with xAI API")
     print("✓ Ontology-grounded reasoning prevents hallucinations")
     print("✓ Tool invocation enables actionable outputs (viz, ML, etc.)")

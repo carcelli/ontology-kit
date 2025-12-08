@@ -12,14 +12,16 @@ Run:
 """
 
 from __future__ import annotations
-from agents import Agent, Runner
-from agent_kit.adapters import OntologyAgentAdapter
-from agent_kit.ontology.loader import OntologyLoader
 
 import asyncio
 import os
 import sys
 from pathlib import Path
+
+from agents import Agent, Runner
+
+from agent_kit.adapters import OntologyAgentAdapter
+from agent_kit.ontology.loader import OntologyLoader
 
 # Add src to path BEFORE importing agent_kit modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

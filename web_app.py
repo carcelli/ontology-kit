@@ -6,13 +6,13 @@ A simple web interface to demonstrate Agent Kit capabilities.
 Deployable on Vercel, Heroku, or any Python hosting platform.
 """
 
-import streamlit as st
 import sys
 from pathlib import Path
+
 import networkx as nx
 import plotly.express as px
 import plotly.graph_objects as go
-import random
+import streamlit as st
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / 'src'))
@@ -20,10 +20,10 @@ sys.path.insert(0, str(Path(__file__).parent / 'src'))
 def visualize_ontology_network(graph, max_nodes=100):
     """Create a Plotly network graph from RDF graph."""
     nx_graph = nx.DiGraph()
-    
+
     # Extract triples and limit count
     triples = list(graph)[:max_nodes]
-    
+
     for s, p, o in triples:
         # Simplify labels
         s_label = str(s).split('#')[-1].split('/')[-1]
@@ -32,7 +32,7 @@ def visualize_ontology_network(graph, max_nodes=100):
 
     # Layout
     pos = nx.spring_layout(nx_graph, seed=42)
-    
+
     # Edges
     edge_x = []
     edge_y = []
@@ -53,7 +53,7 @@ def visualize_ontology_network(graph, max_nodes=100):
     node_y = []
     node_text = []
     node_adjacencies = []
-    
+
     for node in nx_graph.nodes():
         x, y = pos[node]
         node_x.append(x)
@@ -151,7 +151,7 @@ elif page == "🔍 Ontology Explorer":
             try:
                 loader = OntologyLoader(ontology_path)
                 graph = loader.load()
-                
+
                 # Visualize Graph
                 st.subheader("🕸️ Graph Visualization")
                 fig = visualize_ontology_network(graph)
@@ -262,19 +262,19 @@ elif page == "🎯 Leverage Analysis":
 
         import pandas as pd
         df = pd.DataFrame(leverage_data)
-        
+
         # Interactive Plotly Chart
         fig = px.bar(
-            df, 
-            x="Concept", 
-            y="Leverage Score", 
-            color="Impact Potential", 
+            df,
+            x="Concept",
+            y="Leverage Score",
+            color="Impact Potential",
             title="Business Leverage Analysis",
             hover_data=["Impact Potential"],
             color_discrete_map={"High": "orange", "Very High": "red", "Medium": "blue"}
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         st.dataframe(df)
 
         st.markdown("""
@@ -331,17 +331,17 @@ elif page == "⚙️ Agent Playground":
 elif page == "📓 Notebooks":
     st.header("Jupyter Notebooks")
     st.markdown("Access interactive notebooks for deeper analysis and experimentation.")
-    
+
     notebooks = list(Path("examples").glob("*.ipynb"))
-    
+
     if notebooks:
         st.success(f"Found {len(notebooks)} notebooks in `examples/` directory.")
-        
+
         for nb in notebooks:
             with st.expander(f"📄 {nb.name}"):
                 st.write(f"**Path:** `{nb}`")
                 st.code(f"jupyter notebook {nb}", language="bash")
-                
+
                 # Option to convert to HTML for viewing (if nbconvert is installed)
                 if st.button(f"Generate HTML Preview for {nb.name}"):
                     try:

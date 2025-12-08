@@ -13,13 +13,12 @@ Integrates with:
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from typing import Any
 
 from agent_kit.agents.base import AgentResult, AgentTask
 from agent_kit.ontology.loader import OntologyLoader
 
-from .ontology_event import OntologyEvent, OntologyEventContent
+from .ontology_event import OntologyEvent
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +94,9 @@ class OntologyEventLogger:
         self._session_entities.pop(session_id, None)
         self._session_events.pop(session_id, None)
 
-        logger.debug(f"Stopped tracking for session: {session_id}, {len(events)} events")
+        logger.debug(
+            f"Stopped tracking for session: {session_id}, {len(events)} events"
+        )
         return events
 
     def log_query(self, session_id: str, query: str) -> None:
@@ -257,4 +258,3 @@ class OntologyEventLogger:
                 entity_counts[entity] = entity_counts.get(entity, 0) + 1
 
         return entity_counts
-

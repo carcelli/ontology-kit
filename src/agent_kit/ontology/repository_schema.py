@@ -14,10 +14,10 @@ from agent_kit.tools.repository_tree import RepoNodeType, RepoTreeNode
 class RepoEntityType(str, Enum):
     """Semantic categories for repository entities."""
 
-    REPOSITORY = 'repository'
-    DIRECTORY = 'directory'
-    FILE = 'file'
-    OBJECT = 'object'
+    REPOSITORY = "repository"
+    DIRECTORY = "directory"
+    FILE = "file"
+    OBJECT = "object"
 
 
 class RepoEntity(BaseModel):
@@ -57,12 +57,16 @@ class RepositoryOntology(BaseModel):
         try:
             return self.entities[entity_id]
         except KeyError as exc:
-            raise KeyError(f'Entity {entity_id} not found') from exc
+            raise KeyError(f"Entity {entity_id} not found") from exc
 
     def children_of(self, entity_id: str) -> list[RepoEntity]:
         """Return direct children of the specified entity."""
         entity = self.get(entity_id)
-        return [self.entities[child_id] for child_id in entity.children if child_id in self.entities]
+        return [
+            self.entities[child_id]
+            for child_id in entity.children
+            if child_id in self.entities
+        ]
 
     def find(
         self,
@@ -97,10 +101,10 @@ class RepositoryOntology(BaseModel):
         files = len(self.find(entity_type=RepoEntityType.FILE))
         languages = self.language_histogram()
         return {
-            'total_entities': len(self.entities),
-            'directories': directories,
-            'files': files,
-            'languages': languages,
+            "total_entities": len(self.entities),
+            "directories": directories,
+            "files": files,
+            "languages": languages,
         }
 
 
@@ -108,24 +112,24 @@ class RepositoryOntologyBuilder:
     """Construct a RepositoryOntology from a RepoTreeNode hierarchy."""
 
     DEFAULT_LANGUAGE_MAP: dict[str, str] = {
-        '.py': 'Python',
-        '.ts': 'TypeScript',
-        '.tsx': 'TypeScript',
-        '.js': 'JavaScript',
-        '.jsx': 'JavaScript',
-        '.rs': 'Rust',
-        '.go': 'Go',
-        '.java': 'Java',
-        '.cs': 'C#',
-        '.cpp': 'C++',
-        '.c': 'C',
-        '.md': 'Markdown',
-        '.rst': 'reStructuredText',
-        '.toml': 'TOML',
-        '.yml': 'YAML',
-        '.yaml': 'YAML',
-        '.json': 'JSON',
-        '.sh': 'Shell',
+        ".py": "Python",
+        ".ts": "TypeScript",
+        ".tsx": "TypeScript",
+        ".js": "JavaScript",
+        ".jsx": "JavaScript",
+        ".rs": "Rust",
+        ".go": "Go",
+        ".java": "Java",
+        ".cs": "C#",
+        ".cpp": "C++",
+        ".c": "C",
+        ".md": "Markdown",
+        ".rst": "reStructuredText",
+        ".toml": "TOML",
+        ".yml": "YAML",
+        ".yaml": "YAML",
+        ".json": "JSON",
+        ".sh": "Shell",
     }
 
     def __init__(self, language_map: dict[str, str] | None = None) -> None:
@@ -136,19 +140,23 @@ class RepositoryOntologyBuilder:
         """Convert RepoTreeNode tree to a RepositoryOntology."""
         self._root_path = root.path
         repository = RepoEntity(
-            id='.',
+            id=".",
             name=root.name,
             path=self._as_posix(root.path),
             entity_type=RepoEntityType.REPOSITORY,
-            tags=['repository'],
-            metadata={'node_type': root.node_type.value},
-            description='Repository root',
+            tags=["repository"],
+            metadata={"node_type": root.node_type.value},
+            description="Repository root",
         )
-        ontology = RepositoryOntology(repository=repository, entities={repository.id: repository})
+        ontology = RepositoryOntology(
+            repository=repository, entities={repository.id: repository}
+        )
         self._walk(root, ontology, repository.id)
         return ontology
 
-    def _walk(self, node: RepoTreeNode, ontology: RepositoryOntology, parent_id: str) -> None:
+    def _walk(
+        self, node: RepoTreeNode, ontology: RepositoryOntology, parent_id: str
+    ) -> None:
         for child in node.children:
             entity = self._node_to_entity(child, parent_id)
             ontology.add_entity(entity)
@@ -162,7 +170,7 @@ class RepositoryOntologyBuilder:
         if language:
             tags.append(language.lower())
 
-        metadata = {'node_type': node.node_type.value}
+        metadata = {"node_type": node.node_type.value}
         metadata.update(node.metadata)
 
         return RepoEntity(
@@ -172,7 +180,7 @@ class RepositoryOntologyBuilder:
             entity_type=entity_type,
             parent_id=parent_id,
             language=language,
-            size_bytes=node.metadata.get('size_bytes'),
+            size_bytes=node.metadata.get("size_bytes"),
             tags=tags,
             metadata=metadata,
         )
@@ -198,7 +206,7 @@ class RepositoryOntologyBuilder:
         except ValueError:
             return path.as_posix()
         value = relative.as_posix()
-        return value or '.'
+        return value or "."
 
     def _as_posix(self, path: Path) -> str:
         return path.as_posix()

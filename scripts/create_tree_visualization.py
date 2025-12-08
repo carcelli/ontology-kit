@@ -1,5 +1,7 @@
 import os
+
 from treelib import Tree
+
 
 def create_directory_tree(root_dir, max_depth=None, exclude_dirs=None, exclude_exts=None):
     """

@@ -13,8 +13,8 @@ These protocols follow the ADK patterns while supporting OpenAI SDK integration.
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from typing import Any, AsyncIterator, Protocol, TypeVar, runtime_checkable
+from collections.abc import AsyncIterator
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 # Type variables
 T = TypeVar("T")
@@ -143,9 +143,7 @@ class SessionServiceProtocol(Protocol):
         """Get or create session."""
         ...
 
-    async def append_event(
-        self, session_id: str, event: EventProtocol
-    ) -> None:
+    async def append_event(self, session_id: str, event: EventProtocol) -> None:
         """Append event to session."""
         ...
 
@@ -162,9 +160,7 @@ class SessionBackendProtocol(Protocol):
         """Get session data."""
         ...
 
-    async def save_session(
-        self, session_id: str, session_data: dict[str, Any]
-    ) -> None:
+    async def save_session(self, session_id: str, session_data: dict[str, Any]) -> None:
         """Save session data."""
         ...
 
@@ -449,5 +445,3 @@ class AgentAdapterProtocol(Protocol):
     def domain(self) -> str:
         """Domain identifier."""
         ...
-
-

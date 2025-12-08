@@ -19,7 +19,9 @@ class OntologyLoader:
         10
     """
 
-    def __init__(self, ontology_path: str, enable_query_cache: bool = True, cache_size: int = 128) -> None:
+    def __init__(
+        self, ontology_path: str, enable_query_cache: bool = True, cache_size: int = 128
+    ) -> None:
         """
         Initialize ontology loader.
 
@@ -40,7 +42,7 @@ class OntologyLoader:
         self._cache_hits = 0
         self._cache_misses = 0
 
-    def load(self, format: str = 'turtle') -> Graph:
+    def load(self, format: str = "turtle") -> Graph:
         """
         Load ontology into RDFLib graph.
 
@@ -94,7 +96,11 @@ class OntologyLoader:
             binding = {}
             for var in results.vars:
                 # Handle case where variable might not be in row
-                value = row.get(var) if hasattr(row, 'get') else (row[var] if var in row else None)
+                value = (
+                    row.get(var)
+                    if hasattr(row, "get")
+                    else (row[var] if var in row else None)
+                )
                 binding[str(var)] = value
             output.append(binding)
 
@@ -151,7 +157,7 @@ class OntologyLoader:
         }
         """
         results = self.query(sparql, use_cache=use_cache)
-        return [str(r['class']) for r in results]
+        return [str(r["class"]) for r in results]
 
     def get_properties(self, use_cache: bool = True) -> list[str]:
         """
@@ -176,10 +182,10 @@ class OntologyLoader:
         }
         """
         results = self.query(sparql, use_cache=use_cache)
-        return [str(r['prop']) for r in results]
+        return [str(r["prop"]) for r in results]
 
     def __repr__(self) -> str:
-        status = 'loaded' if self.graph is not None else 'not loaded'
+        status = "loaded" if self.graph is not None else "not loaded"
         triples = len(self.graph) if self.graph is not None else 0
         return f"OntologyLoader(path='{self.path}', status={status}, triples={triples})"
 
@@ -189,7 +195,7 @@ class OntologyLoader:
             raise RuntimeError("Call load() first")
         self.graph.add((subject, predicate, object_))
 
-    def save(self, file_path: str | None = None, format: str = 'turtle') -> None:
+    def save(self, file_path: str | None = None, format: str = "turtle") -> None:
         """Serializes and saves the graph back to file."""
         if self.graph is None:
             raise RuntimeError("Call load() first")

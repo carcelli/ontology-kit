@@ -53,6 +53,6 @@ class PlannerAgent(Agent):
                 plan.append({"agent": agent_name, "prompt": prompt})
 
         # A simple heuristic to order the plan: forecast before optimize.
-        plan.sort(key=lambda x: (x['agent'] != 'forecaster', x['agent'] != 'optimizer'))
+        plan.sort(key=lambda x: (x["agent"] != "forecaster", x["agent"] != "optimizer"))
 
         return plan

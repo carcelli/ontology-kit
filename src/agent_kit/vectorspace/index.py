@@ -21,7 +21,7 @@ class VectorIndex:
         (42, 0.12)
     """
 
-    def __init__(self, dim: int, metric: str = 'cosine') -> None:
+    def __init__(self, dim: int, metric: str = "cosine") -> None:
         """
         Initialize vector index.
 
@@ -33,10 +33,10 @@ class VectorIndex:
         self.metric = metric
 
         # Create FAISS index
-        if metric == 'cosine':
+        if metric == "cosine":
             # Inner product (assumes normalized vectors)
             self.index = faiss.IndexFlatIP(dim)
-        elif metric == 'euclidean':
+        elif metric == "euclidean":
             self.index = faiss.IndexFlatL2(dim)
         else:
             raise ValueError(f"Unsupported metric: {metric}")
@@ -53,7 +53,7 @@ class VectorIndex:
         self,
         vectors: np.ndarray,
         ids: list[int] | None = None,
-        metadata: list[Any] | None = None
+        metadata: list[Any] | None = None,
     ) -> None:
         """
         Add vectors to the index.
@@ -69,7 +69,7 @@ class VectorIndex:
         N = len(vectors)
 
         # Normalize if using cosine similarity
-        if self.metric == 'cosine':
+        if self.metric == "cosine":
             vectors = vectors / (np.linalg.norm(vectors, axis=1, keepdims=True) + 1e-8)
 
         # Generate IDs if not provided
@@ -93,11 +93,7 @@ class VectorIndex:
             for custom_id, meta in zip(ids, metadata, strict=False):
                 self.metadata[custom_id] = meta
 
-    def query(
-        self,
-        vector: np.ndarray,
-        k: int = 10
-    ) -> list[dict[str, Any]]:
+    def query(self, vector: np.ndarray, k: int = 10) -> list[dict[str, Any]]:
         """
         Find k nearest neighbors.
 
@@ -113,7 +109,7 @@ class VectorIndex:
             vector = vector.reshape(1, -1)
 
         # Normalize if using cosine
-        if self.metric == 'cosine':
+        if self.metric == "cosine":
             vector = vector / (np.linalg.norm(vector, axis=1, keepdims=True) + 1e-8)
 
         # Search
@@ -131,17 +127,14 @@ class VectorIndex:
 
             # For IndexFlatIP (cosine), FAISS returns inner product (similarity)
             # Convert to distance: distance = 1 - similarity
-            if self.metric == 'cosine':
+            if self.metric == "cosine":
                 distance = 1.0 - float(dist)
             else:
                 distance = float(dist)
 
-            result = {
-                'id': custom_id,
-                'distance': distance
-            }
+            result = {"id": custom_id, "distance": distance}
             if custom_id in self.metadata:
-                result['metadata'] = self.metadata[custom_id]
+                result["metadata"] = self.metadata[custom_id]
             results.append(result)
 
         return results
@@ -152,33 +145,36 @@ class VectorIndex:
         faiss.write_index(self.index, f"{path}.faiss")
 
         # Save metadata
-        with open(f"{path}.meta", 'wb') as f:
-            pickle.dump({
-                'dim': self.dim,
-                'metric': self.metric,
-                'id_map': self.id_map,
-                'metadata': self.metadata,
-                'next_id': self._next_id
-            }, f)
+        with open(f"{path}.meta", "wb") as f:
+            pickle.dump(
+                {
+                    "dim": self.dim,
+                    "metric": self.metric,
+                    "id_map": self.id_map,
+                    "metadata": self.metadata,
+                    "next_id": self._next_id,
+                },
+                f,
+            )
 
     @classmethod
-    def load(cls, path: str) -> 'VectorIndex':
+    def load(cls, path: str) -> "VectorIndex":
         """Load index from disk."""
         # Load FAISS index
         faiss_index = faiss.read_index(f"{path}.faiss")
 
         # Load metadata
-        with open(f"{path}.meta", 'rb') as f:
+        with open(f"{path}.meta", "rb") as f:
             meta = pickle.load(f)
 
         # Reconstruct
         index = cls.__new__(cls)
-        index.dim = meta['dim']
-        index.metric = meta['metric']
+        index.dim = meta["dim"]
+        index.metric = meta["metric"]
         index.index = faiss_index
-        index.id_map = meta.get('id_map', {})  # Backward compat
-        index.metadata = meta['metadata']
-        index._next_id = meta['next_id']
+        index.id_map = meta.get("id_map", {})  # Backward compat
+        index.metadata = meta["metadata"]
+        index._next_id = meta["next_id"]
 
         return index
 
@@ -188,4 +184,3 @@ class VectorIndex:
 
     def __repr__(self) -> str:
         return f"VectorIndex(dim={self.dim}, metric='{self.metric}', size={len(self)})"
-

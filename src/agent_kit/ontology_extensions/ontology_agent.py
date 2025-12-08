@@ -21,10 +21,12 @@ from ..ontology.loader import OntologyLoader
 # Try to import from agents SDK, with fallbacks
 try:
     from agents import Agent, RunContextWrapper, TContext
+
     AGENTS_AVAILABLE = True
 except ImportError:
     # Fallback definitions when SDK is not available
     from typing import Any as TContext
+
     RunContextWrapper = Any
     Agent = object
     AGENTS_AVAILABLE = False
@@ -47,12 +49,7 @@ class OntologyAgent(Agent if AGENTS_AVAILABLE else object):
     - Maintain semantic context across interactions
     """
 
-    def __init__(
-        self,
-        name: str,
-        ontology_path: str,
-        **kwargs
-    ):
+    def __init__(self, name: str, ontology_path: str, **kwargs):
         """
         Initialize the ontology-enhanced agent.
 
@@ -70,14 +67,11 @@ class OntologyAgent(Agent if AGENTS_AVAILABLE else object):
         # Discover ontology-relevant tools
         tools = self._discover_ontology_tools()
 
-        super().__init__(
-            name=name,
-            instructions=instructions,
-            tools=tools,
-            **kwargs
-        )
+        super().__init__(name=name, instructions=instructions, tools=tools, **kwargs)
 
-    def _generate_ontology_instructions(self) -> str | Callable[[RunContextWrapper[TContext], Agent[TContext]], str] | None:
+    def _generate_ontology_instructions(
+        self,
+    ) -> str | Callable[[RunContextWrapper[TContext], Agent[TContext]], str] | None:
         """
         Generate instructions dynamically from the ontology.
 
@@ -143,12 +137,15 @@ Always consider the semantic relationships and business rules defined in the ont
                     # Try to import the tool from our tool registry
                     if tool_name == "Predict Tool":
                         from ..tools.business import predict
+
                         tools.append(predict)
                     elif tool_name == "Optimize Tool":
                         from ..tools.business import optimize
+
                         tools.append(optimize)
                     elif tool_name == "GitHub Tool":
                         from ..tools.github_tools import write_to_github
+
                         tools.append(write_to_github)
                     # Add more tool mappings as needed
                 except ImportError:
@@ -161,9 +158,7 @@ Always consider the semantic relationships and business rules defined in the ont
         return tools
 
     async def validate_action_against_ontology(
-        self,
-        action: str,
-        context: RunContextWrapper[TContext] | None = None
+        self, action: str, context: RunContextWrapper[TContext] | None = None
     ) -> bool:
         """
         Validate a proposed action against ontology business rules.
@@ -192,9 +187,7 @@ Always consider the semantic relationships and business rules defined in the ont
             return True
 
     async def get_ontology_context(
-        self,
-        query: str,
-        context: RunContextWrapper[TContext] | None = None
+        self, query: str, context: RunContextWrapper[TContext] | None = None
     ) -> dict[str, Any]:
         """
         Retrieve relevant context from the ontology for a given query.
@@ -212,7 +205,9 @@ Always consider the semantic relationships and business rules defined in the ont
             return {
                 "ontology_path": self.ontology_path,
                 "agent_name": self.name,
-                "available_triples": len(list(self.ontology)) if hasattr(self.ontology, '__iter__') else 0,
+                "available_triples": len(list(self.ontology))
+                if hasattr(self.ontology, "__iter__")
+                else 0,
                 "query": query,
             }
         except Exception:

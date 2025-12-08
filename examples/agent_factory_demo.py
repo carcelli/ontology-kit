@@ -10,13 +10,13 @@ Run:
 """
 
 from __future__ import annotations
-from agent_kit.domains.registry import get_global_registry
-from agent_kit.agents.base import AgentTask
-from agent_kit.factories import AgentFactory
 
 import os
 import sys
 from pathlib import Path
+
+from agent_kit.domains.registry import get_global_registry
+from agent_kit.factories import AgentFactory
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -117,7 +117,7 @@ def demo_tool_loading():
     registry = get_global_registry()
     cfg = registry.get("business")
 
-    print(f"Loading tools for domain 'business'...")
+    print("Loading tools for domain 'business'...")
     print(f"   Tool paths: {cfg.allowed_tools[:3]}...")  # Show first 3
 
     tools = factory._load_tools(cfg.allowed_tools)
@@ -137,7 +137,7 @@ def demo_ontology_loading():
     registry = get_global_registry()
     cfg = registry.get("business")
 
-    print(f"Loading ontology for domain 'business'...")
+    print("Loading ontology for domain 'business'...")
     print(f"   IRI: {cfg.ontology_iri}")
 
     ontology = factory._load_ontology(cfg.ontology_iri)

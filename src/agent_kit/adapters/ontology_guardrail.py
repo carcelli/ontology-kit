@@ -11,7 +11,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agents import InputGuardrail, InputGuardrailResult, OutputGuardrail, OutputGuardrailResult, RunContextWrapper
+from agents import (
+    InputGuardrail,
+    InputGuardrailResult,
+    OutputGuardrail,
+    OutputGuardrailResult,
+    RunContextWrapper,
+)
 from pydantic import ValidationError
 
 from agent_kit.schemas import get_schema
@@ -84,7 +90,7 @@ class OntologyOutputGuardrail(OutputGuardrail):
 
         try:
             # Validate against Pydantic schema
-            validated = self.schema(**output_dict)
+            self.schema(**output_dict)
             return OutputGuardrailResult(passed=True)
         except ValidationError as e:
             errors = "; ".join([str(err) for err in e.errors()])
@@ -153,4 +159,3 @@ class OntologyInputGuardrail(InputGuardrail):
             )
 
         return InputGuardrailResult(passed=True)
-

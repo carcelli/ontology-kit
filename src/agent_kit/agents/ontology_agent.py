@@ -19,6 +19,7 @@ TOOL_REGISTRY = {
     "GitHub Tool": write_to_github,
 }
 
+
 class OntologyAgent(Agent):
     """SDK Agent with ontology integration and proper context management."""
 
@@ -31,7 +32,9 @@ class OntologyAgent(Agent):
 
     def _generate_instructions(self) -> str | None:
         """Query ontology for dynamic instructions."""
-        base_instructions = f"You are the {self.agent_name} agent with ontology-driven capabilities."
+        base_instructions = (
+            f"You are the {self.agent_name} agent with ontology-driven capabilities."
+        )
 
         # Check if we need dynamic instructions based on ontology
         sparql = f"""

@@ -30,6 +30,7 @@ import psutil
 @dataclass
 class ExecutionMetrics:
     """Metrics collected during agent execution."""
+
     start_time: datetime
     end_time: datetime | None = None
     duration_seconds: float | None = None
@@ -43,6 +44,7 @@ class ExecutionMetrics:
 @dataclass
 class OntologyQueryMetrics:
     """Metrics for ontology queries performed by agents."""
+
     query_type: str  # SPARQL, entity_lookup, relationship_query, etc.
     query_text: str
     execution_time_seconds: float
@@ -55,6 +57,7 @@ class OntologyQueryMetrics:
 @dataclass
 class ToolUsageMetrics:
     """Metrics for tool usage by agents."""
+
     tool_name: str
     tool_category: str  # ml_training, visualization, data_processing, etc.
     execution_time_seconds: float
@@ -67,6 +70,7 @@ class ToolUsageMetrics:
 @dataclass
 class DecisionMetrics:
     """Metrics for agent decision-making."""
+
     decision_context: str
     confidence_score: float
     alternatives_considered: int
@@ -80,6 +84,7 @@ class DecisionMetrics:
 @dataclass
 class AgentPerformanceRecord:
     """Complete performance record for an agent execution."""
+
     agent_name: str
     task_type: str
     task_description: str
@@ -107,6 +112,7 @@ class AgentPerformanceRecord:
 @dataclass
 class MonitoringConfig:
     """Configuration for monitoring and data collection."""
+
     data_dir: Path = Path("outputs/agent_data")
     include_env: bool = True
     track_cpu: bool = True
@@ -137,18 +143,23 @@ class AgentDataCollector:
     def __init__(self, config: MonitoringConfig | None = None):
         self.config = config or MonitoringConfig()
         self.config.data_dir.mkdir(exist_ok=True, parents=True)
-        
+
         # Use contextvars for thread-safe per-execution tracking
         self._record_var: contextvars.ContextVar[AgentPerformanceRecord | None] = (
             contextvars.ContextVar("current_record", default=None)
         )
-        
+
         # Track max memory over execution
         self._memory_samples: list[float] = []
 
     @contextmanager
-    def track_execution(self, agent_name: str, task_type: str, task_description: str,
-                       session_id: str | None = None):
+    def track_execution(
+        self,
+        agent_name: str,
+        task_type: str,
+        task_description: str,
+        session_id: str | None = None,
+    ):
         """
         Context manager to track complete agent execution.
 
@@ -169,7 +180,7 @@ class AgentDataCollector:
         process = psutil.Process()
         if self.config.track_cpu:
             process.cpu_percent(interval=None)  # Prime CPU counter
-        
+
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
         self._memory_samples = [initial_memory]
 
@@ -181,7 +192,7 @@ class AgentDataCollector:
                 session_id=session_id,
                 timestamp=datetime.now(),
                 execution=execution_metrics,
-                environment_info=self._get_environment_info()
+                environment_info=self._get_environment_info(),
             )
 
             # Set in contextvar for this execution context
@@ -213,7 +224,7 @@ class AgentDataCollector:
                     # CPU usage since last call (non-blocking)
                     cpu_pct = process.cpu_percent(interval=0.0)
                     record.execution.cpu_usage_percent = cpu_pct
-                
+
                 if self.config.track_memory:
                     # Track max RSS over execution, not just end-start
                     final_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -226,7 +237,7 @@ class AgentDataCollector:
 
                 # Save the record
                 self._save_record(record)
-            
+
             # Reset contextvar
             self._record_var.reset(token)
             self._memory_samples = []
@@ -242,14 +253,16 @@ class AgentDataCollector:
         """
         record = self._record_var.get()
         if not record:
-            raise RuntimeError("No active execution record. Use track_execution() first.")
+            raise RuntimeError(
+                "No active execution record. Use track_execution() first."
+            )
 
         start_time = time.time()
         query_metrics = OntologyQueryMetrics(
             query_type=query_type,
             query_text=query_text,
             execution_time_seconds=0.0,
-            result_count=0
+            result_count=0,
         )
 
         try:
@@ -259,8 +272,12 @@ class AgentDataCollector:
             record.ontology_queries.append(query_metrics)
 
     @contextmanager
-    def track_tool_usage(self, tool_name: str, tool_category: str = "general",
-                        input_params: dict[str, Any] | None = None):
+    def track_tool_usage(
+        self,
+        tool_name: str,
+        tool_category: str = "general",
+        input_params: dict[str, Any] | None = None,
+    ):
         """
         Context manager to track tool usage.
 
@@ -271,7 +288,9 @@ class AgentDataCollector:
         """
         record = self._record_var.get()
         if not record:
-            raise RuntimeError("No active execution record. Use track_execution() first.")
+            raise RuntimeError(
+                "No active execution record. Use track_execution() first."
+            )
 
         start_time = time.time()
         tool_metrics = ToolUsageMetrics(
@@ -279,7 +298,7 @@ class AgentDataCollector:
             tool_category=tool_category,
             execution_time_seconds=0.0,
             success=False,
-            input_parameters=input_params or {}
+            input_parameters=input_params or {},
         )
 
         try:
@@ -293,10 +312,15 @@ class AgentDataCollector:
             tool_metrics.execution_time_seconds = time.time() - start_time
             record.tool_usage.append(tool_metrics)
 
-    def record_decision(self, decision_context: str, final_decision: str,
-                       confidence_score: float, alternatives: list[str] | None = None,
-                       ontology_entities: list[str] | None = None,
-                       tools_consulted: list[str] | None = None) -> None:
+    def record_decision(
+        self,
+        decision_context: str,
+        final_decision: str,
+        confidence_score: float,
+        alternatives: list[str] | None = None,
+        ontology_entities: list[str] | None = None,
+        tools_consulted: list[str] | None = None,
+    ) -> None:
         """
         Record an agent decision with context.
 
@@ -310,7 +334,9 @@ class AgentDataCollector:
         """
         record = self._record_var.get()
         if not record:
-            raise RuntimeError("No active execution record. Use track_execution() first.")
+            raise RuntimeError(
+                "No active execution record. Use track_execution() first."
+            )
 
         decision_metrics = DecisionMetrics(
             decision_context=decision_context,
@@ -318,13 +344,14 @@ class AgentDataCollector:
             alternatives_considered=len(alternatives) if alternatives else 0,
             ontology_entities_used=ontology_entities or [],
             tools_consulted=tools_consulted or [],
-            final_decision=final_decision
+            final_decision=final_decision,
         )
 
         record.decisions.append(decision_metrics)
 
-    def update_decision_outcome(self, decision_index: int, success: bool,
-                               quality_score: float | None = None) -> None:
+    def update_decision_outcome(
+        self, decision_index: int, success: bool, quality_score: float | None = None
+    ) -> None:
         """
         Update the outcome of a previously recorded decision.
 
@@ -335,7 +362,9 @@ class AgentDataCollector:
         """
         record = self._record_var.get()
         if not record:
-            raise RuntimeError("No active execution record. Use track_execution() first.")
+            raise RuntimeError(
+                "No active execution record. Use track_execution() first."
+            )
 
         if 0 <= decision_index < len(record.decisions):
             record.decisions[decision_index].outcome_success = success
@@ -344,27 +373,27 @@ class AgentDataCollector:
     def _get_environment_info(self) -> dict[str, Any]:
         """Collect environment information for tracking."""
         env_info = {}
-        
+
         if self.config.include_env:
             # Git commit (if available)
             try:
                 git_sha = subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"],
-                    stderr=subprocess.DEVNULL,
-                    text=True
+                    ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
                 ).strip()
                 env_info["git_sha"] = git_sha[:8]  # Short SHA
             except (subprocess.CalledProcessError, FileNotFoundError):
                 pass
-            
+
             # Python version
             import sys
+
             env_info["python_version"] = sys.version.split()[0]
-            
+
             # Platform
             import platform
+
             env_info["platform"] = platform.platform()
-        
+
         return env_info
 
     def _calculate_derived_metrics(self, record: AgentPerformanceRecord) -> None:
@@ -373,20 +402,25 @@ class AgentDataCollector:
             return
 
         # Total query time
-        record.total_query_time = sum(q.execution_time_seconds for q in record.ontology_queries)
+        record.total_query_time = sum(
+            q.execution_time_seconds for q in record.ontology_queries
+        )
 
         # Total tool time
-        record.total_tool_time = sum(t.execution_time_seconds for t in record.tool_usage)
+        record.total_tool_time = sum(
+            t.execution_time_seconds for t in record.tool_usage
+        )
 
         # Average confidence
         if record.decisions:
-            record.average_confidence = (
-                sum(d.confidence_score for d in record.decisions) / len(record.decisions)
-            )
+            record.average_confidence = sum(
+                d.confidence_score for d in record.decisions
+            ) / len(record.decisions)
 
         # Success rate (decisions with positive outcomes)
         successful_decisions = [
-            d for d in record.decisions
+            d
+            for d in record.decisions
             if d.outcome_success is not None and d.outcome_success
         ]
         if record.decisions:
@@ -405,7 +439,7 @@ class AgentDataCollector:
         # Convert dataclasses to dictionaries for JSON serialization
         record_dict = self._record_to_dict(record)
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(record_dict, f, indent=2, default=str)
 
         # Also save to daily summary file for quick analysis
@@ -419,18 +453,18 @@ class AgentDataCollector:
             "task_description": record.task_description,
             "session_id": record.session_id,
             "timestamp": record.timestamp.isoformat(),
-
             "execution": {
                 "start_time": record.execution.start_time.isoformat(),
-                "end_time": record.execution.end_time.isoformat() if record.execution.end_time else None,
+                "end_time": record.execution.end_time.isoformat()
+                if record.execution.end_time
+                else None,
                 "duration_seconds": record.execution.duration_seconds,
                 "cpu_usage_percent": record.execution.cpu_usage_percent,
                 "memory_usage_mb": record.execution.memory_usage_mb,
                 "success": record.execution.success,
                 "error_message": record.execution.error_message,
-                "retry_count": record.execution.retry_count
+                "retry_count": record.execution.retry_count,
             },
-
             "ontology_queries": [
                 {
                     "query_type": q.query_type,
@@ -439,11 +473,10 @@ class AgentDataCollector:
                     "result_count": q.result_count,
                     "entities_discovered": q.entities_discovered,
                     "relationships_found": q.relationships_found,
-                    "cache_hit": q.cache_hit
+                    "cache_hit": q.cache_hit,
                 }
                 for q in record.ontology_queries
             ],
-
             "tool_usage": [
                 {
                     "tool_name": t.tool_name,
@@ -452,11 +485,10 @@ class AgentDataCollector:
                     "success": t.success,
                     "input_parameters": t.input_parameters,
                     "output_summary": t.output_summary,
-                    "error_details": t.error_details
+                    "error_details": t.error_details,
                 }
                 for t in record.tool_usage
             ],
-
             "decisions": [
                 {
                     "decision_context": d.decision_context,
@@ -466,23 +498,21 @@ class AgentDataCollector:
                     "tools_consulted": d.tools_consulted,
                     "final_decision": d.final_decision,
                     "outcome_success": d.outcome_success,
-                    "outcome_quality_score": d.outcome_quality_score
+                    "outcome_quality_score": d.outcome_quality_score,
                 }
                 for d in record.decisions
             ],
-
             "derived_metrics": {
                 "total_query_time": record.total_query_time,
                 "total_tool_time": record.total_tool_time,
                 "average_confidence": record.average_confidence,
-                "success_rate": record.success_rate
+                "success_rate": record.success_rate,
             },
-
             "context": {
                 "ontology_version": record.ontology_version,
                 "agent_version": record.agent_version,
-                "environment_info": record.environment_info
-            }
+                "environment_info": record.environment_info,
+            },
         }
 
     def _update_daily_summary(self, record: AgentPerformanceRecord) -> None:
@@ -502,7 +532,7 @@ class AgentDataCollector:
                 "task_distribution": {},
                 "success_rates": {},
                 "average_durations": {},
-                "error_patterns": []
+                "error_patterns": [],
             }
 
         # Update summary statistics
@@ -515,7 +545,7 @@ class AgentDataCollector:
                 "session_count": 0,
                 "total_successes": 0,
                 "total_duration": 0.0,
-                "avg_confidence": 0.0
+                "avg_confidence": 0.0,
             }
 
         agent_stats = summary["agent_performance"][agent]
@@ -523,13 +553,15 @@ class AgentDataCollector:
         agent_stats["total_successes"] += 1 if record.execution.success else 0
         agent_stats["total_duration"] += record.execution.duration_seconds or 0
         agent_stats["avg_confidence"] = (
-            (agent_stats["avg_confidence"] * (agent_stats["session_count"] - 1) +
-             record.average_confidence) / agent_stats["session_count"]
-        )
+            agent_stats["avg_confidence"] * (agent_stats["session_count"] - 1)
+            + record.average_confidence
+        ) / agent_stats["session_count"]
 
         # Task distribution
         task = record.task_type
-        summary["task_distribution"][task] = summary["task_distribution"].get(task, 0) + 1
+        summary["task_distribution"][task] = (
+            summary["task_distribution"].get(task, 0) + 1
+        )
 
         # Success rates
         summary["success_rates"][agent] = (
@@ -543,17 +575,19 @@ class AgentDataCollector:
 
         # Error tracking
         if not record.execution.success and record.execution.error_message:
-            summary["error_patterns"].append({
-                "agent": agent,
-                "task": task,
-                "error": record.execution.error_message,
-                "timestamp": record.timestamp.isoformat()
-            })
+            summary["error_patterns"].append(
+                {
+                    "agent": agent,
+                    "task": task,
+                    "error": record.execution.error_message,
+                    "timestamp": record.timestamp.isoformat(),
+                }
+            )
 
         # Keep only recent errors (last 10)
         summary["error_patterns"] = summary["error_patterns"][-10:]
 
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
 
 
@@ -567,8 +601,9 @@ class PerformanceAnalytics:
     def __init__(self, data_dir: str | Path = "outputs/agent_data"):
         self.data_dir = Path(data_dir)
 
-    def get_agent_performance_summary(self, agent_name: str | None = None,
-                                    days: int = 7) -> dict[str, Any]:
+    def get_agent_performance_summary(
+        self, agent_name: str | None = None, days: int = 7
+    ) -> dict[str, Any]:
         """
         Get performance summary for agents over recent days.
 
@@ -610,7 +645,7 @@ class PerformanceAnalytics:
                         "total_successes": 0,
                         "total_duration": 0.0,
                         "avg_confidence": 0.0,
-                        "success_rate": 0.0
+                        "success_rate": 0.0,
                     }
 
                 agent_stats = agent_performance[agent]
@@ -618,22 +653,25 @@ class PerformanceAnalytics:
                 agent_stats["total_successes"] += stats["total_successes"]
                 agent_stats["total_duration"] += stats["total_duration"]
                 # Weighted average for confidence
-                total_sessions_so_far = agent_stats["total_sessions"] - stats["session_count"]
-                agent_stats["avg_confidence"] = (
-                    (agent_stats["avg_confidence"] * total_sessions_so_far +
-                     stats["avg_confidence"] * stats["session_count"]) /
-                    agent_stats["total_sessions"]
+                total_sessions_so_far = (
+                    agent_stats["total_sessions"] - stats["session_count"]
                 )
+                agent_stats["avg_confidence"] = (
+                    agent_stats["avg_confidence"] * total_sessions_so_far
+                    + stats["avg_confidence"] * stats["session_count"]
+                ) / agent_stats["total_sessions"]
 
         # Calculate final success rates
         for agent_stats in agent_performance.values():
             agent_stats["success_rate"] = (
                 agent_stats["total_successes"] / agent_stats["total_sessions"]
-                if agent_stats["total_sessions"] > 0 else 0
+                if agent_stats["total_sessions"] > 0
+                else 0
             )
             agent_stats["avg_duration"] = (
                 agent_stats["total_duration"] / agent_stats["total_sessions"]
-                if agent_stats["total_sessions"] > 0 else 0
+                if agent_stats["total_sessions"] > 0
+                else 0
             )
 
         return {
@@ -643,8 +681,8 @@ class PerformanceAnalytics:
             "top_performing_agents": sorted(
                 agent_performance.items(),
                 key=lambda x: x[1]["success_rate"],
-                reverse=True
-            )[:5]
+                reverse=True,
+            )[:5],
         }
 
     def identify_bottlenecks(self) -> dict[str, Any]:
@@ -662,7 +700,7 @@ class PerformanceAnalytics:
             "slow_queries": [],
             "failed_tools": [],
             "low_confidence_decisions": [],
-            "high_resource_usage": []
+            "high_resource_usage": [],
         }
 
         for record_file in record_files[:50]:  # Analyze last 50 records
@@ -673,44 +711,55 @@ class PerformanceAnalytics:
                 # Check for slow ontology queries
                 for query in record_data.get("ontology_queries", []):
                     if query["execution_time_seconds"] > 5.0:  # >5 seconds
-                        bottlenecks["slow_queries"].append({
-                            "agent": record_data["agent_name"],
-                            "query_type": query["query_type"],
-                            "duration": query["execution_time_seconds"],
-                            "timestamp": record_data["timestamp"]
-                        })
+                        bottlenecks["slow_queries"].append(
+                            {
+                                "agent": record_data["agent_name"],
+                                "query_type": query["query_type"],
+                                "duration": query["execution_time_seconds"],
+                                "timestamp": record_data["timestamp"],
+                            }
+                        )
 
                 # Check for failed tools
                 for tool in record_data.get("tool_usage", []):
                     if not tool["success"]:
-                        bottlenecks["failed_tools"].append({
-                            "agent": record_data["agent_name"],
-                            "tool": tool["tool_name"],
-                            "error": tool["error_details"],
-                            "timestamp": record_data["timestamp"]
-                        })
+                        bottlenecks["failed_tools"].append(
+                            {
+                                "agent": record_data["agent_name"],
+                                "tool": tool["tool_name"],
+                                "error": tool["error_details"],
+                                "timestamp": record_data["timestamp"],
+                            }
+                        )
 
                 # Check for low confidence decisions
                 for decision in record_data.get("decisions", []):
                     if decision["confidence_score"] < 0.5:
-                        bottlenecks["low_confidence_decisions"].append({
-                            "agent": record_data["agent_name"],
-                            "decision": decision["final_decision"],
-                            "confidence": decision["confidence_score"],
-                            "context": decision["decision_context"],
-                            "timestamp": record_data["timestamp"]
-                        })
+                        bottlenecks["low_confidence_decisions"].append(
+                            {
+                                "agent": record_data["agent_name"],
+                                "decision": decision["final_decision"],
+                                "confidence": decision["confidence_score"],
+                                "context": decision["decision_context"],
+                                "timestamp": record_data["timestamp"],
+                            }
+                        )
 
                 # Check for high resource usage
                 execution = record_data.get("execution", {})
-                if execution.get("cpu_usage_percent", 0) > 50 or execution.get("memory_usage_mb", 0) > 500:
-                    bottlenecks["high_resource_usage"].append({
-                        "agent": record_data["agent_name"],
-                        "cpu_percent": execution.get("cpu_usage_percent"),
-                        "memory_mb": execution.get("memory_usage_mb"),
-                        "duration": execution.get("duration_seconds"),
-                        "timestamp": record_data["timestamp"]
-                    })
+                if (
+                    execution.get("cpu_usage_percent", 0) > 50
+                    or execution.get("memory_usage_mb", 0) > 500
+                ):
+                    bottlenecks["high_resource_usage"].append(
+                        {
+                            "agent": record_data["agent_name"],
+                            "cpu_percent": execution.get("cpu_usage_percent"),
+                            "memory_mb": execution.get("memory_usage_mb"),
+                            "duration": execution.get("duration_seconds"),
+                            "timestamp": record_data["timestamp"],
+                        }
+                    )
 
             except (json.JSONDecodeError, FileNotFoundError):
                 continue
@@ -741,7 +790,7 @@ class PerformanceAnalytics:
         return {
             "bottlenecks": bottlenecks,
             "recommendations": recommendations,
-            "analysis_timestamp": datetime.now().isoformat()
+            "analysis_timestamp": datetime.now().isoformat(),
         }
 
 
@@ -751,6 +800,8 @@ def create_data_collector(config: MonitoringConfig | None = None) -> AgentDataCo
     return AgentDataCollector(config)
 
 
-def create_performance_analytics(data_dir: str | Path = "outputs/agent_data") -> PerformanceAnalytics:
+def create_performance_analytics(
+    data_dir: str | Path = "outputs/agent_data",
+) -> PerformanceAnalytics:
     """Create a new performance analytics instance."""
     return PerformanceAnalytics(data_dir)

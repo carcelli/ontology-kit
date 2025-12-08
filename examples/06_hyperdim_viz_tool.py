@@ -129,7 +129,7 @@ async def main_agent_driven():
             analyst_agent, 'Visualize assets/ontologies/business.ttl and explain the semantic relationships'
         )
 
-        print(f'\n🤖 Agent Response:')
+        print('\n🤖 Agent Response:')
         print(result.final_output)
 
         print('\n' + '=' * 70)

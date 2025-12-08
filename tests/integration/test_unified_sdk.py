@@ -7,8 +7,9 @@ docs/UNIFIED_SDK_INTEGRATION_STRATEGY.md.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Test modules
 from agent_kit.adapters import (
@@ -73,7 +74,9 @@ class TestOntologyAgentAdapter:
         mock_agent.tools = []
 
         # Mock domain registry
-        with patch("agent_kit.adapters.ontology_agent_adapter.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_agent_adapter.get_global_registry"
+        ) as mock_registry:
             mock_registry.return_value.get.return_value = MockDomainConfig()
 
             adapter = OntologyAgentAdapter(mock_agent, mock_ontology, "business")
@@ -88,13 +91,18 @@ class TestOntologyAgentAdapter:
         mock_agent.instructions = "Original instructions"
         mock_agent.tools = []
 
-        with patch("agent_kit.adapters.ontology_agent_adapter.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_agent_adapter.get_global_registry"
+        ) as mock_registry:
             mock_registry.return_value.get.return_value = MockDomainConfig()
 
             adapter = OntologyAgentAdapter(mock_agent, mock_ontology, "business")
 
             # Check instructions were enhanced
-            assert "Domain: business" in mock_agent.instructions or adapter.domain == "business"
+            assert (
+                "Domain: business" in mock_agent.instructions
+                or adapter.domain == "business"
+            )
 
     def test_entity_extraction(self, mock_ontology):
         """Test entity extraction from text."""
@@ -103,7 +111,9 @@ class TestOntologyAgentAdapter:
         mock_agent.instructions = "Test"
         mock_agent.tools = []
 
-        with patch("agent_kit.adapters.ontology_agent_adapter.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_agent_adapter.get_global_registry"
+        ) as mock_registry:
             mock_registry.return_value.get.return_value = MockDomainConfig()
 
             adapter = OntologyAgentAdapter(mock_agent, mock_ontology, "business")
@@ -119,7 +129,9 @@ class TestOntologyGuardrails:
     @pytest.mark.asyncio
     async def test_output_guardrail_valid_json(self):
         """Test output guardrail accepts valid JSON."""
-        with patch("agent_kit.adapters.ontology_guardrail.get_schema") as mock_get_schema:
+        with patch(
+            "agent_kit.adapters.ontology_guardrail.get_schema"
+        ) as mock_get_schema:
             # Mock schema that accepts any dict
             mock_schema = MagicMock()
             mock_schema.return_value = MagicMock()
@@ -147,7 +159,9 @@ class TestOntologyGuardrails:
     @pytest.mark.asyncio
     async def test_input_guardrail_passes_by_default(self):
         """Test input guardrail passes when no violations."""
-        with patch("agent_kit.adapters.ontology_guardrail.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_guardrail.get_global_registry"
+        ) as mock_registry:
             mock_registry.return_value.get.return_value = MockDomainConfig()
 
             guardrail = OntologyInputGuardrail("business")
@@ -162,7 +176,9 @@ class TestOntologyToolFilter:
 
     def test_filter_allows_domain_tools(self):
         """Test filter allows tools in domain allowlist."""
-        with patch("agent_kit.adapters.ontology_tool_filter.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_tool_filter.get_global_registry"
+        ) as mock_registry:
             mock_registry.return_value.get.return_value = MockDomainConfig()
 
             filter = OntologyToolFilter("business")
@@ -177,7 +193,9 @@ class TestOntologyToolFilter:
 
     def test_filter_blocks_unknown_tools(self):
         """Test filter blocks tools not in allowlist."""
-        with patch("agent_kit.adapters.ontology_tool_filter.get_global_registry") as mock_registry:
+        with patch(
+            "agent_kit.adapters.ontology_tool_filter.get_global_registry"
+        ) as mock_registry:
             mock_config = MockDomainConfig()
             mock_config.allowed_tools = ["tools.business.predict"]
             mock_registry.return_value.get.return_value = mock_config
@@ -447,10 +465,12 @@ class TestOntologySessionService:
     @pytest.mark.asyncio
     async def test_add_entity_to_session(self, mock_backend, mock_ontology):
         """Test adding entity to session."""
-        mock_backend.get_session = AsyncMock(return_value={
-            "id": "session_001",
-            "ontology_context": {"entities": [], "queries": [], "history": []},
-        })
+        mock_backend.get_session = AsyncMock(
+            return_value={
+                "id": "session_001",
+                "ontology_context": {"entities": [], "queries": [], "history": []},
+            }
+        )
 
         service = OntologySessionService(mock_backend, mock_ontology)
 
@@ -462,10 +482,12 @@ class TestOntologySessionService:
     @pytest.mark.asyncio
     async def test_add_query_to_session(self, mock_backend, mock_ontology):
         """Test adding SPARQL query to session."""
-        mock_backend.get_session = AsyncMock(return_value={
-            "id": "session_001",
-            "ontology_context": {"entities": [], "queries": [], "history": []},
-        })
+        mock_backend.get_session = AsyncMock(
+            return_value={
+                "id": "session_001",
+                "ontology_context": {"entities": [], "queries": [], "history": []},
+            }
+        )
 
         service = OntologySessionService(mock_backend, mock_ontology)
 
@@ -493,5 +515,3 @@ class TestUnifiedSDKIntegration:
         )
 
         assert agent.name == "TestAgent"
-
-

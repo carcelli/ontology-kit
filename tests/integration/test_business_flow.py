@@ -19,7 +19,6 @@ import pytest
 from agent_kit.agents.base import AgentTask
 from agent_kit.domains.registry import DomainRegistry
 from agent_kit.factories.agent_factory import AgentFactory
-from agent_kit.schemas import BusinessOptimizationResult
 
 
 class TestBusinessDomainGoldenFlow:
@@ -119,7 +118,7 @@ class TestBusinessDomainGoldenFlow:
         cfg = registry.get("business")
         max_horizon = cfg.risk_policies.get("max_forecast_horizon_days", 90)
 
-        orchestrator = factory.create_orchestrator("business")
+        factory.create_orchestrator("business")
 
         # Mock result with excessive horizon (simulate in orchestrator test)
         # This test would require mocking specialist results
@@ -233,9 +232,10 @@ class TestDomainRegistry:
 
     def test_registry_validates_required_fields(self):
         """Test: Registry raises on missing required fields."""
-        from agent_kit.domains.registry import DomainRegistry
-        from pathlib import Path
         import tempfile
+        from pathlib import Path
+
+        from agent_kit.domains.registry import DomainRegistry
 
         # Create temp registry with invalid config
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -326,4 +326,3 @@ def sample_intervention_data():
 # pytest tests/integration/test_business_flow.py -v
 # pytest tests/integration/test_business_flow.py -m integration  # Only integration tests
 # pytest tests/integration/test_business_flow.py -m "not slow"  # Skip slow tests
-

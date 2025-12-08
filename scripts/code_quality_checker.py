@@ -9,8 +9,6 @@ when building with AI assistance.
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
-import json
 
 
 class CodeQualityChecker:
@@ -21,7 +19,7 @@ class CodeQualityChecker:
         self.checks_passed = 0
         self.total_checks = 0
 
-    def run_check(self, name: str, command: str, cwd: Optional[Path] = None) -> bool:
+    def run_check(self, name: str, command: str, cwd: Path | None = None) -> bool:
         """Run a quality check and report results."""
         self.total_checks += 1
         print(f"\n🔍 {name}...")
@@ -37,11 +35,11 @@ class CodeQualityChecker:
             )
 
             if result.returncode == 0:
-                print(f"   ✅ PASSED")
+                print("   ✅ PASSED")
                 self.checks_passed += 1
                 return True
             else:
-                print(f"   ❌ FAILED")
+                print("   ❌ FAILED")
                 if result.stdout:
                     print(f"   STDOUT: {result.stdout[:500]}...")
                 if result.stderr:
@@ -49,7 +47,7 @@ class CodeQualityChecker:
                 return False
 
         except subprocess.TimeoutExpired:
-            print(f"   ⏰ TIMEOUT (5min limit)")
+            print("   ⏰ TIMEOUT (5min limit)")
             return False
         except Exception as e:
             print(f"   💥 ERROR: {e}")
@@ -82,7 +80,10 @@ class CodeQualityChecker:
 
         # Check if dependencies are installed
         try:
-            import ruff, black, mypy, pytest
+            import black
+            import mypy
+            import pytest
+            import ruff
             deps_installed = True
         except ImportError:
             print("⚠️  Quality tools not installed. Run: pip install -e .[dev]")
@@ -140,7 +141,7 @@ class CodeQualityChecker:
 
         return all_passed
 
-    def learning_verification_questions(self) -> Dict[str, str]:
+    def learning_verification_questions(self) -> dict[str, str]:
         """Questions to verify understanding of the codebase."""
         return {
             "architecture": "What are the three main layers of Agent Kit?",
@@ -150,7 +151,7 @@ class CodeQualityChecker:
             "testing": "What makes a good unit test for an agent?",
         }
 
-    def run_full_check(self) -> Dict[str, any]:
+    def run_full_check(self) -> dict[str, any]:
         """Run complete quality assurance suite."""
         print("🚀 Agent Kit - Code Quality Assurance")
         print("Building with AI: Quality Verification Suite")

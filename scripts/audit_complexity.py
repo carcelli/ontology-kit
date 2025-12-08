@@ -6,17 +6,15 @@ Run this to see where you're creating agents outside the Factory pattern.
 """
 
 import ast
-import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 
 class AgentCreationAuditor(ast.NodeVisitor):
     """AST visitor to find agent instantiations."""
 
     def __init__(self):
-        self.creations: List[Tuple[str, int, str]] = []  # (file, line, pattern)
-        self.imports: Dict[str, List[str]] = {}  # file -> [imports]
+        self.creations: list[tuple[str, int, str]] = []  # (file, line, pattern)
+        self.imports: dict[str, list[str]] = {}  # file -> [imports]
 
     def visit_Import(self, node):
         """Track imports."""
@@ -64,18 +62,18 @@ class AgentCreationAuditor(ast.NodeVisitor):
                     ))
 
 
-def audit_file(file_path: Path) -> Dict:
+def audit_file(file_path: Path) -> dict:
     """Audit a single Python file."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
         tree = ast.parse(content, filename=str(file_path))
         auditor = AgentCreationAuditor()
-        
+
         # Add file path to nodes for tracking
         for node in ast.walk(tree):
             node.file = str(file_path)
-        
+
         auditor.visit(tree)
         return {
             "creations": auditor.creations,
@@ -90,15 +88,15 @@ def main():
     project_root = Path(__file__).parent.parent
     src_dir = project_root / "src" / "agent_kit"
     examples_dir = project_root / "examples"
-    
+
     print("=" * 70)
     print("Agent System Complexity Audit")
     print("=" * 70)
     print()
-    
+
     all_creations = []
     all_imports = {}
-    
+
     # Audit source files
     print("📁 Auditing source files...")
     for py_file in src_dir.rglob("*.py"):
@@ -109,7 +107,7 @@ def main():
             all_creations.extend(result["creations"])
             if result["imports"]:
                 all_imports[str(py_file)] = result["imports"]
-    
+
     # Audit examples
     print("📁 Auditing examples...")
     for py_file in examples_dir.rglob("*.py"):
@@ -120,37 +118,37 @@ def main():
             all_creations.extend(result["creations"])
             if result["imports"]:
                 all_imports[str(py_file)] = result["imports"]
-    
+
     # Analyze patterns
     print()
     print("=" * 70)
     print("Creation Pattern Analysis")
     print("=" * 70)
     print()
-    
+
     factory_count = sum(1 for _, _, p in all_creations if "Factory" in p)
     direct_count = sum(1 for _, _, p in all_creations if "Direct" in p)
     builder_count = sum(1 for _, _, p in all_creations if "Builder" in p)
-    
+
     print(f"✅ Factory pattern: {factory_count}")
     print(f"⚠️  Direct instantiation: {direct_count}")
     print(f"⚠️  Builder pattern: {builder_count}")
     print()
-    
+
     if direct_count > 0:
         print("🔴 Direct instantiations found (should use Factory):")
         for file, line, pattern in all_creations:
             if "Direct" in pattern:
                 print(f"   {file}:{line} - {pattern}")
         print()
-    
+
     if builder_count > 0:
         print("🟡 Builder pattern found (consider migrating to Factory):")
         for file, line, pattern in all_creations:
             if "Builder" in pattern:
                 print(f"   {file}:{line} - {pattern}")
         print()
-    
+
     # Complexity score
     total = factory_count + direct_count + builder_count
     if total == 0:
@@ -159,14 +157,14 @@ def main():
         factory_ratio = factory_count / total if total > 0 else 0
         complexity_score = 10 - (factory_ratio * 5) - (direct_count * 2) - (builder_count * 1)
         complexity_score = max(0, min(10, complexity_score))
-        
+
         print("=" * 70)
         print("Complexity Score")
         print("=" * 70)
         print(f"Factory usage: {factory_ratio:.1%}")
         print(f"Complexity score: {complexity_score:.1f}/10")
         print()
-        
+
         if complexity_score < 5:
             print("🔴 High complexity: Multiple creation patterns detected")
             print("   Recommendation: Consolidate to Factory pattern")
@@ -176,7 +174,7 @@ def main():
         else:
             print("✅ Low complexity: Mostly using Factory pattern")
             print("   Recommendation: Continue current approach")
-    
+
     print()
     print("=" * 70)
     print("Next Steps")

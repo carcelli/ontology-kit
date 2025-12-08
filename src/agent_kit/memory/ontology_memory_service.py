@@ -13,11 +13,9 @@ Wraps ADK memory backends when available, with fallback to in-memory storage.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from agent_kit.ontology.loader import OntologyLoader
@@ -26,7 +24,10 @@ logger = logging.getLogger(__name__)
 
 # Try to import ADK memory services
 try:
-    from google.adk.memory.base_memory_service import BaseMemoryService  # type: ignore[import-not-found]
+    from google.adk.memory.base_memory_service import (
+        BaseMemoryService,  # type: ignore[import-not-found]
+    )
+
     ADK_MEMORY_AVAILABLE = True
 except ImportError:
     ADK_MEMORY_AVAILABLE = False
@@ -169,14 +170,14 @@ class InMemoryBackend:
         Returns:
             Memories containing any of the specified entities
         """
-        entity_set = set(e.lower() for e in entities)
+        entity_set = {e.lower() for e in entities}
         results = []
 
         for entry in self._memories.values():
             if entry.user_id != user_id:
                 continue
 
-            entry_entities = set(e.lower() for e in entry.entities)
+            entry_entities = {e.lower() for e in entry.entities}
             overlap = entity_set & entry_entities
             if overlap:
                 results.append((entry, len(overlap)))
@@ -335,25 +336,35 @@ class OntologyMemoryService:
         for entry in text_results:
             if entry.id not in seen_ids:
                 seen_ids.add(entry.id)
-                matched = [e for e in entry.entities if e.lower() in
-                          [qe.lower() for qe in query_entities]]
-                results.append(SearchResult(
-                    entry=entry,
-                    score=0.8 + 0.1 * len(matched),
-                    matched_entities=matched,
-                ))
+                matched = [
+                    e
+                    for e in entry.entities
+                    if e.lower() in [qe.lower() for qe in query_entities]
+                ]
+                results.append(
+                    SearchResult(
+                        entry=entry,
+                        score=0.8 + 0.1 * len(matched),
+                        matched_entities=matched,
+                    )
+                )
 
         # Entity results get lower base score
         for entry in entity_results:
             if entry.id not in seen_ids:
                 seen_ids.add(entry.id)
-                matched = [e for e in entry.entities if e.lower() in
-                          [qe.lower() for qe in expanded_entities]]
-                results.append(SearchResult(
-                    entry=entry,
-                    score=0.5 + 0.1 * len(matched),
-                    matched_entities=matched,
-                ))
+                matched = [
+                    e
+                    for e in entry.entities
+                    if e.lower() in [qe.lower() for qe in expanded_entities]
+                ]
+                results.append(
+                    SearchResult(
+                        entry=entry,
+                        score=0.5 + 0.1 * len(matched),
+                        matched_entities=matched,
+                    )
+                )
 
         # Sort by score
         results.sort(key=lambda r: r.score, reverse=True)
@@ -457,7 +468,7 @@ class OntologyMemoryService:
             query = f"""
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX owl: <http://www.w3.org/2002/07/owl#>
-            
+
             SELECT DISTINCT ?relatedLabel WHERE {{
                 ?entity rdfs:label "{entity}" .
                 {{
@@ -496,5 +507,3 @@ class OntologyMemoryService:
         # Add entity terms to query
         entity_terms = " ".join(entities[:5])  # Limit to prevent query explosion
         return f"{original} {entity_terms}"
-
-

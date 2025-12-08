@@ -24,7 +24,7 @@ def test_business_creation() -> None:
         industry="Bakery",
         location="Milwaukee, WI",
         annual_revenue=500000.0,
-        employee_count=10
+        employee_count=10,
     )
 
     assert biz.id == "biz_001"
@@ -41,7 +41,7 @@ def test_business_location_validation() -> None:
             industry="Bakery",
             location="InvalidLocation",  # Missing comma
             annual_revenue=500000.0,
-            employee_count=10
+            employee_count=10,
         )
 
 
@@ -54,7 +54,7 @@ def test_business_revenue_validation() -> None:
             industry="Bakery",
             location="Milwaukee, WI",
             annual_revenue=-1000.0,  # Negative
-            employee_count=10
+            employee_count=10,
         )
 
 
@@ -65,7 +65,7 @@ def test_client_creation() -> None:
         name="Restaurant Partner",
         lifetime_value=125000.0,
         acquisition_date=date(2024, 3, 15),
-        segment="wholesale"
+        segment="wholesale",
     )
 
     assert client.lifetime_value == 125000.0
@@ -79,7 +79,7 @@ def test_revenue_stream_creation() -> None:
         amount=32000.0,
         period="Q1 2025",
         forecast_confidence=0.87,
-        client_id="client_001"
+        client_id="client_001",
     )
 
     assert revenue.amount == 32000.0
@@ -94,7 +94,7 @@ def test_timeseries_validation() -> None:
             data_points=[10.0],  # Only 1 point
             frequency="monthly",
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 12, 31)
+            end_date=date(2024, 12, 31),
         )
 
 
@@ -105,7 +105,7 @@ def test_timeseries_valid() -> None:
         data_points=[10.0, 12.0, 15.0, 14.0],
         frequency="monthly",
         start_date=date(2024, 1, 1),
-        end_date=date(2024, 4, 30)
+        end_date=date(2024, 4, 30),
     )
 
     assert len(ts.data_points) == 4
@@ -117,7 +117,7 @@ def test_forecast_model_accuracy() -> None:
         id="model_001",
         model_type="ARIMA",
         accuracy_score=0.89,
-        last_trained=date(2025, 1, 1)
+        last_trained=date(2025, 1, 1),
     )
 
     assert 0 <= model.accuracy_score <= 1
@@ -131,7 +131,7 @@ def test_outreach_campaign_conversion_rate() -> None:
         channel="email",
         budget=5000.0,
         start_date=date(2025, 3, 1),
-        conversion_rate=0.12
+        conversion_rate=0.12,
     )
 
     assert 0 <= campaign.conversion_rate <= 1
@@ -145,7 +145,7 @@ def test_leverage_point_roi() -> None:
         expected_impact=1.25,
         cost=500.0,
         priority=1,
-        affects_business_id="biz_001"
+        affects_business_id="biz_001",
     )
 
     # ROI includes small epsilon (1e-6) to avoid division by zero
@@ -162,7 +162,7 @@ def test_leverage_point_zero_cost() -> None:
         expected_impact=2.0,
         cost=0.0,
         priority=1,
-        affects_business_id="biz_001"
+        affects_business_id="biz_001",
     )
 
     # Should not divide by zero (adds 1e-6 in property)
@@ -175,7 +175,7 @@ def test_insight_to_natural_language() -> None:
         id="insight_001",
         text="High-value clients respond better to morning emails",
         confidence=0.91,
-        generated_at=date(2025, 11, 9)
+        generated_at=date(2025, 11, 9),
     )
 
     output = insight.to_natural_language()
@@ -189,8 +189,7 @@ def test_insight_confidence_bounds() -> None:
         id="insight_001",
         text="Test insight",
         confidence=0.5,
-        generated_at=date(2025, 1, 1)
+        generated_at=date(2025, 1, 1),
     )
 
     assert 0 <= insight.confidence <= 1
-

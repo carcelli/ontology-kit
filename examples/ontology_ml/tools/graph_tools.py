@@ -3,10 +3,9 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+from agents import function_tool
 from pyshacl import validate
 from rdflib import OWL, RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
-
-from agents import function_tool
 
 EX = Namespace('http://example.org/retail#')
 

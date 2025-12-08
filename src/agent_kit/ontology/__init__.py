@@ -9,9 +9,9 @@ from agent_kit.ontology.repository_schema import (
 )
 
 __all__ = [
-    'OntologyLoader',
-    'RepoEntity',
-    'RepoEntityType',
-    'RepositoryOntology',
-    'RepositoryOntologyBuilder',
+    "OntologyLoader",
+    "RepoEntity",
+    "RepoEntityType",
+    "RepositoryOntology",
+    "RepositoryOntologyBuilder",
 ]

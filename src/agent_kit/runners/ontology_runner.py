@@ -17,12 +17,13 @@ import asyncio
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from agent_kit.adapters import OntologyAgentAdapter, OntologyOutputGuardrail
+from agent_kit.adapters import OntologyAgentAdapter
 from agent_kit.events import OntologyEvent, OntologyEventLogger
 from agent_kit.memory import OntologyMemoryService
 from agent_kit.ontology.loader import OntologyLoader
@@ -32,7 +33,9 @@ logger = logging.getLogger(__name__)
 
 # Try to import OpenAI SDK
 try:
-    from agents import Agent, Runner as OpenAIRunner
+    from agents import Agent
+    from agents import Runner as OpenAIRunner
+
     OPENAI_SDK_AVAILABLE = True
 except ImportError:
     OPENAI_SDK_AVAILABLE = False
@@ -42,6 +45,7 @@ except ImportError:
 # Try to import ADK
 try:
     from google.adk.runners import Runner as ADKRunner  # type: ignore[import-not-found]
+
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
@@ -50,6 +54,7 @@ except ImportError:
 
 class RunConfig(BaseModel):
     """Configuration for runner execution."""
+
     model_config = {"extra": "forbid"}
 
     # Session configuration
@@ -59,7 +64,9 @@ class RunConfig(BaseModel):
     user_id: str = Field(default="default", description="User identifier")
 
     # Execution configuration
-    max_turns: int = Field(default=10, ge=1, le=100, description="Max conversation turns")
+    max_turns: int = Field(
+        default=10, ge=1, le=100, description="Max conversation turns"
+    )
     timeout_seconds: float = Field(default=300.0, gt=0, description="Execution timeout")
 
     # Ontology configuration
@@ -69,7 +76,9 @@ class RunConfig(BaseModel):
 
     # Guardrail configuration
     validate_output: bool = Field(default=True, description="Validate against schema")
-    max_retries: int = Field(default=3, ge=0, description="Retries on validation failure")
+    max_retries: int = Field(
+        default=3, ge=0, description="Retries on validation failure"
+    )
 
     # Streaming configuration
     stream: bool = Field(default=False, description="Enable streaming responses")
@@ -165,9 +174,6 @@ class OntologyRunner:
             self.session_service = session_service
         else:
             # Create simple in-memory session backend
-            from agent_kit.sessions.ontology_session_service import (
-                OntologySessionService,
-            )
             self.session_service = None  # Will use simple dict
 
         self._sessions: dict[str, dict[str, Any]] = {}
@@ -205,7 +211,7 @@ class OntologyRunner:
 
         try:
             # Get or create session
-            session = await self._get_session(session_id, config.user_id)
+            await self._get_session(session_id, config.user_id)
 
             # Execute agent
             if isinstance(agent, OntologyAgentAdapter):
@@ -224,7 +230,7 @@ class OntologyRunner:
                 structured = None
 
             # Create event
-            event = self.event_logger.create_event(
+            self.event_logger.create_event(
                 agent_name=getattr(sdk_agent, "name", "Agent"),
                 task=input,
                 result={"summary": output},
@@ -383,9 +389,7 @@ class OntologyRunner:
             logger.error(f"Streaming failed: {e}")
             yield f"Error: {e}"
 
-    async def _get_session(
-        self, session_id: str, user_id: str
-    ) -> dict[str, Any]:
+    async def _get_session(self, session_id: str, user_id: str) -> dict[str, Any]:
         """Get or create session."""
         if session_id not in self._sessions:
             self._sessions[session_id] = {
@@ -404,9 +408,11 @@ class OntologyRunner:
         """Validate output against domain schema."""
         try:
             import json
+
             output_dict = json.loads(output)
 
             from agent_kit.schemas import get_schema
+
             schema_name = f"{domain.capitalize()}OptimizationResult"
             if domain == "betting":
                 schema_name = "BettingRecommendation"
@@ -444,5 +450,3 @@ class OntologyRunner:
     def get_session_history(self, session_id: str) -> list[OntologyEvent]:
         """Get event history for a session."""
         return self.event_logger.get_events(session_id)
-
-

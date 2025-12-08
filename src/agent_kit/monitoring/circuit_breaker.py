@@ -6,11 +6,13 @@ Automatically halts trading when:
 - Error rate too high
 - Sharpe ratio drops below minimum
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import Enum
+from functools import wraps
 from typing import Any
 
 from pydantic import BaseModel  # pyright: ignore[reportMissingImports]
@@ -18,6 +20,7 @@ from pydantic import BaseModel  # pyright: ignore[reportMissingImports]
 
 class CircuitState(str, Enum):
     """Circuit breaker states."""
+
     CLOSED = "CLOSED"  # Normal operation
     OPEN = "OPEN"  # Trading halted
     HALF_OPEN = "HALF_OPEN"  # Testing recovery
@@ -25,6 +28,7 @@ class CircuitState(str, Enum):
 
 class CircuitBreakerConfig(BaseModel):
     """Configuration for circuit breaker."""
+
     max_drawdown: float = 0.15  # 15% max drawdown
     min_sharpe_ratio: float = 0.5  # Minimum Sharpe
     error_rate_threshold: float = 0.05  # 5% error rate
@@ -34,6 +38,7 @@ class CircuitBreakerConfig(BaseModel):
 
 class CircuitBreakerEvent(BaseModel):
     """Event logged when circuit breaker triggers."""
+
     timestamp: datetime
     event_type: str  # "OPENED", "CLOSED", "HALF_OPENED"
     reason: str
@@ -69,7 +74,9 @@ class CircuitBreaker:
 
         # State tracking
         self.errors: list[datetime] = []
-        self.successes: list[datetime] = []  # Track successes for error rate calculation
+        self.successes: list[
+            datetime
+        ] = []  # Track successes for error rate calculation
         self.peak_portfolio_value = 0.0
         self.current_portfolio_value = 0.0
         self.current_sharpe_ratio = 0.0
@@ -95,7 +102,9 @@ class CircuitBreaker:
         if self.state == CircuitState.OPEN:
             self._check_recovery()
             if self.state == CircuitState.OPEN:
-                raise Exception(f"Circuit breaker OPEN - trading halted. Last event: {self.events[-1].reason}")
+                raise Exception(
+                    f"Circuit breaker OPEN - trading halted. Last event: {self.events[-1].reason}"
+                )
 
         try:
             result = func(*args, **kwargs)
@@ -123,7 +132,7 @@ class CircuitBreaker:
             if drawdown >= self.config.max_drawdown:
                 self._open_circuit(
                     reason=f"Drawdown {drawdown:.2%} >= max {self.config.max_drawdown:.2%}",
-                    metrics={"drawdown": drawdown, "portfolio_value": value}
+                    metrics={"drawdown": drawdown, "portfolio_value": value},
                 )
 
     def update_sharpe_ratio(self, sharpe: float):
@@ -138,7 +147,7 @@ class CircuitBreaker:
         if sharpe < self.config.min_sharpe_ratio:
             self._open_circuit(
                 reason=f"Sharpe ratio {sharpe:.2f} < min {self.config.min_sharpe_ratio:.2f}",
-                metrics={"sharpe_ratio": sharpe}
+                metrics={"sharpe_ratio": sharpe},
             )
 
     def _record_error(self):
@@ -158,17 +167,21 @@ class CircuitBreaker:
             if error_rate >= self.config.error_rate_threshold:
                 self._open_circuit(
                     reason=f"Error rate {error_rate:.2%} >= threshold {self.config.error_rate_threshold:.2%}",
-                    metrics={"error_count": len(self.errors), "total_calls": total_calls, "error_rate": error_rate}
+                    metrics={
+                        "error_count": len(self.errors),
+                        "total_calls": total_calls,
+                        "error_rate": error_rate,
+                    },
                 )
 
     def _record_success(self):
         """Record successful execution."""
         self.successes.append(datetime.now())
-        
+
         # Remove old successes outside check window
         cutoff = datetime.now() - timedelta(minutes=self.config.check_window_minutes)
         self.successes = [e for e in self.successes if e > cutoff]
-        
+
         if self.state == CircuitState.HALF_OPEN:
             # Success in HALF_OPEN state -> close circuit
             self._close_circuit()
@@ -183,7 +196,7 @@ class CircuitBreaker:
                 timestamp=datetime.now(),
                 event_type="OPENED",
                 reason=reason,
-                metrics=metrics
+                metrics=metrics,
             )
             self.events.append(event)
 
@@ -198,7 +211,7 @@ class CircuitBreaker:
             timestamp=datetime.now(),
             event_type="CLOSED",
             reason="Recovered - successful execution",
-            metrics={}
+            metrics={},
         )
         self.events.append(event)
 
@@ -218,7 +231,7 @@ class CircuitBreaker:
                     timestamp=datetime.now(),
                     event_type="HALF_OPENED",
                     reason="Recovery timeout reached - attempting test execution",
-                    metrics={}
+                    metrics={},
                 )
                 self.events.append(event)
 
@@ -256,15 +269,17 @@ class CircuitBreaker:
             "sharpe_ratio": self.current_sharpe_ratio,
             "recent_errors": len(self.errors),
             "recent_successes": len(self.successes),
-            "last_state_change": self.last_state_change.isoformat() if self.last_state_change else None,
+            "last_state_change": self.last_state_change.isoformat()
+            if self.last_state_change
+            else None,
             "recent_events": [
                 {
                     "timestamp": e.timestamp.isoformat(),
                     "type": e.event_type,
-                    "reason": e.reason
+                    "reason": e.reason,
                 }
                 for e in self.events[-5:]  # Last 5 events
-            ]
+            ],
         }
 
     def manual_reset(self):
@@ -277,7 +292,7 @@ class CircuitBreaker:
             timestamp=datetime.now(),
             event_type="CLOSED",
             reason="Manual reset by operator",
-            metrics={}
+            metrics={},
         )
         self.events.append(event)
         print("⚠️  Circuit breaker manually reset")
@@ -288,7 +303,9 @@ class CircuitBreaker:
 _circuit_breakers: dict[str, CircuitBreaker] = {}
 
 
-def get_circuit_breaker(agent_name: str, config: CircuitBreakerConfig | None = None) -> CircuitBreaker:
+def get_circuit_breaker(
+    agent_name: str, config: CircuitBreakerConfig | None = None
+) -> CircuitBreaker:
     """
     Get or create circuit breaker for agent.
 
@@ -308,13 +325,9 @@ def get_circuit_breaker(agent_name: str, config: CircuitBreakerConfig | None = N
 # Decorator for Functional Composition (Apply circuit breaker to any function)
 # ============================================================================
 
-from functools import wraps
-
 
 def with_circuit_breaker(
-    max_failures: int = 3,
-    reset_timeout: int = 60,
-    failure_threshold: float = 0.5
+    max_failures: int = 3, reset_timeout: int = 60, failure_threshold: float = 0.5
 ):
     """
     Decorator to apply circuit breaker pattern to any function.
@@ -340,6 +353,7 @@ def with_circuit_breaker(
         - Release It! by Michael Nygard (Circuit Breaker pattern)
         - Python decorators: PEP 318
     """
+
     def decorator(func: Callable) -> Callable:
         # Nonlocal state for circuit breaker (closure pattern)
         state: dict[str, Any] = {
@@ -355,12 +369,16 @@ def with_circuit_breaker(
             if state["is_open"]:
                 # Check if timeout elapsed
                 if state["last_failure_time"]:
-                    elapsed = (datetime.now() - state["last_failure_time"]).total_seconds()
+                    elapsed = (
+                        datetime.now() - state["last_failure_time"]
+                    ).total_seconds()
                     if elapsed >= reset_timeout:
                         # Try half-open state
                         state["is_open"] = False
                         state["failures"] = 0  # Reset
-                        print(f"🔄 Circuit breaker HALF-OPEN for {func.__name__} - testing recovery")
+                        print(
+                            f"🔄 Circuit breaker HALF-OPEN for {func.__name__} - testing recovery"
+                        )
                     else:
                         raise Exception(
                             f"Circuit breaker OPEN for {func.__name__}. "
@@ -398,4 +416,3 @@ def with_circuit_breaker(
         return wrapper
 
     return decorator
-

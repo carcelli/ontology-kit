@@ -16,19 +16,19 @@ This module provides:
 - Evaluators: LLM-as-judge, rubric-based, trajectory
 """
 
-from .ontology_evaluator import (
-    EvalCase,
-    EvalMetrics,
-    EvalResult,
-    EvalSet,
-    OntologyEvaluator,
-)
 from .evaluators import (
     BaseEvaluator,
     ExactMatchEvaluator,
     LLMJudgeEvaluator,
     OntologyComplianceEvaluator,
     RubricEvaluator,
+)
+from .ontology_evaluator import (
+    EvalCase,
+    EvalMetrics,
+    EvalResult,
+    EvalSet,
+    OntologyEvaluator,
 )
 
 __all__ = [
@@ -45,4 +45,3 @@ __all__ = [
     "RubricEvaluator",
     "OntologyComplianceEvaluator",
 ]
-

@@ -129,9 +129,10 @@ class OpenAISDKAdapter:
         try:
             results = self.ontology_loader.query(sparql_query)
             if results:
-                business_context = '\n'.join([f"- {r['name']}" for r in results])
+                business_context = "\n".join([f"- {r['name']}" for r in results])
                 enriched = (
-                    f"Ontology Context (Available Businesses):\n{business_context}\n\n" f"Task: {task_description}"
+                    f"Ontology Context (Available Businesses):\n{business_context}\n\n"
+                    f"Task: {task_description}"
                 )
                 return enriched
         except Exception:
@@ -179,19 +180,23 @@ class OpenAISDKAdapter:
         """
         # Extract output from SDK result
         # SDK result structure: RunResult with .final_output, .output, .context_wrapper
-        final_output = getattr(sdk_result, 'final_output', str(sdk_result))
+        final_output = getattr(sdk_result, "final_output", str(sdk_result))
 
         # Create observation (stub for now)
-        observation = AgentObservation(data={'sdk_output': final_output}, notes=['SDK execution completed'])
+        observation = AgentObservation(
+            data={"sdk_output": final_output}, notes=["SDK execution completed"]
+        )
 
         # Create plan (stub)
-        plan = AgentPlan(steps=['Execute via OpenAI SDK'], metadata={'model': self.sdk_agent.model})
+        plan = AgentPlan(
+            steps=["Execute via OpenAI SDK"], metadata={"model": self.sdk_agent.model}
+        )
 
         # Create action result
         action_result = AgentActionResult(
             summary=final_output,
-            artifacts={'sdk_result': sdk_result},
-            log=['Executed via OpenAI SDK adapter'],
+            artifacts={"sdk_result": sdk_result},
+            log=["Executed via OpenAI SDK adapter"],
         )
 
         # Reflections
@@ -201,7 +206,11 @@ class OpenAISDKAdapter:
         ]
 
         return AgentResult(
-            task=task, observation=observation, plan=plan, action_result=action_result, reflections=reflections
+            task=task,
+            observation=observation,
+            plan=plan,
+            action_result=action_result,
+            reflections=reflections,
         )
 
     def describe(self) -> str:
@@ -213,4 +222,3 @@ class OpenAISDKAdapter:
             f"  Ontology: {self.ontology_loader.path}\n"
             f"  Enrichment: {'Enabled' if self.enrich_instructions else 'Disabled'}"
         )
-

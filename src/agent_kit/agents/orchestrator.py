@@ -17,13 +17,13 @@ References:
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
-from agent_kit.agents.base import BaseAgent, AgentTask, AgentResult
+from agent_kit.agents.base import AgentResult, AgentTask, BaseAgent
 from agent_kit.ontology.loader import OntologyLoader
-from agent_kit.schemas import get_schema, SCHEMA_REGISTRY
+from agent_kit.schemas import get_schema
 
 if TYPE_CHECKING:
     from agent_kit.agents.base import GrokConfig
@@ -52,7 +52,7 @@ class OntologyOrchestratorAgent(BaseAgent):
         risk_policies: dict[str, Any],
         output_schema: str | None = None,
         grok_config: GrokConfig | None = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize orchestrator with injected specialists and policies.
@@ -76,9 +76,7 @@ class OntologyOrchestratorAgent(BaseAgent):
         self.grok_config = grok_config
 
         # Build specialist name map for routing
-        self.specialist_map = {
-            agent.__class__.__name__: agent for agent in specialists
-        }
+        self.specialist_map = {agent.__class__.__name__: agent for agent in specialists}
 
         super().__init__(name=f"{domain.capitalize()}Orchestrator", **kwargs)
 
@@ -111,16 +109,19 @@ class OntologyOrchestratorAgent(BaseAgent):
         for specialist_name in specialist_names:
             if specialist_name not in self.specialist_map:
                 import warnings
-                warnings.warn(f"Specialist '{specialist_name}' not found, skipping")
+
+                warnings.warn(
+                    f"Specialist '{specialist_name}' not found, skipping",
+                    stacklevel=2,
+                )
                 continue
 
             specialist = self.specialist_map[specialist_name]
             specialist_task = AgentTask(prompt=goal)
             specialist_result = specialist.run(specialist_task)
-            results.append({
-                "specialist": specialist_name,
-                "result": specialist_result.result
-            })
+            results.append(
+                {"specialist": specialist_name, "result": specialist_result.result}
+            )
 
         # Step 4: Aggregate results
         aggregated = self._aggregate_results(goal, results)
@@ -154,7 +155,11 @@ class OntologyOrchestratorAgent(BaseAgent):
         # Business domain routing
         if "forecast" in goal_lower or "predict" in goal_lower:
             specialists.append("ForecastAgent")
-        if "optimize" in goal_lower or "improve" in goal_lower or "recommend" in goal_lower:
+        if (
+            "optimize" in goal_lower
+            or "improve" in goal_lower
+            or "recommend" in goal_lower
+        ):
             specialists.append("OptimizerAgent")
 
         # Trading domain routing
@@ -227,7 +232,9 @@ class OntologyOrchestratorAgent(BaseAgent):
             portfolio_metrics = result.get("portfolio_metrics", {})
             if isinstance(portfolio_metrics, dict):
                 max_drawdown = portfolio_metrics.get("current_drawdown", 0.0)
-                max_dd_threshold = self.risk_policies.get("max_drawdown_threshold", 0.15)
+                max_dd_threshold = self.risk_policies.get(
+                    "max_drawdown_threshold", 0.15
+                )
                 if max_drawdown > max_dd_threshold:
                     raise ValueError(
                         f"Policy violation: Current drawdown ({max_drawdown:.2%}) "
@@ -252,8 +259,8 @@ class OntologyOrchestratorAgent(BaseAgent):
             "summary": self._generate_summary(results),
             "metadata": {
                 "num_specialists": len(results),
-                "specialist_names": [r["specialist"] for r in results]
-            }
+                "specialist_names": [r["specialist"] for r in results],
+            },
         }
 
         # Extract domain-specific fields
@@ -311,16 +318,20 @@ class OntologyOrchestratorAgent(BaseAgent):
             return validated_model.model_dump()  # Return as dict
         except (ValueError, KeyError) as e:
             import warnings
+
             warnings.warn(
                 f"Schema '{self.output_schema_name}' not found or invalid: {e}. "
-                f"Returning unvalidated result."
+                f"Returning unvalidated result.",
+                stacklevel=2,
             )
             return aggregated
         except ValidationError as e:
             # Log validation errors but return result (fail gracefully)
             import warnings
+
             warnings.warn(
                 f"Validation failed for schema '{self.output_schema_name}': {e}. "
-                f"Returning unvalidated result."
+                f"Returning unvalidated result.",
+                stacklevel=2,
             )
             return aggregated

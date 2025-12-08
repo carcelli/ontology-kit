@@ -82,7 +82,8 @@ class InMemorySessionBackend:
         """List session IDs."""
         if user_id:
             return [
-                sid for sid, data in self._sessions.items()
+                sid
+                for sid, data in self._sessions.items()
                 if data.get("user_id") == user_id
             ]
         return list(self._sessions.keys())
@@ -122,18 +123,18 @@ class SqliteSessionBackend:
                 )
             """)
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_sessions_user 
+                CREATE INDEX IF NOT EXISTS idx_sessions_user
                 ON sessions(user_id)
             """)
             conn.commit()
 
     async def get_session(self, session_id: str) -> dict[str, Any]:
         """Get or create session."""
+
         def _get() -> dict[str, Any]:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute(
-                    "SELECT data FROM sessions WHERE session_id = ?",
-                    (session_id,)
+                    "SELECT data FROM sessions WHERE session_id = ?", (session_id,)
                 )
                 row = cursor.fetchone()
                 if row:
@@ -151,7 +152,7 @@ class SqliteSessionBackend:
                 conn.execute(
                     """INSERT INTO sessions (session_id, user_id, data, created_at, updated_at)
                        VALUES (?, ?, ?, ?, ?)""",
-                    (session_id, None, json.dumps(session), now, now)
+                    (session_id, None, json.dumps(session), now, now),
                 )
                 conn.commit()
                 return session
@@ -160,6 +161,7 @@ class SqliteSessionBackend:
 
     async def save_session(self, session_id: str, session_data: dict[str, Any]) -> None:
         """Save session."""
+
         def _save() -> None:
             now = time.time()
             session_data["updated_at"] = now
@@ -167,14 +169,20 @@ class SqliteSessionBackend:
 
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
-                    """INSERT OR REPLACE INTO sessions 
+                    """INSERT OR REPLACE INTO sessions
                        (session_id, user_id, data, created_at, updated_at)
                        VALUES (?, ?, ?, COALESCE(
                            (SELECT created_at FROM sessions WHERE session_id = ?),
                            ?
                        ), ?)""",
-                    (session_id, user_id, json.dumps(session_data),
-                     session_id, now, now)
+                    (
+                        session_id,
+                        user_id,
+                        json.dumps(session_data),
+                        session_id,
+                        now,
+                        now,
+                    ),
                 )
                 conn.commit()
 
@@ -182,11 +190,11 @@ class SqliteSessionBackend:
 
     async def delete_session(self, session_id: str) -> bool:
         """Delete session."""
+
         def _delete() -> bool:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute(
-                    "DELETE FROM sessions WHERE session_id = ?",
-                    (session_id,)
+                    "DELETE FROM sessions WHERE session_id = ?", (session_id,)
                 )
                 conn.commit()
                 return cursor.rowcount > 0
@@ -195,12 +203,12 @@ class SqliteSessionBackend:
 
     async def list_sessions(self, user_id: str | None = None) -> list[str]:
         """List session IDs."""
+
         def _list() -> list[str]:
             with sqlite3.connect(self.db_path) as conn:
                 if user_id:
                     cursor = conn.execute(
-                        "SELECT session_id FROM sessions WHERE user_id = ?",
-                        (user_id,)
+                        "SELECT session_id FROM sessions WHERE user_id = ?", (user_id,)
                     )
                 else:
                     cursor = conn.execute("SELECT session_id FROM sessions")
@@ -251,8 +259,7 @@ class ADKSessionBackendAdapter:
         """Save to ADK backend (via event appending)."""
         # ADK sessions are event-append only
         # This is a simplified adapter
-        logger.warning(
-            "ADK sessions don't support full save; use append_event instead")
+        logger.warning("ADK sessions don't support full save; use append_event instead")
 
     async def delete_session(self, session_id: str) -> bool:
         """Delete from ADK backend."""

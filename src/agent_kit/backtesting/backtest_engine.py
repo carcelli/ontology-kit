@@ -7,6 +7,7 @@ Test agent strategies on historical data and calculate:
 - Risk metrics (max drawdown, VaR)
 - Business viability (break-even analysis)
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -19,6 +20,7 @@ from pydantic import BaseModel
 
 class Trade(BaseModel):
     """Single trade executed during backtest."""
+
     timestamp: datetime
     ticker: str
     side: str  # "buy" or "sell"
@@ -29,7 +31,12 @@ class Trade(BaseModel):
     pnl: float = 0.0  # Profit/loss
     commission: float = 0.0
 
-    def close_trade(self, exit_price: float, exit_timestamp: datetime, commission_rate: float = 0.001):
+    def close_trade(
+        self,
+        exit_price: float,
+        exit_timestamp: datetime,
+        commission_rate: float = 0.001,
+    ):
         """Close the trade and calculate P&L."""
         self.exit_price = exit_price
         self.exit_timestamp = exit_timestamp
@@ -41,13 +48,16 @@ class Trade(BaseModel):
             raw_pnl = (self.entry_price - exit_price) * self.quantity
 
         # Deduct commissions
-        self.commission = (self.entry_price + exit_price) * self.quantity * commission_rate
+        self.commission = (
+            (self.entry_price + exit_price) * self.quantity * commission_rate
+        )
         self.pnl = raw_pnl - self.commission
 
 
 @dataclass
 class BacktestMetrics:
     """Performance metrics from backtest."""
+
     # Returns
     total_return: float  # Total % return
     annualized_return: float
@@ -96,7 +106,7 @@ class BacktestEngine:
         slippage: float = 0.0005,  # 0.05% slippage
         data_cost_per_month: float = 50.0,  # Data feed costs
         compute_cost_per_month: float = 100.0,  # Server costs
-        api_cost_per_call: float = 0.001  # API costs (e.g., Grok)
+        api_cost_per_call: float = 0.001,  # API costs (e.g., Grok)
     ):
         """
         Initialize backtest engine.
@@ -127,7 +137,7 @@ class BacktestEngine:
         strategy_func: Callable[[dict], list[dict]],  # Function that generates signals
         historical_data: dict[str, list[dict]],  # ticker -> list of OHLCV bars
         start_date: datetime,
-        end_date: datetime
+        end_date: datetime,
     ) -> BacktestMetrics:
         """
         Run backtest on historical data.
@@ -178,7 +188,9 @@ class BacktestEngine:
             current_price = latest_bar["close"]
 
             # Apply slippage
-            execution_price = current_price * (1 + self.slippage if signal_type == "BUY" else 1 - self.slippage)
+            execution_price = current_price * (
+                1 + self.slippage if signal_type == "BUY" else 1 - self.slippage
+            )
 
             # Calculate quantity
             quantity = (self.capital * position_size) / execution_price
@@ -190,7 +202,7 @@ class BacktestEngine:
                     ticker=ticker,
                     side="buy",
                     quantity=quantity,
-                    entry_price=execution_price
+                    entry_price=execution_price,
                 )
                 open_positions[ticker] = trade
 
@@ -234,7 +246,7 @@ class BacktestEngine:
                 cost_per_trade=0.0,
                 break_even_trades_per_month=0,
                 monthly_profit_potential=0.0,
-                roi_break_even_months=0.0
+                roi_break_even_months=0.0,
             )
 
         # Returns
@@ -247,11 +259,13 @@ class BacktestEngine:
 
         win_rate = len(winning_trades) / len(self.trades) if self.trades else 0.0
         avg_win = np.mean([t.pnl for t in winning_trades]) if winning_trades else 0.0
-        avg_loss = np.mean([abs(t.pnl) for t in losing_trades]) if losing_trades else 0.0
+        avg_loss = (
+            np.mean([abs(t.pnl) for t in losing_trades]) if losing_trades else 0.0
+        )
 
         total_wins = sum(t.pnl for t in winning_trades)
         total_losses = sum(abs(t.pnl) for t in losing_trades)
-        profit_factor = total_wins / total_losses if total_losses > 0 else float('inf')
+        profit_factor = total_wins / total_losses if total_losses > 0 else float("inf")
 
         # P&L
         total_pnl = sum(t.pnl for t in self.trades)
@@ -271,7 +285,9 @@ class BacktestEngine:
         # Business metrics
         # How many trades needed per month to break even?
         if avg_pnl_per_trade > cost_per_trade:
-            break_even_trades = int(monthly_overhead / (avg_pnl_per_trade - cost_per_trade))
+            break_even_trades = int(
+                monthly_overhead / (avg_pnl_per_trade - cost_per_trade)
+            )
         else:
             break_even_trades = -1  # Not profitable
 
@@ -283,7 +299,7 @@ class BacktestEngine:
         if monthly_profit > 0:
             roi_months = self.initial_capital / monthly_profit
         else:
-            roi_months = float('inf')
+            roi_months = float("inf")
 
         # Risk metrics
         returns = [t.pnl / self.initial_capital for t in self.trades]
@@ -309,10 +325,12 @@ class BacktestEngine:
             cost_per_trade=cost_per_trade,
             break_even_trades_per_month=break_even_trades,
             monthly_profit_potential=monthly_profit,
-            roi_break_even_months=roi_months
+            roi_break_even_months=roi_months,
         )
 
-    def _calculate_sharpe(self, returns: list[float], risk_free_rate: float = 0.02) -> float:
+    def _calculate_sharpe(
+        self, returns: list[float], risk_free_rate: float = 0.02
+    ) -> float:
         """Calculate Sharpe ratio."""
         if len(returns) < 2:
             return 0.0
@@ -379,7 +397,7 @@ class BacktestEngine:
         else:
             print("  Break-Even: ⚠️  NOT PROFITABLE")
         print(f"  Monthly Profit Potential: ${metrics.monthly_profit_potential:.2f}")
-        if metrics.roi_break_even_months < float('inf'):
+        if metrics.roi_break_even_months < float("inf"):
             print(f"  ROI Break-Even: {metrics.roi_break_even_months:.1f} months")
         else:
             print("  ROI Break-Even: ⚠️  NEVER (negative ROI)")
@@ -393,34 +411,55 @@ if __name__ == "__main__":
         """Generate random signals for testing."""
         signals = []
         for ticker in data.keys():
-            signals.append({
-                "ticker": ticker,
-                "signal_type": "BUY",
-                "position_size": 0.1
-            })
+            signals.append(
+                {"ticker": ticker, "signal_type": "BUY", "position_size": 0.1}
+            )
         return signals
 
     # Mock historical data
     mock_data = {
         "AAPL": [
-            {"timestamp": "2024-01-01", "open": 150, "high": 155, "low": 148, "close": 152, "volume": 1000000},
-            {"timestamp": "2024-01-02", "open": 152, "high": 158, "low": 151, "close": 157, "volume": 1100000},
+            {
+                "timestamp": "2024-01-01",
+                "open": 150,
+                "high": 155,
+                "low": 148,
+                "close": 152,
+                "volume": 1000000,
+            },
+            {
+                "timestamp": "2024-01-02",
+                "open": 152,
+                "high": 158,
+                "low": 151,
+                "close": 157,
+                "volume": 1100000,
+            },
         ],
         "MSFT": [
-            {"timestamp": "2024-01-01", "open": 300, "high": 305, "low": 298, "close": 302, "volume": 800000},
-            {"timestamp": "2024-01-02", "open": 302, "high": 308, "low": 300, "close": 306, "volume": 850000},
-        ]
+            {
+                "timestamp": "2024-01-01",
+                "open": 300,
+                "high": 305,
+                "low": 298,
+                "close": 302,
+                "volume": 800000,
+            },
+            {
+                "timestamp": "2024-01-02",
+                "open": 302,
+                "high": 308,
+                "low": 300,
+                "close": 306,
+                "volume": 850000,
+            },
+        ],
     }
 
     # Run backtest
     engine = BacktestEngine(initial_capital=100000)
     metrics = engine.run_backtest(
-        mock_strategy,
-        mock_data,
-        datetime(2024, 1, 1),
-        datetime(2024, 1, 31)
+        mock_strategy, mock_data, datetime(2024, 1, 1), datetime(2024, 1, 31)
     )
 
     engine.print_summary(metrics)
-
-

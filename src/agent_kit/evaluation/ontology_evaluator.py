@@ -12,13 +12,12 @@ We validate:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -31,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class EvalCase(BaseModel):
     """Single test case for evaluation."""
+
     model_config = {"extra": "forbid"}
 
     id: str = Field(..., description="Unique test case ID")
@@ -45,9 +45,7 @@ class EvalCase(BaseModel):
     expected_tool_calls: list[str] = Field(
         default_factory=list, description="Expected tools to be called"
     )
-    tags: list[str] = Field(
-        default_factory=list, description="Tags for filtering"
-    )
+    tags: list[str] = Field(default_factory=list, description="Tags for filtering")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
@@ -55,6 +53,7 @@ class EvalCase(BaseModel):
 
 class EvalSet(BaseModel):
     """Collection of test cases."""
+
     model_config = {"extra": "forbid"}
 
     name: str = Field(..., description="Eval set name")
@@ -63,13 +62,13 @@ class EvalSet(BaseModel):
     cases: list[EvalCase] = Field(default_factory=list, description="Test cases")
 
     @classmethod
-    def from_json(cls, path: str | Path) -> "EvalSet":
+    def from_json(cls, path: str | Path) -> EvalSet:
         """Load eval set from JSON file."""
         with open(path) as f:
             data = json.load(f)
         return cls(**data)
 
-    def filter_by_tag(self, tag: str) -> "EvalSet":
+    def filter_by_tag(self, tag: str) -> EvalSet:
         """Filter cases by tag."""
         filtered = [c for c in self.cases if tag in c.tags]
         return EvalSet(
@@ -160,7 +159,7 @@ class EvalResult:
         """Generate summary report."""
         return f"""
 Evaluation: {self.eval_set_name}
-{'=' * 50}
+{"=" * 50}
 Total Cases: {self.metrics.total_cases}
 Passed: {self.metrics.passed_cases} ({self.metrics.accuracy:.1%})
 Failed: {self.metrics.failed_cases}
@@ -240,7 +239,9 @@ class OntologyEvaluator:
         total_tools_correct = 0
         compliant_count = 0
 
-        logger.info(f"Starting evaluation: {eval_set.name} ({len(eval_set.cases)} cases)")
+        logger.info(
+            f"Starting evaluation: {eval_set.name} ({len(eval_set.cases)} cases)"
+        )
 
         for case in eval_set.cases:
             case_result = await self._evaluate_case(agent, case, config)
@@ -266,10 +267,16 @@ class OntologyEvaluator:
 
         metrics = EvalMetrics(
             accuracy=passed / total if total > 0 else 0,
-            avg_latency_ms=sum(r.latency_ms for r in case_results) / total if total > 0 else 0,
+            avg_latency_ms=sum(r.latency_ms for r in case_results) / total
+            if total > 0
+            else 0,
             ontology_compliance=compliant_count / total if total > 0 else 0,
-            entity_recall=total_entities_found / total_entities_expected if total_entities_expected > 0 else 1.0,
-            tool_accuracy=total_tools_correct / total_tools_expected if total_tools_expected > 0 else 1.0,
+            entity_recall=total_entities_found / total_entities_expected
+            if total_entities_expected > 0
+            else 1.0,
+            tool_accuracy=total_tools_correct / total_tools_expected
+            if total_tools_expected > 0
+            else 1.0,
             total_cases=total,
             passed_cases=passed,
             failed_cases=total - passed,
@@ -375,5 +382,3 @@ class OntologyEvaluator:
             "goal_achievement": 1.0,
             "entity_consistency": 1.0,
         }
-
-

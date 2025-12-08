@@ -13,10 +13,9 @@ while maintaining our ontology-first architecture.
 
 from __future__ import annotations
 
-from typing import Any
+from agents import Agent
 
-from agents import Agent, RunContextWrapper
-from agent_kit.domains.registry import DomainRegistry, get_global_registry
+from agent_kit.domains.registry import get_global_registry
 from agent_kit.ontology.loader import OntologyLoader
 
 
@@ -80,8 +79,8 @@ class OntologyAgentAdapter:
 
 ## Ontology Context
 - **Domain**: {self.domain}
-- **Available Entities**: {', '.join(ontology_context['entities'][:10])}
-- **Key Relationships**: {', '.join(ontology_context['relationships'][:5])}
+- **Available Entities**: {", ".join(ontology_context["entities"][:10])}
+- **Key Relationships**: {", ".join(ontology_context["relationships"][:5])}
 
 ## Instructions
 When making decisions:
@@ -103,7 +102,7 @@ When making decisions:
         query = f"""
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        
+
         SELECT DISTINCT ?entity ?label WHERE {{
             ?entity rdfs:label ?label .
             ?entity rdf:type ?type .
@@ -113,7 +112,9 @@ When making decisions:
         """
         try:
             results = self.ontology.query(query)
-            entities = [r.get("label", {}).get("value", "") for r in results if r.get("label")]
+            entities = [
+                r.get("label", {}).get("value", "") for r in results if r.get("label")
+            ]
         except Exception:
             entities = []
 
@@ -130,7 +131,7 @@ When making decisions:
         query = """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        
+
         SELECT DISTINCT ?predicate ?label WHERE {
             ?predicate rdf:type rdf:Property .
             ?predicate rdfs:label ?label .
@@ -140,7 +141,9 @@ When making decisions:
         """
         try:
             results = self.ontology.query(query)
-            return [r.get("label", {}).get("value", "") for r in results if r.get("label")]
+            return [
+                r.get("label", {}).get("value", "") for r in results if r.get("label")
+            ]
         except Exception:
             return []
 
@@ -208,4 +211,3 @@ When making decisions:
         if not hasattr(self.agent, "_ontology_queries"):
             self.agent._ontology_queries = []
         self.agent._ontology_queries.append(query)
-

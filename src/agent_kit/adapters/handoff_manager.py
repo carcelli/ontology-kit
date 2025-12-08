@@ -12,8 +12,9 @@ We enhance this with:
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from agent_kit.events import OntologyEventLogger
 from agent_kit.ontology.loader import OntologyLoader
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 try:
     from agents import Agent, Runner, handoff
     from agents.handoffs import Handoff
+
     OPENAI_SDK_AVAILABLE = True
 except ImportError:
     OPENAI_SDK_AVAILABLE = False
@@ -91,17 +93,17 @@ class OntologyHandoffManager:
 
     Example:
         >>> manager = OntologyHandoffManager(ontology)
-        >>> 
+        >>>
         >>> # Create agents
         >>> forecast_agent = manager.create_specialist("ForecastAgent", forecast_instructions)
         >>> optimizer_agent = manager.create_specialist("OptimizerAgent", optimizer_instructions)
-        >>> 
+        >>>
         >>> # Create orchestrator with handoffs
         >>> orchestrator = manager.create_orchestrator(
         ...     "BusinessOrchestrator",
         ...     [forecast_agent, optimizer_agent],
         ... )
-        >>> 
+        >>>
         >>> # Execute
         >>> result = await manager.run(orchestrator, "Forecast and optimize")
     """
@@ -174,10 +176,12 @@ class OntologyHandoffManager:
             Orchestrator Agent with handoffs configured
         """
         # Build specialist descriptions
-        specialist_info = "\n".join([
-            f"- {agent.name}: {self._get_agent_description(agent)}"
-            for agent in specialists
-        ])
+        specialist_info = "\n".join(
+            [
+                f"- {agent.name}: {self._get_agent_description(agent)}"
+                for agent in specialists
+            ]
+        )
 
         default_instructions = f"""You are an orchestrator that routes tasks to specialist agents.
 
@@ -232,7 +236,9 @@ Always transfer complex analysis tasks to specialists.
         try:
             # Build enhanced input with context
             if self._context.handoff_chain:
-                enhanced_input = f"{self._context.to_prompt_context()}\n\nNew request: {input}"
+                enhanced_input = (
+                    f"{self._context.to_prompt_context()}\n\nNew request: {input}"
+                )
             else:
                 enhanced_input = input
 
@@ -270,6 +276,7 @@ Always transfer complex analysis tasks to specialists.
         Returns:
             Function that returns appropriate agent
         """
+
         def dynamic_router(input: str) -> Agent:
             agent_name = routing_fn(input)
             if agent_name in self._agents:
@@ -286,6 +293,7 @@ Always transfer complex analysis tasks to specialists.
         Returns:
             Function that analyzes input and returns best agent name
         """
+
         def route_by_entities(input: str) -> str:
             input_lower = input.lower()
 
@@ -293,7 +301,9 @@ Always transfer complex analysis tasks to specialists.
             if any(word in input_lower for word in ["forecast", "predict", "trend"]):
                 return "ForecastAgent"
 
-            if any(word in input_lower for word in ["optimize", "improve", "recommend"]):
+            if any(
+                word in input_lower for word in ["optimize", "improve", "recommend"]
+            ):
                 return "OptimizerAgent"
 
             if any(word in input_lower for word in ["bet", "odds", "probability"]):
@@ -315,7 +325,7 @@ Always transfer complex analysis tasks to specialists.
 
 ## Domain Context
 - Domain: {self.domain}
-- Available entities: {', '.join(context['entities'][:5])}
+- Available entities: {", ".join(context["entities"][:5])}
 
 ## Guidelines
 - Query the ontology for entity relationships when needed
@@ -335,9 +345,7 @@ Always transfer complex analysis tasks to specialists.
         try:
             results = self.ontology.query(query)
             entities = [
-                r.get("label", {}).get("value", "")
-                for r in results
-                if r.get("label")
+                r.get("label", {}).get("value", "") for r in results if r.get("label")
             ]
         except Exception:
             entities = []
@@ -349,7 +357,7 @@ Always transfer complex analysis tasks to specialists.
         instructions = agent.instructions
         if isinstance(instructions, str):
             # Take first sentence
-            first_line = instructions.split('\n')[0]
+            first_line = instructions.split("\n")[0]
             return first_line[:100]
         return "Specialist agent"
 
@@ -394,5 +402,3 @@ def create_handoff_pipeline(
     )
 
     return orchestrator, manager
-
-

@@ -7,10 +7,10 @@ Integrates with sportsbook APIs (DraftKings, FanDuel, Pinnacle, etc.)
 From first principles: Sportsbook APIs have rate limits—circuit breakers prevent
 exhausting quotas and getting banned.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 
 from agents import function_tool
 from pydantic import BaseModel
@@ -20,7 +20,8 @@ from agent_kit.monitoring.circuit_breaker import with_circuit_breaker
 
 class OddsData(BaseModel):
     """Odds data from sportsbook."""
-    model_config = {'extra': 'forbid'}
+
+    model_config = {"extra": "forbid"}
 
     bookmaker: str
     event_id: str
@@ -34,7 +35,8 @@ class OddsData(BaseModel):
 
 class ArbitrageOpportunity(BaseModel):
     """Arbitrage opportunity across bookmakers."""
-    model_config = {'extra': 'forbid'}
+
+    model_config = {"extra": "forbid"}
 
     event_id: str
     event_description: str
@@ -56,7 +58,7 @@ class ArbitrageOpportunity(BaseModel):
 def fetch_odds(
     sport: str = "basketball_nba",
     market: str = "h2h",
-    bookmakers: str = "draftkings,fanduel,betmgm"
+    bookmakers: str = "draftkings,fanduel,betmgm",
 ) -> list[dict]:
     """
     Fetch live odds from sportsbooks.
@@ -96,7 +98,7 @@ def fetch_odds(
             "selection": "Lakers",
             "odds": 2.10,
             "line": None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         },
         {
             "bookmaker": "fanduel",
@@ -106,8 +108,8 @@ def fetch_odds(
             "selection": "Lakers",
             "odds": 2.15,
             "line": None,
-            "timestamp": datetime.now().isoformat()
-        }
+            "timestamp": datetime.now().isoformat(),
+        },
     ]
 
     return mock_odds
@@ -116,8 +118,7 @@ def fetch_odds(
 @function_tool
 @with_circuit_breaker(max_failures=5, reset_timeout=180)
 def fetch_player_props(
-    sport: str = "basketball_nba",
-    player_name: str | None = None
+    sport: str = "basketball_nba", player_name: str | None = None
 ) -> list[dict]:
     """
     Fetch player proposition bets.
@@ -148,7 +149,7 @@ def fetch_player_props(
             "selection": "over",
             "odds": 1.91,
             "line": 25.5,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         },
         {
             "bookmaker": "fanduel",
@@ -160,21 +161,21 @@ def fetch_player_props(
             "selection": "over",
             "odds": 1.95,
             "line": 25.5,
-            "timestamp": datetime.now().isoformat()
-        }
+            "timestamp": datetime.now().isoformat(),
+        },
     ]
 
     if player_name:
-        mock_props = [p for p in mock_props if player_name.lower()
-                      in p["player"].lower()]
+        mock_props = [
+            p for p in mock_props if player_name.lower() in p["player"].lower()
+        ]
 
     return mock_props
 
 
 @function_tool
 def detect_arbitrage(
-    odds_data: list[dict],
-    min_profit_margin: float = 0.01
+    odds_data: list[dict], min_profit_margin: float = 0.01
 ) -> list[dict]:
     """
     Detect arbitrage opportunities across bookmakers.
@@ -210,7 +211,7 @@ def detect_arbitrage(
     for event_id, event_odds in events.items():
         # Simple two-way arbitrage (home vs away, over vs under)
         for i, odd1 in enumerate(event_odds):
-            for odd2 in event_odds[i+1:]:
+            for odd2 in event_odds[i + 1 :]:
                 # Check if opposite sides (e.g., one home, one away)
                 if odd1["selection"] != odd2["selection"]:
                     # Calculate arbitrage
@@ -228,21 +229,25 @@ def detect_arbitrage(
                             stake2 = total_stake * implied2 / total_implied
                             guaranteed_profit = total_stake * profit_margin
 
-                            arbitrage_ops.append({
-                                "event_id": event_id,
-                                "event_description": odd1.get("event_description", ""),
-                                "bookmaker1": odd1["bookmaker"],
-                                "odds1": odd1["odds"],
-                                "selection1": odd1["selection"],
-                                "bookmaker2": odd2["bookmaker"],
-                                "odds2": odd2["odds"],
-                                "selection2": odd2["selection"],
-                                "profit_margin": profit_margin,
-                                "stake1": stake1,
-                                "stake2": stake2,
-                                "total_stake": total_stake,
-                                "guaranteed_profit": guaranteed_profit
-                            })
+                            arbitrage_ops.append(
+                                {
+                                    "event_id": event_id,
+                                    "event_description": odd1.get(
+                                        "event_description", ""
+                                    ),
+                                    "bookmaker1": odd1["bookmaker"],
+                                    "odds1": odd1["odds"],
+                                    "selection1": odd1["selection"],
+                                    "bookmaker2": odd2["bookmaker"],
+                                    "odds2": odd2["odds"],
+                                    "selection2": odd2["selection"],
+                                    "profit_margin": profit_margin,
+                                    "stake1": stake1,
+                                    "stake2": stake2,
+                                    "total_stake": total_stake,
+                                    "guaranteed_profit": guaranteed_profit,
+                                }
+                            )
 
     return arbitrage_ops
 
@@ -284,9 +289,7 @@ def calculate_implied_probability(odds: float, odds_format: str = "decimal") -> 
 
 @function_tool
 def fetch_historical_betting_data(
-    sport: str,
-    start_date: str,
-    end_date: str
+    sport: str, start_date: str, end_date: str
 ) -> list[dict]:
     """
     Fetch historical betting data for backtesting.
@@ -315,7 +318,7 @@ def fetch_historical_betting_data(
             "home_score": 110,
             "away_score": 105,
             "closing_odds_home": 1.85,
-            "closing_odds_away": 2.10
+            "closing_odds_away": 2.10,
         }
     ]
 
@@ -326,5 +329,5 @@ __all__ = [
     "fetch_player_props",
     "detect_arbitrage",
     "calculate_implied_probability",
-    "fetch_historical_betting_data"
+    "fetch_historical_betting_data",
 ]

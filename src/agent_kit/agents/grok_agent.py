@@ -1,6 +1,7 @@
 """
 Ontology-aware agent using Grok (xAI) for advanced reasoning.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -8,23 +9,24 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from agent_kit.agents.base import (
-    BaseAgent,
-    AgentTask,
+    AgentActionResult,
     AgentObservation,
     AgentPlan,
-    AgentActionResult,
-    AgentResult
+    AgentTask,
+    BaseAgent,
 )
 
 # Lazy imports
 try:
     from openai import OpenAI
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
 
 try:
     from tenacity import retry, stop_after_attempt, wait_exponential
+
     TENACITY_AVAILABLE = True
 except ImportError:
     TENACITY_AVAILABLE = False
@@ -38,30 +40,24 @@ class GrokConfig(BaseModel):
         - xAI API docs: https://x.ai/api
         - OpenAI Python SDK for compatibility: https://github.com/openai/openai-python
     """
+
     api_key: str = Field(..., description="xAI API key (get from https://x.ai/api)")
-    base_url: str = Field(
-        default="https://api.x.ai/v1",
-        description="xAI API endpoint"
-    )
+    base_url: str = Field(default="https://api.x.ai/v1", description="xAI API endpoint")
     model: str = Field(
         default="grok-beta",
-        description="Grok model version (grok-beta, grok-4 when available)"
+        description="Grok model version (grok-beta, grok-4 when available)",
     )
     temperature: float = Field(
         default=0.7,
         ge=0.0,
         le=2.0,
-        description="Sampling temperature for response generation"
+        description="Sampling temperature for response generation",
     )
     max_tokens: int = Field(
-        default=2048,
-        ge=1,
-        le=131072,
-        description="Maximum tokens in response"
+        default=2048, ge=1, le=131072, description="Maximum tokens in response"
     )
     seed: int | None = Field(
-        default=42,
-        description="Random seed for reproducible outputs"
+        default=42, description="Random seed for reproducible outputs"
     )
 
 
@@ -95,16 +91,15 @@ class GrokAgent(BaseAgent):
         self.ontology = ontology
         self.tool_registry = tool_registry or {}
         # memory is initialized in BaseAgent in our new design, but we can init here too just in case
-        if not hasattr(self, 'memory'):
+        if not hasattr(self, "memory"):
             self.memory: list[str] = []
 
         if not config.api_key:
-            raise ValueError("Grok API key is required. Set XAI_API_KEY env var or pass api_key to GrokConfig.")
-        
-        self.client = OpenAI(
-            api_key=config.api_key,
-            base_url=config.base_url
-        )
+            raise ValueError(
+                "Grok API key is required. Set XAI_API_KEY env var or pass api_key to GrokConfig."
+            )
+
+        self.client = OpenAI(api_key=config.api_key, base_url=config.base_url)
 
         self.system_prompt = system_prompt or (
             "You are an ontology-driven AI agent for small business optimization. "
@@ -135,9 +130,9 @@ class GrokAgent(BaseAgent):
 
         try:
             # Check if ontology has query method (OntologyLoader) or graph.query (rdflib Graph)
-            if hasattr(self.ontology, 'query'):
+            if hasattr(self.ontology, "query"):
                 results = self.ontology.query(sparql)
-            elif hasattr(self.ontology, 'graph') and self.ontology.graph is not None:
+            elif hasattr(self.ontology, "graph") and self.ontology.graph is not None:
                 results = self.ontology.graph.query(sparql)
                 # Convert rdflib results to list of dicts
                 results = [
@@ -149,25 +144,31 @@ class GrokAgent(BaseAgent):
                 ]
             else:
                 results = []
-            
+
             observations = [
                 f"{row.get('entity', 'N/A')}: {row.get('property', 'N/A')} = {row.get('value', 'N/A')}"
                 for row in results
             ]
-            content = "\n".join(observations) if observations else "No ontology data found for task."
+            content = (
+                "\n".join(observations)
+                if observations
+                else "No ontology data found for task."
+            )
         except Exception as e:
             content = f"Ontology query failed: {str(e)}"
 
         # Return object compatible with Pydantic or NamedTuple
         # We will make AgentObservation flexible in base.py
-        return AgentObservation(content=content, data={"raw_sparql": sparql, "task_lower": task_lower})
+        return AgentObservation(
+            content=content, data={"raw_sparql": sparql, "task_lower": task_lower}
+        )
 
     def plan(self, task: AgentTask, observation: AgentObservation) -> AgentPlan:
         """
         Use Grok to generate actionable plan from observations.
         """
-        obs_content = getattr(observation, 'content', str(observation))
-        
+        obs_content = getattr(observation, "content", str(observation))
+
         user_prompt = f"""
 Task: {task.prompt}
 
@@ -175,10 +176,10 @@ Ontology Context:
 {obs_content}
 
 Available Tools:
-{', '.join(self.tool_registry.keys()) if self.tool_registry else 'None'}
+{", ".join(self.tool_registry.keys()) if self.tool_registry else "None"}
 
 Previous Learnings:
-{chr(10).join(self.memory[-3:]) if self.memory else 'None'}
+{chr(10).join(self.memory[-3:]) if self.memory else "None"}
 
 Generate a step-by-step plan to accomplish the task, grounded in the ontology.
 Specify which tools to invoke and why.
@@ -200,22 +201,31 @@ Specify which tools to invoke and why.
 
         return AgentPlan(thought=plan_text, action=action)
 
-    def act(self, task: AgentTask, plan: AgentPlan, observation: AgentObservation) -> AgentActionResult:
+    def act(
+        self, task: AgentTask, plan: AgentPlan, observation: AgentObservation
+    ) -> AgentActionResult:
         """
         Execute plan by invoking tools from registry.
         """
         action = plan.action
 
-        if action == "generate_visualization" and "generate_interactive_leverage_viz" in self.tool_registry:
+        if (
+            action == "generate_visualization"
+            and "generate_interactive_leverage_viz" in self.tool_registry
+        ):
             try:
                 viz_tool = self.tool_registry["generate_interactive_leverage_viz"]
                 result = viz_tool(
                     terms=["Revenue", "Budget", "Marketing", "Sales"],
                     kpi_term="Revenue",
                     actionable_terms=["Budget", "Marketing"],
-                    output_file="outputs/grok_agent_viz.html"
+                    output_file="outputs/grok_agent_viz.html",
                 )
-                viz_path = result.get('viz_path', 'unknown') if isinstance(result, dict) else str(result)
+                viz_path = (
+                    result.get("viz_path", "unknown")
+                    if isinstance(result, dict)
+                    else str(result)
+                )
                 return AgentActionResult(output=f"Visualization generated: {viz_path}")
             except Exception as e:
                 return AgentActionResult(output=f"Visualization failed: {str(e)}")
@@ -223,7 +233,9 @@ Specify which tools to invoke and why.
         elif action == "cluster_data" and "cluster_data" in self.tool_registry:
             try:
                 cluster_tool = self.tool_registry["cluster_data"]
-                result = cluster_tool({"data": [[1, 2], [2, 3], [10, 11]], "algorithm": "DBSCAN"})
+                result = cluster_tool(
+                    {"data": [[1, 2], [2, 3], [10, 11]], "algorithm": "DBSCAN"}
+                )
                 return AgentActionResult(output=f"Clustering result: {result}")
             except Exception as e:
                 return AgentActionResult(output=f"Clustering failed: {str(e)}")
@@ -235,7 +247,9 @@ Specify which tools to invoke and why.
         """
         Use Grok to critique results and store learnings.
         """
-        result_output = getattr(result, 'output', getattr(result, 'summary', str(result)))
+        result_output = getattr(
+            result, "output", getattr(result, "summary", str(result))
+        )
 
         reflection_prompt = f"""
 Task: {task.prompt}
@@ -251,37 +265,41 @@ Provide 2-3 concise insights for learning.
 
         try:
             response = self._call_grok_with_retry(reflection_prompt)
-            reflection = response.choices[0].message.content or "No reflection generated."
+            reflection = (
+                response.choices[0].message.content or "No reflection generated."
+            )
             self.memory.append(reflection)
         except Exception as e:
             self.memory.append(f"Reflection failed: {str(e)}")
 
     def _call_grok_with_retry(self, user_prompt: str) -> Any:
         if TENACITY_AVAILABLE:
+
             @retry(
                 stop=stop_after_attempt(3),
-                wait=wait_exponential(multiplier=1, min=2, max=10)
+                wait=wait_exponential(multiplier=1, min=2, max=10),
             )
             def _call() -> Any:
                 return self.client.chat.completions.create(
                     model=self.config.model,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "user", "content": user_prompt},
                     ],
                     temperature=self.config.temperature,
                     max_tokens=self.config.max_tokens,
-                    seed=self.config.seed
+                    seed=self.config.seed,
                 )
+
             return _call()
         else:
             return self.client.chat.completions.create(
                 model=self.config.model,
                 messages=[
                     {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
-                seed=self.config.seed
+                seed=self.config.seed,
             )

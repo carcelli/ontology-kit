@@ -15,26 +15,22 @@ and generating interactive dashboards for exploration.
 import asyncio
 import time
 from datetime import datetime
-from pathlib import Path
 
-from agent_kit.ontology_ml_workflow import (
-    OntologyMLWorkflowAnalyzer,
-    create_workflow_analyzer,
-    start_tracking_workflow,
-    record_agent_decision,
-    generate_performance_report,
-    AgentDecision
-)
 from agent_kit.data_collection import (
     create_data_collector,
-    create_performance_analytics
+    create_performance_analytics,
 )
 from agent_kit.interactive_dashboard import (
     create_interactive_dashboard,
-    generate_full_dashboard,
-    generate_performance_dashboard
 )
 from agent_kit.ontology.loader import OntologyLoader
+from agent_kit.ontology_ml_workflow import (
+    AgentDecision,
+    create_workflow_analyzer,
+    generate_performance_report,
+    record_agent_decision,
+    start_tracking_workflow,
+)
 
 
 async def simulate_agent_workflow():
@@ -235,7 +231,7 @@ async def simulate_agent_workflow():
         final_metrics
     )
 
-    print(f"\n✅ Workflow completed successfully!")
+    print("\n✅ Workflow completed successfully!")
     print(".2f")
     print(".1%")
 

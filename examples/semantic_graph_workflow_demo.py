@@ -14,7 +14,6 @@ intervention points, as documented in docs/SEMANTIC_LEVERAGE_GUIDE.md
 Run from repo root:
     python examples/semantic_graph_workflow_demo.py
 """
-import json
 import sys
 from pathlib import Path
 
@@ -133,7 +132,7 @@ def main() -> None:
 
     if leverage_result['status'] == 'COMPLETED':
         print(f'✓ Status: {leverage_result["status"]}')
-        print(f'\n🎯 Top 5 Leverage Points for Revenue:')
+        print('\n🎯 Top 5 Leverage Points for Revenue:')
 
         for i, lever in enumerate(leverage_result['levers'], 1):
             print(f'\n  {i}. {lever["term"]}: {lever["total_leverage"]:.4f}')
@@ -168,7 +167,7 @@ def main() -> None:
 
     if intervention_result['status'] == 'COMPLETED':
         print(f'✓ Status: {intervention_result["status"]}')
-        print(f'\n📊 Experiment Recommendations:')
+        print('\n📊 Experiment Recommendations:')
 
         for exp in intervention_result['recommendations']:
             print(f'\n  {exp["name"]}')
@@ -177,17 +176,17 @@ def main() -> None:
             print(f'  Target: {exp["target"]}')
             print(f'  Path: {exp["path"]}')
             print(f'    (weight: {exp["path_weight"]}, length: {exp["path_length"]} hops)')
-            print(f'\n  💡 Action:')
+            print('\n  💡 Action:')
             print(f'    {exp["action"]}')
-            print(f'\n  📈 Expected Impact:')
+            print('\n  📈 Expected Impact:')
             print(f'    • Estimated lift: {exp["expected_lift"]:.1%}')
             print(f'    • Sample size: {exp["sample_size"]:,} per group')
             print(f'    • Duration: {exp["duration"]}')
-            print(f'\n  📊 KPIs to Track:')
+            print('\n  📊 KPIs to Track:')
             print(f'    • Primary: {exp["primary_kpi"]}')
             if exp['intermediate_kpis']:
                 print(f'    • Intermediates: {", ".join(exp["intermediate_kpis"])}')
-            print(f'\n  ⚠️  Guardrails:')
+            print('\n  ⚠️  Guardrails:')
             for guardrail in exp['guardrails']:
                 print(f'    • {guardrail}')
 

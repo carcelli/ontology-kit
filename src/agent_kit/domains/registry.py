@@ -37,8 +37,8 @@ class DomainConfig(dict):
         """Enable dot-access: cfg.id instead of cfg['id']."""
         try:
             return self[name]
-        except KeyError:
-            raise AttributeError(f"DomainConfig has no attribute '{name}'")
+        except KeyError as e:
+            raise AttributeError(f"DomainConfig has no attribute '{name}'") from e
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Support assignment: cfg.id = 'new_value'."""
@@ -141,7 +141,8 @@ class DomainRegistry:
         """
         # Generator comprehension for efficiency
         return sorted(
-            path.stem for path in self.base_path.glob("*.yaml")
+            path.stem
+            for path in self.base_path.glob("*.yaml")
             if not path.stem.startswith("_")  # Ignore _templates, etc.
         )
 
@@ -220,4 +221,3 @@ def get_global_registry() -> DomainRegistry:
     if _global_registry is None:
         _global_registry = DomainRegistry()
     return _global_registry
-

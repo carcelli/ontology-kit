@@ -18,9 +18,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from agents import Runner
+
 from agent_kit.agents.orchestrator import OntologyOrchestratorAgent
 from agent_kit.ontology_extensions import OntologyMemorySession
-from agents.memory import SessionInputCallback
 
 
 async def main() -> None:

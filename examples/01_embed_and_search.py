@@ -22,7 +22,7 @@ def main() -> None:
     print("Agent Kit - Example 1: Embed and Search")
     print("=" * 70)
     print()
-    
+
     # Sample task descriptions
     tasks = [
         "Sort a list of numbers in ascending order",
@@ -36,42 +36,42 @@ def main() -> None:
         "Merge two sorted arrays",
         "Remove duplicate elements",
     ]
-    
+
     print(f"📝 Embedding {len(tasks)} task descriptions...")
-    
+
     # 1. Initialize embedder
     embedder = Embedder(model_name='all-MiniLM-L6-v2')
     print(f"   Model: {embedder.model_name}")
     print(f"   Dimension: {embedder.dimension}")
     print()
-    
+
     # 2. Generate embeddings
     embeddings = embedder.embed_batch(tasks, show_progress=True)
     print(f"   Shape: {embeddings.shape}")
     print()
-    
+
     # 3. Build vector index
     print("🔧 Building FAISS index...")
     index = VectorIndex(dim=embedder.dimension, metric='cosine')
     index.add(embeddings, ids=list(range(len(tasks))), metadata=tasks)
     print(f"   Index: {index}")
     print()
-    
+
     # 4. Query
     queries = [
         "Order items by value",
         "Locate specific element",
         "Combine two lists",
     ]
-    
+
     print("🔍 Searching for similar tasks...")
     print()
-    
+
     for query_text in queries:
         print(f"Query: '{query_text}'")
         query_vec = embedder.embed(query_text)
         results = index.query(query_vec, k=3)
-        
+
         print("Top 3 results:")
         for i, res in enumerate(results, 1):
             task_desc = res['metadata']
@@ -79,7 +79,7 @@ def main() -> None:
             print(f"  {i}. {task_desc}")
             print(f"     (similarity: {similarity:.3f})")
         print()
-    
+
     print("=" * 70)
     print("✅ Example complete!")
     print()

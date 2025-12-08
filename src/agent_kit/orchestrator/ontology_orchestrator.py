@@ -8,6 +8,7 @@ Workflow:
 3. Map to function + schema in registry
 4. Execute and return result
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -17,8 +18,8 @@ from rdflib import Namespace
 
 from ..ontology.loader import OntologyLoader
 
-ML = Namespace('http://agent-kit.com/ontology/ml#')
-CORE = Namespace('http://agent-kit.com/ontology/core#')
+ML = Namespace("http://agent-kit.com/ontology/ml#")
+CORE = Namespace("http://agent-kit.com/ontology/core#")
 
 
 class OntologyOrchestrator:
@@ -35,7 +36,9 @@ class OntologyOrchestrator:
         ...                    {'dataset_uri': 's3://bucket/data.parquet'})
     """
 
-    def __init__(self, ontology: OntologyLoader, registry: dict[str, dict[str, Any]]) -> None:
+    def __init__(
+        self, ontology: OntologyLoader, registry: dict[str, dict[str, Any]]
+    ) -> None:
         """
         Initialize orchestrator.
 
@@ -70,8 +73,8 @@ class OntologyOrchestrator:
         """
         rows = self.ontology.query(q)
         if not rows:
-            raise RuntimeError(f'No tool bound for class {class_iri}')
-        py = str(rows[0]['py'])
+            raise RuntimeError(f"No tool bound for class {class_iri}")
+        py = str(rows[0]["py"])
         tool = self.registry.get(py)
         if not tool:
             raise RuntimeError(f"Python identifier '{py}' not found in registry")
@@ -98,7 +101,7 @@ class OntologyOrchestrator:
         rows = self.ontology.query(q)
         tools = []
         for row in rows:
-            py = str(row['py'])
+            py = str(row["py"])
             if py in self.registry:
                 tools.append(self.registry[py])
         return tools
@@ -116,7 +119,7 @@ class OntologyOrchestrator:
         specs = []
         for cls in classes:
             t = self.discover_tool(cls)
-            specs.append(t['tool_spec'])
+            specs.append(t["tool_spec"])
         return specs
 
     def call(self, class_iri: str, params: dict[str, Any]) -> Any:
@@ -131,8 +134,8 @@ class OntologyOrchestrator:
             Tool execution result
         """
         tool = self.discover_tool(class_iri)
-        schema = tool['schema']
-        fn: Callable = tool['function']
+        schema = tool["schema"]
+        fn: Callable = tool["function"]
         validated = schema(**params)
         return fn(validated)
 
@@ -150,8 +153,7 @@ class OntologyOrchestrator:
         tool = self.registry.get(python_id)
         if not tool:
             raise RuntimeError(f"Python identifier '{python_id}' not found in registry")
-        schema = tool['schema']
-        fn: Callable = tool['function']
+        schema = tool["schema"]
+        fn: Callable = tool["function"]
         validated = schema(**params)
         return fn(validated)
-

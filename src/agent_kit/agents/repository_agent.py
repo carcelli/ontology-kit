@@ -162,10 +162,18 @@ class RepositoryAnalysisAgent(BaseAgent):
                 # Extract classes and functions
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ClassDef):
-                        nodes.append({"type": "class", "name": node.name, "file": py_file.name})
+                        nodes.append(
+                            {"type": "class", "name": node.name, "file": py_file.name}
+                        )
                     elif isinstance(node, ast.FunctionDef):
                         if not node.name.startswith("_"):  # Skip private
-                            nodes.append({"type": "function", "name": node.name, "file": py_file.name})
+                            nodes.append(
+                                {
+                                    "type": "function",
+                                    "name": node.name,
+                                    "file": py_file.name,
+                                }
+                            )
             except Exception:
                 # Skip files with parse errors
                 pass

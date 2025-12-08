@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
 from agent_kit.adapters import OntologyAgentAdapter
 from agent_kit.events import OntologyEvent, OntologyEventLogger
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Try imports
 try:
-    from agents import Agent, Runner as OpenAIRunner
+    from agents import Runner as OpenAIRunner
+
     OPENAI_SDK_AVAILABLE = True
 except ImportError:
     OPENAI_SDK_AVAILABLE = False
@@ -140,7 +142,7 @@ class StreamingRunner:
                 # Fallback: simulate streaming
                 response = f"Response to: {input}"
                 for i in range(0, len(response), config.chunk_size):
-                    chunk_text = response[i:i + config.chunk_size]
+                    chunk_text = response[i : i + config.chunk_size]
                     is_final = i + config.chunk_size >= len(response)
 
                     chunk = StreamChunk(
@@ -190,7 +192,7 @@ class StreamingRunner:
 
             # Simulate streaming by chunking
             for i in range(0, len(output), config.chunk_size):
-                chunk_text = output[i:i + config.chunk_size]
+                chunk_text = output[i : i + config.chunk_size]
                 is_final = i + config.chunk_size >= len(output)
 
                 if config.on_token:
@@ -232,12 +234,16 @@ class StreamingRunner:
             StreamChunk
         """
         # Build context string
-        context_str = "\n".join([
-            f"{msg['role']}: {msg['content']}"
-            for msg in context[-5:]  # Last 5 messages
-        ])
+        context_str = "\n".join(
+            [
+                f"{msg['role']}: {msg['content']}"
+                for msg in context[-5:]  # Last 5 messages
+            ]
+        )
 
-        enhanced_input = f"Previous conversation:\n{context_str}\n\nCurrent question: {input}"
+        enhanced_input = (
+            f"Previous conversation:\n{context_str}\n\nCurrent question: {input}"
+        )
 
         async for chunk in self.stream(agent, enhanced_input, config):
             yield chunk
@@ -293,5 +299,3 @@ class LiveRunner:
                 text="Live mode requires text or audio input",
                 is_final=True,
             )
-
-

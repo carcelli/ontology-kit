@@ -16,27 +16,28 @@ This implementation uses:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from agent_kit.adapters import OntologyAgentAdapter, OntologyOutputGuardrail
-from agent_kit.adapters.handoff_manager import HandoffContext, OntologyHandoffManager
+from agent_kit.adapters.handoff_manager import OntologyHandoffManager
 from agent_kit.events import OntologyEvent, OntologyEventLogger
 from agent_kit.memory import OntologyMemoryService
 from agent_kit.ontology.loader import OntologyLoader
-from agent_kit.runners import OntologyRunner, RunConfig, RunResult
+from agent_kit.runners import OntologyRunner, RunConfig
 from agent_kit.sessions import OntologySessionService, create_session_backend
 
 logger = logging.getLogger(__name__)
 
 # Try to import SDKs
 try:
-    from agents import Agent, Runner as OpenAIRunner
+    from agents import Agent
+    from agents import Runner as OpenAIRunner
+
     OPENAI_SDK_AVAILABLE = True
 except ImportError:
     OPENAI_SDK_AVAILABLE = False
@@ -46,14 +47,13 @@ except ImportError:
 
 class OrchestratorConfig(BaseModel):
     """Configuration for unified orchestrator."""
+
     model_config = {"extra": "forbid"}
 
     domain: str = Field(default="business", description="Domain identifier")
 
     # Session configuration
-    session_backend: str = Field(
-        default="memory", description="Session backend type"
-    )
+    session_backend: str = Field(default="memory", description="Session backend type")
     session_db_path: str = Field(
         default="sessions.db", description="Path for SQLite backend"
     )
@@ -65,9 +65,13 @@ class OrchestratorConfig(BaseModel):
 
     # Feature flags
     enable_memory: bool = Field(default=True, description="Enable memory service")
-    enable_guardrails: bool = Field(default=True, description="Enable output guardrails")
+    enable_guardrails: bool = Field(
+        default=True, description="Enable output guardrails"
+    )
     enable_event_logging: bool = Field(default=True, description="Enable event logging")
-    enable_ontology_context: bool = Field(default=True, description="Enrich with ontology")
+    enable_ontology_context: bool = Field(
+        default=True, description="Enrich with ontology"
+    )
 
 
 @dataclass
@@ -163,9 +167,7 @@ class UnifiedOrchestrator:
 
         # Event logger
         if self.config.enable_event_logging:
-            self.event_logger = OntologyEventLogger(
-                self.ontology, self.config.domain
-            )
+            self.event_logger = OntologyEventLogger(self.ontology, self.config.domain)
         else:
             self.event_logger = None
 
@@ -209,9 +211,7 @@ class UnifiedOrchestrator:
             self._agents[name] = agent
         else:
             # Wrap with adapter
-            adapter = OntologyAgentAdapter(
-                agent, self.ontology, self.config.domain
-            )
+            adapter = OntologyAgentAdapter(agent, self.ontology, self.config.domain)
             self._agents[name] = adapter
 
         logger.info(f"Registered agent: {name}")
@@ -237,10 +237,12 @@ class UnifiedOrchestrator:
             raise ValueError("No specialists registered. Register agents first.")
 
         # Build default instructions
-        specialist_info = "\n".join([
-            f"- {name}: Handles {adapter.domain} tasks"
-            for name, adapter in self._agents.items()
-        ])
+        specialist_info = "\n".join(
+            [
+                f"- {name}: Handles {adapter.domain} tasks"
+                for name, adapter in self._agents.items()
+            ]
+        )
 
         default_instructions = f"""You are a business intelligence orchestrator.
 
@@ -303,13 +305,9 @@ If unsure, ask clarifying questions before routing.
 
             # Run with orchestrator or simple routing
             if self._orchestrator_agent and OPENAI_SDK_AVAILABLE:
-                output, agents_used = await self._run_with_handoffs(
-                    input, session_id
-                )
+                output, agents_used = await self._run_with_handoffs(input, session_id)
             else:
-                output, agents_used = await self._run_simple_routing(
-                    input, session_id
-                )
+                output, agents_used = await self._run_simple_routing(input, session_id)
 
             # Store in memory if enabled
             if self.memory_service:
@@ -460,5 +458,3 @@ def create_business_orchestrator(
     )
 
     return UnifiedOrchestrator(ontology, config)
-
-

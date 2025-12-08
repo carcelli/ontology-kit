@@ -23,7 +23,11 @@ Usage:
     >>> adapter.agent.output_guardrails = [OntologyOutputGuardrail("business")]
 """
 
-from .handoff_manager import HandoffContext, OntologyHandoffManager, create_handoff_pipeline
+from .handoff_manager import (
+    HandoffContext,
+    OntologyHandoffManager,
+    create_handoff_pipeline,
+)
 from .ontology_agent_adapter import OntologyAgentAdapter
 from .ontology_guardrail import OntologyInputGuardrail, OntologyOutputGuardrail
 from .ontology_tool_filter import OntologyToolFilter

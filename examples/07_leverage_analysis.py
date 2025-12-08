@@ -56,7 +56,7 @@ def main():
         )
 
         print(f"\n✅ Visualization: {result1['viz_path']}")
-        print(f"\n🎯 Top 5 Leverage Points (Revenue KPI):")
+        print("\n🎯 Top 5 Leverage Points (Revenue KPI):")
         for lever in result1['top_levers'][:5]:
             term = lever['term']
             score = lever['leverage']
@@ -110,13 +110,13 @@ def main():
     )
 
     print(f"\n✅ 3D Visualization: {result2['viz_path']}")
-    print(f"\n🎯 Top 3 Interventions:")
+    print("\n🎯 Top 3 Interventions:")
     for i, lever in enumerate(result2['top_levers'][:3], 1):
         print(f"\n  {i}. {lever['term']}: {lever['leverage']:.3f}")
         if result2['scores'][lever['term']]['actionability'] > 0:
-            print(f"     ✓ Actionable - can be changed directly")
+            print("     ✓ Actionable - can be changed directly")
         else:
-            print(f"     ✗ Fixed - observe/measure only")
+            print("     ✗ Fixed - observe/measure only")
 
     # Example 3: Different KPI - Customer Satisfaction
     print('\n\n😊 Example 3: Customer Satisfaction Leverage')
@@ -132,12 +132,12 @@ def main():
         )
 
         print(f"\n✅ Visualization: {result3['viz_path']}")
-        print(f"\n🎯 Top 3 Levers for Customer Satisfaction:")
+        print("\n🎯 Top 3 Levers for Customer Satisfaction:")
         for lever in result3['top_levers'][:3]:
             print(f"  • {lever['term']}: {lever['leverage']:.3f}")
 
         # Compare to Revenue KPI
-        print(f"\n📊 Comparison: Revenue vs. Satisfaction Leverage")
+        print("\n📊 Comparison: Revenue vs. Satisfaction Leverage")
         print(f"{'Term':<25} {'Revenue Lever':<15} {'Satisfaction Lever':<20}")
         print('-' * 60)
         for term in actionable[:5]:

@@ -16,12 +16,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Try to import from agents SDK, with fallbacks
 try:
     from agents.mcp import ToolFilterContext, ToolFilterStatic
+
     AGENTS_AVAILABLE = True
 except ImportError:
     # Fallback definitions when SDK is not available
     from typing import TypedDict
+
     ToolFilterContext = dict
-    ToolFilterStatic = TypedDict('ToolFilterStatic', {})
+
+    class ToolFilterStatic(TypedDict, total=False):
+        """Minimal TypedDict stub when upstream agents SDK is unavailable."""
+
+        pass
     AGENTS_AVAILABLE = False
 
 if TYPE_CHECKING:
@@ -58,6 +64,7 @@ class OntologyMCPToolFilter:
         if ontology_path:
             try:
                 from ..ontology.loader import OntologyLoader
+
                 self.ontology_loader = OntologyLoader(ontology_path)
                 self.ontology = self.ontology_loader.load()
             except Exception:
@@ -148,7 +155,8 @@ class OntologyMCPToolFilter:
         if self._embedder is None:
             try:
                 from ..vectorspace.embedder import Embedder
-                self._embedder = Embedder(model_name='all-MiniLM-L6-v2')
+
+                self._embedder = Embedder(model_name="all-MiniLM-L6-v2")
             except Exception:
                 return None
         return self._embedder
@@ -183,7 +191,9 @@ class OntologyMCPToolFilter:
             # Get all classes from ontology
             classes = self.ontology_loader.get_classes()
             for cls_uri in classes:
-                local_name = cls_uri.split('#')[-1] if '#' in cls_uri else cls_uri.split('/')[-1]
+                local_name = (
+                    cls_uri.split("#")[-1] if "#" in cls_uri else cls_uri.split("/")[-1]
+                )
                 if local_name.lower() in text_lower:
                     concepts.append(local_name)
 
@@ -225,7 +235,7 @@ class OntologyMCPToolFilter:
         if not context_parts:
             return True  # No context to match against
 
-        context_text = ' '.join(context_parts)
+        context_text = " ".join(context_parts)
         tool_text = f"{tool_name} {tool_description}"
 
         # Use semantic similarity if embedder available
@@ -233,7 +243,9 @@ class OntologyMCPToolFilter:
         context_embedding = self._get_embedding(context_text)
 
         if tool_embedding is not None and context_embedding is not None:
-            similarity = float(cosine_similarity([tool_embedding], [context_embedding])[0][0])
+            similarity = float(
+                cosine_similarity([tool_embedding], [context_embedding])[0][0]
+            )
 
             # Boost similarity if ontology concepts match
             tool_concepts = self._extract_ontology_concepts(tool_text)
@@ -241,16 +253,22 @@ class OntologyMCPToolFilter:
 
             concept_overlap = len(set(tool_concepts) & set(context_concepts))
             if concept_overlap > 0:
-                similarity += 0.2 * min(concept_overlap / max(len(tool_concepts), 1), 1.0)
+                similarity += 0.2 * min(
+                    concept_overlap / max(len(tool_concepts), 1), 1.0
+                )
 
             return similarity >= similarity_threshold
 
         # Fallback to keyword matching
         relevance_keywords = []
         if agent_context:
-            relevance_keywords.extend([w for w in agent_context.lower().split() if len(w) > 3])
+            relevance_keywords.extend(
+                [w for w in agent_context.lower().split() if len(w) > 3]
+            )
         if task_context:
-            relevance_keywords.extend([w for w in task_context.lower().split() if len(w) > 3])
+            relevance_keywords.extend(
+                [w for w in task_context.lower().split() if len(w) > 3]
+            )
 
         tool_text_lower = tool_text.lower()
         for keyword in relevance_keywords:
@@ -280,8 +298,12 @@ class OntologyMCPToolFilter:
         if not self.ontology or not self.ontology_loader:
             # Fallback to simple string matching
             tool_lower = tool_name.lower()
-            matches = sum(1 for cap in required_capabilities if cap.lower() in tool_lower)
-            return matches / len(required_capabilities) if required_capabilities else 1.0
+            matches = sum(
+                1 for cap in required_capabilities if cap.lower() in tool_lower
+            )
+            return (
+                matches / len(required_capabilities) if required_capabilities else 1.0
+            )
 
         # Query ontology for tool capabilities
         tool_capabilities = set()
@@ -309,10 +331,14 @@ class OntologyMCPToolFilter:
             """
             results = self.ontology_loader.query(sparql)
             for result in results:
-                cap_uri = str(result.get('capability', ''))
+                cap_uri = str(result.get("capability", ""))
                 if cap_uri:
                     # Extract local name
-                    cap_name = cap_uri.split('#')[-1] if '#' in cap_uri else cap_uri.split('/')[-1]
+                    cap_name = (
+                        cap_uri.split("#")[-1]
+                        if "#" in cap_uri
+                        else cap_uri.split("/")[-1]
+                    )
                     tool_capabilities.add(cap_name.lower())
         except Exception:
             pass
@@ -331,7 +357,9 @@ class OntologyMCPToolFilter:
                 for cap in required_capabilities:
                     cap_embedding = self._get_embedding(cap)
                     if cap_embedding is not None:
-                        similarity = float(cosine_similarity([tool_embedding], [cap_embedding])[0][0])
+                        similarity = float(
+                            cosine_similarity([tool_embedding], [cap_embedding])[0][0]
+                        )
                         if similarity > 0.5:  # Threshold for semantic match
                             tool_capabilities.add(cap.lower())
 
@@ -347,5 +375,9 @@ class OntologyMCPToolFilter:
                     matches += 0.5
 
         # Normalize score
-        score = min(matches / len(required_capabilities), 1.0) if required_capabilities else 1.0
+        score = (
+            min(matches / len(required_capabilities), 1.0)
+            if required_capabilities
+            else 1.0
+        )
         return score

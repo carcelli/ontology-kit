@@ -7,6 +7,7 @@ Uses ontology to:
 3. Size bets with Kelly Criterion
 4. Enforce bankroll management constraints
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,6 +20,7 @@ from agent_kit.ontology.loader import OntologyLoader
 
 class PropBet(BaseModel):
     """Proposition bet with odds and metadata."""
+
     event_id: str
     description: str  # e.g., "LeBron James Over 25.5 Points"
     bookmaker: str
@@ -33,6 +35,7 @@ class PropBet(BaseModel):
 
 class BettingEdge(BaseModel):
     """Detected edge with bet recommendation."""
+
     prop_bet: PropBet
     true_probability: float  # Agent's estimated probability
     edge: float  # true_prob - implied_prob
@@ -43,6 +46,7 @@ class BettingEdge(BaseModel):
 
 class BettingRecommendation(BaseModel):
     """Final betting recommendation after risk checks."""
+
     edges: list[BettingEdge]
     total_exposure: float  # Sum of all bet sizes
     expected_roi: float  # Expected return on investment
@@ -68,7 +72,7 @@ class PropBettingAgent(GrokAgent):
         bankroll: float = 10000.0,
         strategy: str = "ValueBetting",
         grok_config: GrokConfig | None = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize prop betting agent.
@@ -93,7 +97,7 @@ class PropBettingAgent(GrokAgent):
             ontology=ontology,
             system_prompt=instructions,
             grok_config=grok_config or GrokConfig(),
-            **kwargs
+            **kwargs,
         )
 
     def _load_risk_rules(self) -> dict[str, Any]:
@@ -110,27 +114,19 @@ class PropBettingAgent(GrokAgent):
                       bet:dailyBetLimit ?dailyLimit .
             }}
         """
-        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+        if not hasattr(self.ontology, "graph") or self.ontology.graph is None:
             # Fallback to defaults if graph not loaded
-            return {
-                "max_bet_size": 0.02,
-                "min_edge": 0.05,
-                "daily_limit": 10
-            }
+            return {"max_bet_size": 0.02, "min_edge": 0.05, "daily_limit": 10}
         results = list(self.ontology.graph.query(sparql))
         if not results:
             # Default to conservative if strategy not found
-            return {
-                "max_bet_size": 0.02,
-                "min_edge": 0.05,
-                "daily_limit": 10
-            }
+            return {"max_bet_size": 0.02, "min_edge": 0.05, "daily_limit": 10}
 
         row = results[0]
         return {
             "max_bet_size": float(row.maxBetSize),
             "min_edge": float(row.minEdge),
-            "daily_limit": int(row.dailyLimit)
+            "daily_limit": int(row.dailyLimit),
         }
 
     def _generate_betting_instructions(self) -> str:
@@ -144,7 +140,7 @@ class PropBettingAgent(GrokAgent):
                 bet:PropBettingAgent core:hasInstructions ?instructions .
             }
         """
-        if not hasattr(self.ontology, 'graph') or self.ontology.graph is None:
+        if not hasattr(self.ontology, "graph") or self.ontology.graph is None:
             return """You are a professional sports betting analyst.
 Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
         results = list(self.ontology.graph.query(sparql))
@@ -176,7 +172,9 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
         # Cap at max bet size from risk rules
         return min(fractional_kelly, self.risk_rules["max_bet_size"])
 
-    def detect_edge(self, prop_bet: PropBet, true_probability: float, confidence: float) -> BettingEdge | None:
+    def detect_edge(
+        self, prop_bet: PropBet, true_probability: float, confidence: float
+    ) -> BettingEdge | None:
         """
         Detect if there's a betting edge.
 
@@ -207,10 +205,12 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
             edge=edge,
             kelly_fraction=kelly_fraction,
             confidence=confidence,
-            strategy=self.strategy
+            strategy=self.strategy,
         )
 
-    def validate_risk_constraints(self, edges: list[BettingEdge]) -> tuple[bool, list[str]]:
+    def validate_risk_constraints(
+        self, edges: list[BettingEdge]
+    ) -> tuple[bool, list[str]]:
         """
         Validate betting recommendations against risk rules.
 
@@ -228,9 +228,7 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
         # Check total exposure
         total_exposure = sum(edge.kelly_fraction for edge in edges)
         if total_exposure > 0.25:  # Never risk more than 25% of bankroll in one session
-            violations.append(
-                f"Total exposure too high: {total_exposure:.2%} > 25%"
-            )
+            violations.append(f"Total exposure too high: {total_exposure:.2%} > 25%")
 
         # Check individual bet sizes
         for edge in edges:
@@ -246,7 +244,7 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
         self,
         prop_bets: list[PropBet],
         true_probabilities: dict[str, float],
-        confidence_scores: dict[str, float]
+        confidence_scores: dict[str, float],
     ) -> BettingRecommendation:
         """
         Analyze a batch of prop bets and generate recommendations.
@@ -280,8 +278,7 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
 
         # Calculate expected ROI
         expected_roi = sum(
-            edge.edge * edge.kelly_fraction * self.bankroll
-            for edge in edges
+            edge.edge * edge.kelly_fraction * self.bankroll for edge in edges
         )
 
         total_exposure = sum(edge.kelly_fraction for edge in edges)
@@ -293,10 +290,12 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
             expected_roi=expected_roi,
             risk_adjusted_exposure=risk_adjusted_exposure,
             passed_risk_checks=passed_risk,
-            risk_violations=violations
+            risk_violations=violations,
         )
 
-    def execute_grok_analysis(self, task_description: str, prop_bets_data: dict) -> BettingRecommendation:
+    def execute_grok_analysis(
+        self, task_description: str, prop_bets_data: dict
+    ) -> BettingRecommendation:
         """
         Use Grok to analyze props with full observe-plan-act-reflect loop.
 
@@ -337,5 +336,3 @@ Analyze prop bets, detect edges, and recommend bets using Kelly Criterion."""
             confidence_scores[prop.event_id] = 0.75
 
         return self.analyze_props(prop_bets, true_probabilities, confidence_scores)
-
-

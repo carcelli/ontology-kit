@@ -28,22 +28,23 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agents import Agent, Runner
+
 from agent_kit.adapters import OntologyAgentAdapter, OntologyOutputGuardrail
 from agent_kit.events import OntologyEventLogger
 from agent_kit.memory import OntologyMemoryService
 from agent_kit.ontology.loader import OntologyLoader
 from agent_kit.sessions import OntologySessionService
-from agent_kit.tools.business import predict, optimize
+from agent_kit.tools.business import optimize, predict
 from agent_kit.tools.ontology import query_ontology
 
 
 # Simple in-memory session backend for testing
 class SimpleSessionBackend:
     """Simple session backend for demonstration."""
-    
+
     def __init__(self):
         self._sessions: dict[str, dict] = {}
-    
+
     async def get_session(self, session_id: str) -> dict:
         if session_id not in self._sessions:
             self._sessions[session_id] = {
@@ -52,7 +53,7 @@ class SimpleSessionBackend:
                 "metadata": {},
             }
         return self._sessions[session_id]
-    
+
     async def save_session(self, session_id: str, session_data: dict) -> None:
         self._sessions[session_id] = session_data
 
@@ -106,7 +107,7 @@ async def main() -> None:
         ontology.load()
         print("   ✅ Ontology loaded from:", ontology_path)
     else:
-        print(f"   ⚠️  Ontology not found, using empty loader")
+        print("   ⚠️  Ontology not found, using empty loader")
     print()
 
     # ==========================================================================

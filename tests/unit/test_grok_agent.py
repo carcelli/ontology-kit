@@ -26,10 +26,20 @@ from agent_kit.agents import AgentTask, GrokAgent, GrokConfig
 def mock_ontology():
     """Create a mock ontology for testing."""
     mock_onto = Mock()
-    mock_onto.query = Mock(return_value=[
-        {'entity': 'http://example.com/Bakery', 'property': 'revenue', 'value': '140'},
-        {'entity': 'http://example.com/Bakery', 'property': 'budget', 'value': '5.0'},
-    ])
+    mock_onto.query = Mock(
+        return_value=[
+            {
+                "entity": "http://example.com/Bakery",
+                "property": "revenue",
+                "value": "140",
+            },
+            {
+                "entity": "http://example.com/Bakery",
+                "property": "budget",
+                "value": "5.0",
+            },
+        ]
+    )
     return mock_onto
 
 
@@ -41,7 +51,7 @@ def mock_config():
         model="grok-beta",
         temperature=0.5,
         max_tokens=1024,
-        seed=42
+        seed=42,
     )
 
 
@@ -61,9 +71,11 @@ def mock_openai_response():
 class TestGrokAgentInitialization:
     """Test agent initialization and configuration."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_init_with_valid_config(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_init_with_valid_config(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test successful initialization with valid config."""
         agent = GrokAgent(mock_config, mock_ontology)
 
@@ -72,29 +84,32 @@ class TestGrokAgentInitialization:
         assert agent.tool_registry == {}
         assert agent.memory == []
         mock_openai_class.assert_called_once_with(
-            api_key=mock_config.api_key,
-            base_url=mock_config.base_url
+            api_key=mock_config.api_key, base_url=mock_config.base_url
         )
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_init_with_custom_system_prompt(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_init_with_custom_system_prompt(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test initialization with custom system prompt."""
         custom_prompt = "You are a custom agent."
         agent = GrokAgent(mock_config, mock_ontology, system_prompt=custom_prompt)
 
         assert agent.system_prompt == custom_prompt
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_init_with_tool_registry(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_init_with_tool_registry(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test initialization with tool registry."""
         tools = {"tool1": Mock(), "tool2": Mock()}
         agent = GrokAgent(mock_config, mock_ontology, tool_registry=tools)
 
         assert agent.tool_registry == tools
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', False)
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", False)
     def test_init_fails_without_openai(self, mock_config, mock_ontology):
         """Test that initialization fails if openai not installed."""
         with pytest.raises(ImportError, match="openai package required"):
@@ -104,9 +119,11 @@ class TestGrokAgentInitialization:
 class TestGrokAgentObserve:
     """Test observation phase (SPARQL queries)."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_observe_with_valid_ontology(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_observe_with_valid_ontology(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test observation with valid ontology data."""
         agent = GrokAgent(mock_config, mock_ontology)
         task = AgentTask(prompt="Analyze revenue for bakery")
@@ -117,9 +134,11 @@ class TestGrokAgentObserve:
         assert "http://example.com/Bakery" in observation.content
         mock_ontology.query.assert_called_once()
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_observe_handles_query_failure(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_observe_handles_query_failure(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test observation handles SPARQL query failures gracefully."""
         mock_ontology.query.side_effect = Exception("SPARQL error")
         agent = GrokAgent(mock_config, mock_ontology)
@@ -133,8 +152,8 @@ class TestGrokAgentObserve:
 class TestGrokAgentPlan:
     """Test planning phase (Grok API calls)."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
     def test_plan_with_valid_observation(
         self, mock_openai_class, mock_config, mock_ontology, mock_openai_response
     ):
@@ -154,8 +173,8 @@ class TestGrokAgentPlan:
         assert "analyze" in plan.thought.lower()
         mock_client.chat.completions.create.assert_called_once()
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
     def test_plan_detects_visualization_action(
         self, mock_openai_class, mock_config, mock_ontology
     ):
@@ -179,9 +198,11 @@ class TestGrokAgentPlan:
 
         assert plan.action == "generate_visualization"
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_plan_handles_api_failure(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_plan_handles_api_failure(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test planning handles API failures gracefully."""
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = Exception("API error")
@@ -199,11 +220,15 @@ class TestGrokAgentPlan:
 class TestGrokAgentAct:
     """Test action execution (tool invocation)."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_act_with_visualization_tool(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_act_with_visualization_tool(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test action execution with visualization tool."""
-        mock_viz_tool = Mock(return_value={'viz_path': '/path/to/viz.html', 'status': 'success'})
+        mock_viz_tool = Mock(
+            return_value={"viz_path": "/path/to/viz.html", "status": "success"}
+        )
         tools = {"generate_interactive_leverage_viz": mock_viz_tool}
 
         agent = GrokAgent(mock_config, mock_ontology, tool_registry=tools)
@@ -214,9 +239,11 @@ class TestGrokAgentAct:
         assert "visualization generated" in result.output.lower()
         mock_viz_tool.assert_called_once()
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_act_with_clustering_tool(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_act_with_clustering_tool(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test action execution with clustering tool."""
         mock_cluster_tool = Mock(return_value={"status": "COMPLETED", "n_clusters": 3})
         tools = {"cluster_data": mock_cluster_tool}
@@ -229,9 +256,11 @@ class TestGrokAgentAct:
         assert "clustering result" in result.output.lower()
         mock_cluster_tool.assert_called_once()
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_act_fallback_without_tools(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_act_fallback_without_tools(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test action execution falls back when no tools available."""
         agent = GrokAgent(mock_config, mock_ontology, tool_registry={})
         plan = Mock(action="unknown_action", thought="Do something")
@@ -244,13 +273,15 @@ class TestGrokAgentAct:
 class TestGrokAgentReflect:
     """Test reflection phase (learning)."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
     def test_reflect_stores_learning(
         self, mock_openai_class, mock_config, mock_ontology, mock_openai_response
     ):
         """Test reflection stores insights in memory."""
-        mock_openai_response.choices[0].message.content = "Key insight: Data quality is good."
+        mock_openai_response.choices[
+            0
+        ].message.content = "Key insight: Data quality is good."
         mock_client = MagicMock()
         mock_client.chat.completions.create.return_value = mock_openai_response
         mock_openai_class.return_value = mock_client
@@ -264,9 +295,11 @@ class TestGrokAgentReflect:
         assert len(agent.memory) == 1
         assert "insight" in agent.memory[0].lower()
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    def test_reflect_handles_api_failure(self, mock_openai_class, mock_config, mock_ontology):
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    def test_reflect_handles_api_failure(
+        self, mock_openai_class, mock_config, mock_ontology
+    ):
         """Test reflection handles API failures gracefully."""
         mock_client = MagicMock()
         mock_client.chat.completions.create.side_effect = Exception("API error")
@@ -285,8 +318,8 @@ class TestGrokAgentReflect:
 class TestGrokAgentFullLoop:
     """Test full observe-plan-act-reflect loop."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
     def test_run_executes_full_loop(
         self, mock_openai_class, mock_config, mock_ontology, mock_openai_response
     ):
@@ -311,10 +344,10 @@ class TestGrokAgentFullLoop:
 class TestGrokAgentRetryLogic:
     """Test retry logic for API calls."""
 
-    @patch('agent_kit.agents.base.OPENAI_AVAILABLE', True)
-    @patch('agent_kit.agents.base.TENACITY_AVAILABLE', True)
-    @patch('agent_kit.agents.base.OpenAI')
-    @patch('agent_kit.agents.base.retry')
+    @patch("agent_kit.agents.base.OPENAI_AVAILABLE", True)
+    @patch("agent_kit.agents.base.TENACITY_AVAILABLE", True)
+    @patch("agent_kit.agents.base.OpenAI")
+    @patch("agent_kit.agents.base.retry")
     def test_retry_decorator_used_when_available(
         self, mock_retry, mock_openai_class, mock_config, mock_ontology
     ):
@@ -343,6 +376,6 @@ def test_grok_config_accepts_valid_temperatures(temperature):
 def test_grok_config_rejects_invalid_temperature():
     """Test that GrokConfig rejects out-of-range temperatures."""
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):  # Pydantic validation error
         GrokConfig(api_key="test-key", temperature=3.0)
-

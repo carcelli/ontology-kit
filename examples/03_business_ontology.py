@@ -23,17 +23,17 @@ def main() -> None:
     print("Agent Kit - Example 3: Business Ontology Navigation")
     print("=" * 70)
     print()
-    
+
     # Load business ontology
     ontology_path = Path(__file__).parent.parent / 'assets' / 'ontologies' / 'business.ttl'
     print(f"📚 Loading business ontology from: {ontology_path}")
-    
+
     loader = OntologyLoader(str(ontology_path))
     graph = loader.load()
-    
+
     print(f"   {loader}")
     print()
-    
+
     # ========================================================================
     # QUERY 1: Discover all businesses
     # ========================================================================
@@ -48,7 +48,7 @@ def main() -> None:
     }
     """
     results = loader.query(sparql)
-    
+
     for res in results:
         name = res.get('name', 'Unknown')
         revenue = res.get('revenue', 'N/A')
@@ -58,7 +58,7 @@ def main() -> None:
         else:
             print(f"   - {name} in {location}")
     print()
-    
+
     # ========================================================================
     # QUERY 2: Client-Revenue relationships (Causal)
     # ========================================================================
@@ -75,7 +75,7 @@ def main() -> None:
     }
     """
     results = loader.query(sparql)
-    
+
     if results:
         for res in results:
             client = res['client']
@@ -85,7 +85,7 @@ def main() -> None:
     else:
         print("   (No client-revenue mappings found)")
     print()
-    
+
     # ========================================================================
     # QUERY 3: Forecast models and their accuracy
     # ========================================================================
@@ -102,7 +102,7 @@ def main() -> None:
     }
     """
     results = loader.query(sparql)
-    
+
     for res in results:
         model = res['model']
         model_type = res.get('modelType', 'Unknown')
@@ -112,7 +112,7 @@ def main() -> None:
         else:
             print(f"   - {model} ({model_type})")
     print()
-    
+
     # ========================================================================
     # QUERY 4: Leverage Points (Strategic Insights)
     # ========================================================================
@@ -131,14 +131,14 @@ def main() -> None:
     ORDER BY ?priority
     """
     results = loader.query(sparql)
-    
+
     for i, res in enumerate(results, 1):
         lever = res['lever']
         impact = res.get('impact', 1.0)
         cost = res.get('cost', 0)
         priority = res.get('priority', '?')
         description = res.get('description', '')
-        
+
         if cost:
             roi = float(impact) / (float(cost) + 1e-6)
             print(f"   {i}. {lever} (Priority {priority})")
@@ -146,11 +146,11 @@ def main() -> None:
         else:
             print(f"   {i}. {lever} (Priority {priority})")
             print(f"      Impact: {float(impact):.2f}")
-        
+
         if description:
             print(f"      → {description}")
         print()
-    
+
     # ========================================================================
     # QUERY 5: Causal Chain - Campaign → Client → Revenue
     # ========================================================================
@@ -170,24 +170,24 @@ def main() -> None:
     }
     """
     results = loader.query(sparql)
-    
+
     if results:
         for res in results:
             print(f"   {res['campaign']} → {res['client']} → {res['revenue']}")
     else:
         print("   (No complete causal chains found - add more example data)")
     print()
-    
+
     # ========================================================================
     # INSIGHT GENERATION (Agent-like behavior)
     # ========================================================================
     print("💡 AGENT NAVIGATION: Discovering optimization opportunities...")
     print()
-    
+
     # Find all businesses
     biz_query = "PREFIX : <http://agent_kit.io/business#> SELECT ?b WHERE { ?b a :Business }"
     businesses = loader.query(biz_query)
-    
+
     # Find all leverage points affecting those businesses
     lever_query = """
     PREFIX : <http://agent_kit.io/business#>
@@ -199,12 +199,12 @@ def main() -> None:
     }
     """
     levers = loader.query(lever_query)
-    
+
     if levers:
         print(f"📊 Found {len(businesses)} business(es) and {len(levers)} leverage point(s)")
         print()
         print("✨ Recommended actions (sorted by ROI):")
-        
+
         # Calculate ROI and sort
         lever_data = []
         for lev in levers:
@@ -217,15 +217,15 @@ def main() -> None:
                 'impact': impact,
                 'cost': cost
             })
-        
+
         lever_data.sort(key=lambda x: x['roi'], reverse=True)
-        
+
         for i, lev in enumerate(lever_data, 1):
             print(f"{i}. {lev['name']}")
             print(f"   → ROI: {lev['roi']:.2f}x | Impact: ${lev['impact']*1000:,.0f} | Cost: ${lev['cost']:,.0f}")
     else:
         print("No leverage points found - ontology needs more example data")
-    
+
     print()
     print("=" * 70)
     print("✅ Example complete!")
