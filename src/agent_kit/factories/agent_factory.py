@@ -464,12 +464,28 @@ class IndustryAgentBuilder:
                 raise ValueError("OntologyLoader must have a valid path")
             return OntologyAgent(name=name, ontology_path=ontology_path, **kwargs)
         elif issubclass(base_class, GrokAgent):
+            grok_config = grok_config or kwargs.pop("grok_config", None)
+            if grok_config is None:
+                api_key = kwargs.pop("grok_api_key", None) or os.getenv("XAI_API_KEY")
+                if not api_key:
+                    raise ValueError(
+                        "Grok API key is required to build GrokAgent. "
+                        "Set XAI_API_KEY or pass grok_config."
+                    )
+                grok_config = GrokConfig(api_key=api_key)
+
+            tool_registry = kwargs.pop("tool_registry", None)
+            if tool_registry is None and tools:
+                tool_registry = {
+                    getattr(tool, "__name__", f"tool_{idx}"): tool
+                    for idx, tool in enumerate(tools)
+                }
+
             return base_class(
-                name=name,
+                config=grok_config,
                 ontology=self.ontology,
+                tool_registry=tool_registry,
                 system_prompt=instructions,
-                grok_config=grok_config or GrokConfig(),
-                **kwargs,
             )
         else:
             raise ValueError(f"Unsupported base class: {base_class}")
